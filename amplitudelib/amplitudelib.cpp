@@ -5,8 +5,8 @@
 
 #include "amplitudelib.hpp"
 #include "datafile.hpp"
-#include "../src/tools.hpp"
-#include "../src/config.hpp"
+#include "../tools/tools.hpp"
+#include "../tools/config.hpp"
 #include <string>
 #include <cmath>
 #include <gsl/gsl_roots.h>
@@ -22,7 +22,7 @@
 
 extern "C"
 {
-    #include "fourier/fourier.h"
+    #include "../fourier/fourier.h"
 }
 
 /*

@@ -3,8 +3,8 @@
  * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
  */
 
-#include "../src/tools.hpp"
-#include "amplitudelib.hpp"
+#include "../tools/tools.hpp"
+#include "../amplitudelib/amplitudelib.hpp"
 #include <iostream>
 #include <gsl/gsl_errno.h>
 #include <string>

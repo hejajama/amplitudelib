@@ -6,8 +6,8 @@
 #ifndef _AMPLITUDELIB_H
 #define _AMPLITUDELIB_H
 
-#include "../src/config.hpp"
-#include "../src/interpolation.hpp"
+#include "../tools/config.hpp"
+#include "../tools/interpolation.hpp"
 #include <vector>
 
 class AmplitudeLib

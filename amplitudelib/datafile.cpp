@@ -3,8 +3,8 @@
  * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
  */
 
-#include "../src/tools.hpp"
-#include "../src/config.hpp"
+#include "../tools/tools.hpp"
+#include "../tools/config.hpp"
 #include "datafile.hpp"
 #include <fstream>
 #include <sstream>

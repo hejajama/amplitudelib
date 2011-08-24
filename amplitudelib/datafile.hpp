@@ -6,8 +6,8 @@
 #ifndef _DATAFILE_H
 #define _DATAFILE_H
 
-#include "../src/tools.hpp"
-#include "../src/config.hpp"
+#include "../tools/tools.hpp"
+#include "../tools/config.hpp"
 #include <sstream>
 #include <vector>
 /* Read data from datafiles, file format is defined in file README
