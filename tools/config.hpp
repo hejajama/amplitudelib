@@ -48,5 +48,10 @@ const REAL eps=0.000001;
 
 inline const REAL SQR(const REAL x) { return x*x; }
 
+enum Parton
+{
+		    UVAL,DVAL,USEA,DSEA,U,D,S,C,B,G    // Valence quarks, sea quarks,all quarks, gluons
+};
+
 
 #endif
