@@ -32,7 +32,7 @@ extern "C"
  * By default der=0, der=1 is 1st derivative w.r.t r, 2 2nd
  */
 REAL AmplitudeLib::N(REAL r, REAL y, int der)
-{
+{    
     if (der>2 or der<0)
     {
         cerr << "Derivative degree " << der << " is not 0, 1 or 2! " << LINEINFO
@@ -74,6 +74,7 @@ REAL AmplitudeLib::N(REAL r, REAL y, int der)
             result = interpolator->Derivative2(r);
             //result /= SQR(r);   // d^2N / d lnr^2 = r^2 d^2 N / dr^2
         }
+        if (result>1) return 1;
         return result;
 
     }
@@ -144,7 +145,9 @@ REAL AmplitudeLib::N(REAL r, REAL y, int der)
 
 REAL AmplitudeLib::S(REAL r, REAL y, int der)
 {
-    return 1.0 - N(r,y,der);
+    double s = 1.0 - N(r,y,der);
+    if (s<=1e-6) return 1e-6;
+    return s;
 }
 
 /*
