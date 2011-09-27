@@ -4,6 +4,7 @@
  */
 
 #include "amplitudelib.hpp"
+#include "virtual_photon.hpp"
 #include "datafile.hpp"
 #include "../tools/tools.hpp"
 #include "../tools/config.hpp"
@@ -146,7 +147,7 @@ REAL AmplitudeLib::N(REAL r, REAL y, int der)
 REAL AmplitudeLib::S(REAL r, REAL y, int der)
 {
     double s = 1.0 - N(r,y,der);
-    if (s<=1e-6) return 1e-6;
+    if (s<=1e-15) return 0;
     return s;
 }
 
@@ -217,6 +218,59 @@ REAL S_k_helperf(REAL r, void* p)
         cerr << "Result is " << result << " at r=" << r <<", k=" << par->kt << " "
          << LINEINFO << endl;
     return result;
+}
+
+/*
+ * Virtual photon-proton cross sections
+ * Separately for transversially and longitudinally polarized photons
+ */
+struct Inthelper_totxs
+{
+    AmplitudeLib* N;
+    int pol;    // 0: L, 1: T
+    REAL Qsqr,y;
+    WaveFunction* wf;
+};
+
+REAL Inthelperf_totxs(REAL r, void* p)
+{
+    Inthelper_totxs* par = (Inthelper_totxs*)p;
+
+    REAL result = r*par->N->N(r,par->y);
+    if (par->pol==0)    // Longitudinal
+        result *= par->wf->PsiSqr_L_intz(par->Qsqr, r);
+    else if (par->pol==1)   // Transverse
+        result *= par->wf->PsiSqr_T_intz(par->Qsqr, r);
+    else
+        cerr << "Invalid polarization " << par->pol << " at " << LINEINFO << endl;
+
+    return result;
+}
+
+REAL AmplitudeLib::ProtonPhotonCrossSection(REAL Qsqr, REAL y, int pol)
+{
+    Inthelper_totxs par; par.N=this;
+    par.pol=pol; par.Qsqr=Qsqr; par.y=y;
+    VirtualPhoton wavef;
+    par.wf=&wavef;
+
+    gsl_function fun; fun.function=Inthelperf_totxs;
+    fun.params=&par;
+    
+
+    REAL result,abserr; size_t eval;
+    int status = gsl_integration_qng(&fun, MinR(), MaxR(),
+    0, 0.001,  &result, &abserr, &eval);
+    
+    if(status){ std::cerr<< "r integral in ProtonPhotonCrossSection failed with code " 
+        << status << " (Qsqr=" << Qsqr << ", y=" << y 
+        << "relerr=" << abserr/result << ")" << " at " << LINEINFO << std::endl;
+    }
+
+    return 2.0*M_PI*result; //2\pi from \theta integral
+
+    
+
 }
 
 /*

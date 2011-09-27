@@ -27,7 +27,12 @@ class AmplitudeLib
 
         // Regular ft to k-space for S=1-N, normalization factor 1/(2\pi)^2
         REAL S_k(REAL kt, REAL y);
-        
+
+        // Virtual photon-proton cross sections, longitudinal and transverse
+        // Notice that these are not normalized, as we don't integrate over
+        // impact parameter
+        // pol 0=longitudinal, 1=transverse
+        REAL ProtonPhotonCrossSection(REAL Qsqr, REAL y, int pol);
 
         // Unintegrated gluon density
         REAL UGD(REAL k, REAL y, Interpolator* interp=NULL);

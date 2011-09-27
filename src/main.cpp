@@ -22,7 +22,8 @@ enum Mode
     SATSCALE,
     GD,
     DSIGMADY,
-    PTSPECTRUM
+    PTSPECTRUM,
+    F2
 };
 
 int main(int argc, char* argv[])
@@ -36,9 +37,10 @@ int main(int argc, char* argv[])
     gsl_set_error_handler(&ErrHandler);
 
     Mode mode=X;
-    REAL Ns=0.5;
+    REAL Ns=0.22;
     REAL y=0;
     REAL r=-1;
+    REAL Qsqr=10;
     string datafile="output.dat";
 
     if (string(argv[1])=="-help")
@@ -52,6 +54,7 @@ int main(int argc, char* argv[])
         cout << "-pt_spectrum: print dN/(d^2 p_T dy)" << endl;
         cout << "-dsigmady: print d\\sigma/dy" << endl;
         cout << "-satscale Ns, print satscale r_s defined as N(r_s)=Ns" << endl;
+        cout << "-F2 Qsqr" << endl;
         return 0;
     }
     
@@ -80,11 +83,17 @@ int main(int argc, char* argv[])
             mode=SATSCALE;
             Ns = StrToReal(argv[i+1]);
         }
+        else if (string(argv[i])=="-F2")
+        {
+            mode=F2;
+            Qsqr = StrToReal(argv[i+1]);
+        }
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
             return -1;
         }
+
     }
 
     cout << "# Reading data from file " << datafile << endl;
@@ -109,6 +118,8 @@ int main(int argc, char* argv[])
         }
     } else if (mode==X)
     {
+        cout <<"# Saturation scale r_s in 1/GeV (N(r_s) = " << Ns <<endl;
+        cout <<"### " << N.SaturationScale(y, Ns) << endl;
         cout << "# r [1/GeV]     Amplitude   \\partial_r   \\partial2"
          << " r d ln N / d ln r^2" << endl;
         for (REAL r=N.MinR()*1.01; r<N.MaxR(); r*=1.1)
@@ -184,9 +195,19 @@ int main(int argc, char* argv[])
                 cout << tmpy << " " << result << endl;
             }
         }
-
+    }
+    else if (mode==F2)
+    {
+        cout <<"# F_2 at Q^2=" << Qsqr << " GeV^2" << endl;
+        for (double y=0; y<10; y+=0.1)
+        {
+            cout << y << " " << Qsqr/(4.0*SQR(M_PI)*ALPHA_e)*
+                ( N.ProtonPhotonCrossSection(Qsqr, y, 0)
+                + N.ProtonPhotonCrossSection(Qsqr, y, 1) ) << endl;
+        }
 
     }
+
     else
     {
         cerr << "Unkown mode " << argv[3] << endl;
