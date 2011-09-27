@@ -16,7 +16,7 @@
 #include <sstream>
 
 const double ZINTACCURACY=0.001;
-const int MAXITER_ZINT=1000;
+const int MAXITER_ZINT=500;
 const double MINZ=0.00001;  // Integration limits
 const double MAXZ=0.9999;
 
@@ -25,7 +25,7 @@ VirtualPhoton::VirtualPhoton()
 {
     // Quark charges, 0=u, 1=d, 2=s
     // Parameters same as in Ref. 0902.1112
-    e_f[0]=2.0/3.0; e_f[1]=-1.0/3.0; e_f[2]=2.0/3.0;
+    e_f[0]=2.0/3.0; e_f[1]=-1.0/3.0; e_f[2]=-1.0/3.0;
     m_f[0]=0.14; m_f[1]=0.14; m_f[2]=0.14;
 }
 
@@ -108,17 +108,17 @@ double VirtualPhoton::PsiSqr_T_intz(double Qsqr, double r)
     int_helper.function=&zhelperfuncT;
     int_helper.params=&zintpar;
     
-    int status = gsl_integration_qng(&int_helper, MINZ, MAXZ,  0, ZINTACCURACY, 
-        &result, &abserr, &eval);
-    //gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_ZINT);
-    //status = gsl_integration_qag(&int_helper, 0, 1, 0, ZINTACCURACY,
-    //    MAXITER_ZINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
-    //gsl_integration_workspace_free(ws);
-/*
+    //int status = gsl_integration_qng(&int_helper, MINZ, MAXZ,  0, ZINTACCURACY, 
+    //    &result, &abserr, &eval);
+    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_ZINT);
+    int status = gsl_integration_qag(&int_helper, 0, 1, 0, ZINTACCURACY,
+        MAXITER_ZINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
+    gsl_integration_workspace_free(ws);
+
     if(status){ std::cerr<< "z integral in Photon failed with code " 
         << status << " (transverse, Qsqr=" << Qsqr << ", r=" << r 
         << "relerr=" << abserr/result << ") at " << LINEINFO << std::endl;}
-*/  
+  
     return result;
 }
 
@@ -134,17 +134,17 @@ double VirtualPhoton::PsiSqr_L_intz(double Qsqr, double r)
     int_helper.function=&zhelperfuncL;
     int_helper.params=&zintpar;
     
-    int status = gsl_integration_qng(&int_helper, MINZ, MAXZ, 0, ZINTACCURACY, 
-        &result, &abserr, &eval);
-    //gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_ZINT);
-    //int status = gsl_integration_qag(&int_helper, 0, 1, 0, ZINTACCURACY,
-    //    MAXITER_ZINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
-    //gsl_integration_workspace_free(ws);
-  /*  
+    //int status = gsl_integration_qng(&int_helper, MINZ, MAXZ, 0, ZINTACCURACY, 
+    //    &result, &abserr, &eval);
+    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_ZINT);
+    int status = gsl_integration_qag(&int_helper, 0, 1, 0, ZINTACCURACY,
+        MAXITER_ZINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
+    gsl_integration_workspace_free(ws);
+    
     if(status){ std::cerr<< "z integral in VirtualPhoton failed: code " 
         << status << " (longitudinal, Qsqr=" << Qsqr << ", r=" << r 
         << "relerr=" << abserr/result << ") at " << LINEINFO << std::endl;}
-*/
+
     return result;
 }
 

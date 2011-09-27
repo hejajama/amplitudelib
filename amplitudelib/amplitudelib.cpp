@@ -260,11 +260,11 @@ REAL AmplitudeLib::ProtonPhotonCrossSection(REAL Qsqr, REAL y, int pol)
 
     REAL result,abserr; size_t eval;
     int status = gsl_integration_qng(&fun, MinR(), MaxR(),
-    0, 0.001,  &result, &abserr, &eval);
+    0, 0.01,  &result, &abserr, &eval);
     
     if(status){ std::cerr<< "r integral in ProtonPhotonCrossSection failed with code " 
         << status << " (Qsqr=" << Qsqr << ", y=" << y 
-        << "relerr=" << abserr/result << ")" << " at " << LINEINFO << std::endl;
+        << " relerr=" << abserr/result << ") at " << LINEINFO << std::endl;
     }
 
     return 2.0*M_PI*result; //2\pi from \theta integral
