@@ -161,6 +161,7 @@ REAL AmplitudeLib::S(REAL r, REAL y, int der)
 struct N_k_helper
 {
     REAL y; REAL kt;
+    bool adjoint;
     AmplitudeLib* N;
 };
 REAL N_k_helperf(REAL r, void* p);
@@ -216,35 +217,43 @@ REAL AmplitudeLib::N_k_to_x(REAL x, REAL y)
 
 /*
  * FT S=1-N to the k-space
- * S(k) = \int d^2 r/(2\pi)^2 exp(ik.r) (1-N(r))
- *  = (2\pi)^{-1} \int dr r BesselJ[0,k*r] * (1-N(r))
+ * S(k) = \int d^2 r exp(ik.r) (1-N(r))
+ *  = (2\pi) \int dr r BesselJ[0,k*r] * (1-N(r))
  * 
  * Note: for performance reasons it is probably a good idea to
  * call AmplitudeLib::InitializeInterpolation(y) before this
+ *
+ * if adjoint==true, then use adjoint representation for N
+ * Default value for adjoint is false
  */
 REAL S_k_helperf(REAL r, void* p);
-REAL AmplitudeLib::S_k(REAL kt, REAL y)
+REAL AmplitudeLib::S_k(REAL kt, REAL y, bool adjoint)
 {
     // Some initialisation stuff -
     set_fpu_state();
-    init_workspace_fourier(700);   // number of bessel zeroes, max 2000
+    init_workspace_fourier(FOURIER_ZEROS);   // number of bessel zeroes, max 2000
     
     N_k_helper par;
-    par.y=y; par.N=this; par.kt=kt;
+    par.y=y; par.N=this; par.kt=kt; par.adjoint=adjoint;
     REAL result = fourier_j0(kt,S_k_helperf,&par);
-    return result;
+    return result*2.0*M_PI; 
 }
 
 REAL S_k_helperf(REAL r, void* p)
 {
     N_k_helper* par = (N_k_helper*) p;
-    if (r < par->N->MinR()) return r/(2.0*M_PI);
-    else if (r > par->N->MaxR()) return 0;
-    REAL result = r*(1.0-par->N->N(r, par->y)) / (2.0*M_PI);
+    REAL result;
+    if (!par->adjoint)
+    {
+        if (r < par->N->MinR()) return r/(2.0*M_PI);
+        else if (r > par->N->MaxR()) return 0;
+        result = r*(1.0-par->N->N(r, par->y));
+    }
+    else
+    {
+        result = r*(1.0-par->N->N_A(r, par->y));
+    }
 
-    if (isnan(result) or isinf(result))
-        cerr << "Result is " << result << " at r=" << r <<", k=" << par->kt << " "
-         << LINEINFO << endl;
     return result;
 }
 
@@ -414,7 +423,7 @@ REAL AmplitudeLib::SaturationScale(REAL y, REAL Ns)
  * Amplitude in adjoint representation
  * Coordinate space: N_A(r) = 2N(r)-N(r)^2
  */
-REAL AmplitudeLib::N_A(REAL r, REAL y, int der=0)
+REAL AmplitudeLib::N_A(REAL r, REAL y, int der)
 {
     if (kspace)
     {

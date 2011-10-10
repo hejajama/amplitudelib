@@ -29,10 +29,12 @@ class AmplitudeLib
         REAL N_k_to_x(REAL x, REAL y);
 
         // Regular ft to k-space for S=1-N, normalization factor 1/(2\pi)^2
-        REAL S_k(REAL kt, REAL y);
+        // if adjoint=true, then N is in adjoint representation
+        REAL S_k(REAL kt, REAL y, bool adjoint=false);
 
         // Amplitude in adjoint representation
         REAL N_A(REAL r, REAL y, int der=0);
+
 
         // Virtual photon-proton cross sections, longitudinal and transverse
         // Notice that these are not normalized, as we don't integrate over
