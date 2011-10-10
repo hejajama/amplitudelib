@@ -3,7 +3,8 @@ LDFLAGS = `gsl-config --libs` -lm
 
 SOURCES = src/main.cpp amplitudelib/amplitudelib.cpp \
 	amplitudelib/datafile.cpp tools/interpolation.cpp tools/tools.cpp \
-	amplitudelib/wave_function.cpp amplitudelib/virtual_photon.cpp 
+	amplitudelib/wave_function.cpp amplitudelib/virtual_photon.cpp \
+	amplitudelib/ugd.cpp 
 FTSOURCES = fourier/fourier.c
 OBJECTS = $(SOURCES:.cpp=.o)
 FTOBJECTS = $(FTSOURCES:.c=.o)

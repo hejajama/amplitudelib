@@ -18,12 +18,14 @@ enum Mode
 {
     X,
     YDEP,
-    K,
+    X_TO_K,
+    K_TO_X,
     SATSCALE,
     GD,
     DSIGMADY,
     PTSPECTRUM,
-    F2
+    F2,
+    LOGLOGDER
 };
 
 int main(int argc, char* argv[])
@@ -41,20 +43,24 @@ int main(int argc, char* argv[])
     REAL y=0;
     REAL r=-1;
     REAL Qsqr=10;
+    bool kspace=false;
     string datafile="output.dat";
 
     if (string(argv[1])=="-help")
     {
         cout << "-y y: set rapidity" << endl;
         cout << "-data datafile" << endl;
-        cout << "-x: print amplitude in x space" << endl;
+        cout << "-kspace: data is in k space" << endl;
+        cout << "-x: print amplitude (space-indep.)" << endl;
         cout << "-ydep r: print N(r,y) as a function of y" << endl;
-        cout << "-k: print amplitude in k space" << endl;
+        cout << "-x_to_k: FT ampltiudet from x to k space" << endl;
+        cout << "-k_to_x: FT amplitude from k to x space" << endl;
         cout << "-ugd: print unintegrated gluon distribution" << endl;
         cout << "-pt_spectrum: print dN/(d^2 p_T dy)" << endl;
         cout << "-dsigmady: print d\\sigma/dy" << endl;
         cout << "-satscale Ns, print satscale r_s defined as N(r_s)=Ns" << endl;
         cout << "-F2 Qsqr" << endl;
+        cout << "-loglogder: print d ln N / d ln x^2" << endl;
         return 0;
     }
     
@@ -64,14 +70,18 @@ int main(int argc, char* argv[])
             y = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-data")
             datafile = argv[i+1];
+        else if (string(argv[i])=="-kspace")
+            kspace=true;
         else if (string(argv[i])=="-x")
             mode=X;
         else if (string(argv[i])=="-ydep")
         {
             mode=YDEP; r=StrToReal(argv[i+1]);
         }
-        else if (string(argv[i])=="-k")
-            mode=K;
+        else if (string(argv[i])=="-x_to_k")
+            mode=X_TO_K;
+        else if (string(argv[i])=="-k_to_x")
+            mode=K_TO_X;
         else if (string(argv[i])=="-ugd")
             mode=GD;
         else if (string(argv[i])=="-dsigmady")
@@ -88,6 +98,8 @@ int main(int argc, char* argv[])
             mode=F2;
             Qsqr = StrToReal(argv[i+1]);
         }
+        else if (string(argv[i])=="-loglogder")
+            mode = LOGLOGDER;
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -97,11 +109,11 @@ int main(int argc, char* argv[])
     }
 
     cout << "# Reading data from file " << datafile << endl;
-    AmplitudeLib N(datafile);
+    AmplitudeLib N(datafile, kspace);
     N.InitializeInterpolation(y);
     cout << "# y = " << y << endl;
 
-    if (mode==K)
+    if (mode==X_TO_K)
     {
         REAL mink = 1e-5; REAL maxk = 1.0/N.MinR()*100;
         int kpoints=100;
@@ -116,15 +128,34 @@ int main(int argc, char* argv[])
                 cout <<tmpk << " " << res << endl;
             }
         }
-    } else if (mode==X)
+    }
+    else if (mode==K_TO_X)
+    {
+        REAL minx = 1e-6; REAL maxx = 50;
+        int xpoints=100;
+        REAL xmultiplier = std::pow(maxx/minx, 1.0/(xpoints-1.0));
+        cout << "# x [1/GeV]     Amplitude  " << endl;
+        for (int xind=0; xind<xpoints; xind++)
+        {
+            REAL tmpx = minx*std::pow(xmultiplier, xind);
+            REAL res = N.N_k_to_x(tmpx, y);
+            #pragma omp critical
+            {
+                cout <<tmpx << " " << res << endl;
+            }
+        }
+    }
+
+    else if (mode==X)
     {
         cout <<"# Saturation scale r_s in 1/GeV (N(r_s) = " << Ns <<endl;
-        cout <<"### " << N.SaturationScale(y, Ns) << endl;
+       // cout <<"### " << N.SaturationScale(y, Ns) << endl;
         cout << "# r [1/GeV]     Amplitude   \\partial_r   \\partial2"
          << " r d ln N / d ln r^2" << endl;
-        for (REAL r=N.MinR()*1.01; r<N.MaxR(); r*=1.1)
+        REAL minr = N.MinR()*1.01; REAL maxr=N.MaxR();
+        for (REAL r=minr; r<maxr; r*=1.03)
         {
-            cout << r << " " << N.N(r, y) <<  " "
+            cout << std::scientific << std::setprecision(7) << r << " " << N.N(r, y)  <<  " "
              << N.N(r,y,1) << " " << N.N(r,y,2) <<
              " " << N.LogLogDerivative(r,y) << endl;
         }
@@ -147,6 +178,18 @@ int main(int argc, char* argv[])
             cout << y << " " << N.SaturationScale(y, Ns) << endl;
         }
     }
+
+    else if (mode==LOGLOGDER)
+    {
+        cout <<"# d ln N / d ln x^2" << endl;
+        cout <<"# r    anomalous_dimension" << endl;
+        for (double x=N.MinR(); x<N.MaxR(); x*=1.03)
+        {
+            cout << x << " " << N.LogLogDerivative(x, y) << endl;
+        }
+
+    }
+    
     else if (mode==GD)
     {
         REAL mink=0.1; REAL maxk=20;
@@ -199,11 +242,18 @@ int main(int argc, char* argv[])
     else if (mode==F2)
     {
         cout <<"# F_2 at Q^2=" << Qsqr << " GeV^2" << endl;
-        for (double y=0; y<10; y+=0.1)
+        cout <<"# x   F_2   F_L   scaled_x     y" << endl;
+        for (double x=1e-6; x<=1e-2; x*=1.1)
         {
-            cout << y << " " << Qsqr/(4.0*SQR(M_PI)*ALPHA_e)*
-                ( N.ProtonPhotonCrossSection(Qsqr, y, 0)
-                + N.ProtonPhotonCrossSection(Qsqr, y, 1) ) << endl;
+            // To go smoothly into the photoproduction region, scale
+            // x -> x*(1 + 4m_f^2/Qsqr)
+            double x2 = x*(1.0+4.0*SQR(0.14)/Qsqr);
+            double y = std::log(0.01/x);    // TODO: or x2?
+            double xs_l = N.ProtonPhotonCrossSection(Qsqr, y, 0);
+            double xs_t = N.ProtonPhotonCrossSection(Qsqr, y, 1);
+            cout << x << " " << Qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t)
+                << " " << Qsqr/(4.0*SQR(M_PI)*ALPHA_e)*xs_l << " "
+                << x2 << " " << y << endl;
         }
 
     }

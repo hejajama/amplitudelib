@@ -13,7 +13,7 @@
 class AmplitudeLib
 {
     public:
-        AmplitudeLib(std::string datafile);
+        AmplitudeLib(std::string datafile, bool kspace_=false);
         ~AmplitudeLib();
 
         // der w.r.t r der times.
@@ -25,14 +25,21 @@ class AmplitudeLib
         // Amplitude in k-space, ft with 1/r^2 prefactor
         REAL N_k(REAL kt, REAL y);
 
+        // Amplitude from k space to x space
+        REAL N_k_to_x(REAL x, REAL y);
+
         // Regular ft to k-space for S=1-N, normalization factor 1/(2\pi)^2
         REAL S_k(REAL kt, REAL y);
+
+        // Amplitude in adjoint representation
+        REAL N_A(REAL r, REAL y, int der=0);
 
         // Virtual photon-proton cross sections, longitudinal and transverse
         // Notice that these are not normalized, as we don't integrate over
         // impact parameter
         // pol 0=longitudinal, 1=transverse
         REAL ProtonPhotonCrossSection(REAL Qsqr, REAL y, int pol);
+
 
         // Unintegrated gluon density
         REAL UGD(REAL k, REAL y, Interpolator* interp=NULL);
@@ -63,11 +70,14 @@ class AmplitudeLib
         
         
     private:
+        // [yind][r/kind]
         std::vector< std::vector<REAL> > n;
         std::vector<REAL> yvals;
         std::vector<REAL> lnrvals;
         std::vector<REAL> rvals;
         Interpolator *interpolator;
+
+        bool kspace;    // true if data is in kspace
 
         REAL interpolator_y;
         REAL* tmprarray;
@@ -83,4 +93,6 @@ class AmplitudeLib
 const int INTERPOLATION_POINTS = 8;
 const REAL UGD_IR_CUTOFF=0.3;   // ugd(k<UGD_IR_CUTOFF)=0     BAD?????
 
+const int FOURIER_ZEROS=1000;   // How many zeros of the Bessel functions is
+                    // used when Fourier transforming
 #endif
