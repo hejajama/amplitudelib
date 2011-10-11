@@ -24,6 +24,11 @@ MRST::~MRST()
 
 double MRST::xq(double x, double q, Parton p)
 {
+    if (x<0 or x>1)
+    {
+        cerr << "x=" << x <<" out of range at " << LINEINFO << endl;
+        return 0;
+    }
     mrst->mrst99(x, q, set);
     switch(p)
     {

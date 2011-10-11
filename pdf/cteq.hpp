@@ -15,6 +15,7 @@
 
 class CTEQ : public PDF
 {
+    public:
         REAL xq(REAL x, REAL q, Parton p);    // return x*q(x,q)
         void Initialize(int param=-1);
         std::string GetString();

@@ -19,6 +19,11 @@ extern "C"
 // D_{p->h}, x: long. mom. fraction, qs: scale (GeV)
 REAL KKP::Evaluate(Parton p, Hadron h, REAL x, REAL qs)
 {
+    if (x<0 or x>1)
+    {
+        cerr << "x=" << x <<" out of range at " << LINEINFO << endl;
+        return 0;
+    }
     int hadron=0; 
     REAL partons[11];
     partons[0]=0; partons[1]=1; partons[2]=2; partons[3]=3; partons[10]=10;

@@ -210,12 +210,12 @@ int main(int argc, char* argv[])
 
     else if (mode==PTSPECTRUM)
     {
-        REAL sqrts=7000;
+        REAL sqrts=200;
         cout << "#d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
         cout << "# p_T   d\\sigma" << endl;
-        for (REAL pt=1; pt<6; pt+=0.2)
+        for (REAL pt=0.5; pt<6; pt+=0.4)
         {
-            REAL result = N.dN_gluon_dyd2pt(pt, y, sqrts);
+            REAL result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts);
             cout << pt << " " << result << endl;
         }
     }

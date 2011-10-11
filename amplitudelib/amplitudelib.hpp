@@ -42,6 +42,9 @@ class AmplitudeLib
         // pol 0=longitudinal, 1=transverse
         REAL ProtonPhotonCrossSection(REAL Qsqr, REAL y, int pol);
 
+        // Differential forward hadron production multiplicity
+        // dN_h / (dy_h d^2 p_T)
+        REAL dHadronMultiplicity_dyd2pt(REAL y, REAL pt, REAL sqrts);
 
         // Unintegrated gluon density
         REAL UGD(REAL k, REAL y, Interpolator* interp=NULL);

@@ -11,6 +11,11 @@
 
 double CTEQ::xq(double x, double q, Parton p)
 {
+    if (x<0 or x>1)
+    {
+        cerr << "x=" << x <<" out of range at " << LINEINFO << endl;
+        return 0;
+    }
     // Codes
     int u=1; int d=2; int s=3; int c=4; int b=5; int g=0;
     int ubar=-1; int dbar=-2; 
