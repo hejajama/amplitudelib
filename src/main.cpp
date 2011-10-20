@@ -44,6 +44,7 @@ int main(int argc, char* argv[])
     REAL r=-1;
     REAL Qsqr=10;
     bool kspace=false;
+    bool bspline=false;
     string datafile="output.dat";
 
     if (string(argv[1])=="-help")
@@ -61,6 +62,7 @@ int main(int argc, char* argv[])
         cout << "-satscale Ns, print satscale r_s defined as N(r_s)=Ns" << endl;
         cout << "-F2 Qsqr" << endl;
         cout << "-loglogder: print d ln N / d ln x^2" << endl;
+        cout << "-bspline: use bspline interpolation (for noisy data)" << endl;
         return 0;
     }
     
@@ -88,6 +90,8 @@ int main(int argc, char* argv[])
             mode=DSIGMADY;
         else if (string(argv[i])=="-pt_spectrum")
             mode=PTSPECTRUM;
+        else if (string(argv[i])=="-bspline")
+            bspline=true;
         else if (string(argv[i])=="-satscale")
         {
             mode=SATSCALE;
@@ -110,7 +114,7 @@ int main(int argc, char* argv[])
 
     cout << "# Reading data from file " << datafile << endl;
     AmplitudeLib N(datafile, kspace);
-    N.InitializeInterpolation(y);
+    N.InitializeInterpolation(y,bspline);
     cout << "# y = " << y << endl;
 
     if (mode==X_TO_K)
@@ -148,8 +152,11 @@ int main(int argc, char* argv[])
 
     else if (mode==X)
     {
-        cout <<"# Saturation scale r_s in 1/GeV (N(r_s) = " << Ns <<endl;
-       // cout <<"### " << N.SaturationScale(y, Ns) << endl;
+        if (!kspace)
+        {
+            cout <<"# Saturation scale r_s in 1/GeV (N(r_s) = " << Ns <<endl;
+            cout <<"### " << N.SaturationScale(y, Ns) << endl;
+        }
         cout << "# r [1/GeV]     Amplitude   \\partial_r   \\partial2"
          << " r d ln N / d ln r^2" << endl;
         REAL minr = N.MinR()*1.01; REAL maxr=N.MaxR();

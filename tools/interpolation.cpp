@@ -127,7 +127,7 @@ REAL Interpolator::Evaluate(REAL x)
 
 REAL Interpolator::Derivative(REAL x)
 {
-    REAL res; int status=0;
+    REAL res=0; int status=0;
     switch(method)
     {
         case INTERPOLATE_SPLINE:

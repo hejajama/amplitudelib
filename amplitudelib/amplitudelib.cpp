@@ -31,8 +31,11 @@ extern "C"
  * Interpolate rapidity linearly and r using spline
  *
  * By default der=0, der=1 is 1st derivative w.r.t r, 2 2nd
+ * By default bspline=false, it it is true use bspline interpolation
+ *  (useful for noisy data), affects only if there is no previously allocated
+ *  interpolator
  */
-REAL AmplitudeLib::N(REAL r, REAL y, int der)
+REAL AmplitudeLib::N(REAL r, REAL y, int der, bool bspline)
 {    
     if (der>2 or der<0)
     {
@@ -121,6 +124,7 @@ REAL AmplitudeLib::N(REAL r, REAL y, int der)
     }
     
     Interpolator interp(tmpxarray, tmparray, interpo_points);
+    if (bspline) interp.SetMethod(INTERPOLATE_BSPLINE);
     interp.Initialize();
     REAL result=0;
     if (der==0)
@@ -463,8 +467,9 @@ REAL AmplitudeLib::N_A(REAL r, REAL y, int der)
 
 /*
  * Initializes interpolation method with all read data points at given y
+ * If bspline is true, then use bspline interpolation, default is false
  */
-void AmplitudeLib::InitializeInterpolation(REAL y)
+void AmplitudeLib::InitializeInterpolation(REAL y, bool bspline)
 {
     if (std::abs(interpolator_y - y) < 0.01) return;    // Already done it
     if (interpolator_y>=0)
@@ -479,6 +484,8 @@ void AmplitudeLib::InitializeInterpolation(REAL y)
         tmpnarray[i] = N(tmpr, y);
     }
     interpolator = new Interpolator(tmprarray, tmpnarray, rpoints);
+    if (bspline)
+        interpolator->SetMethod(INTERPOLATE_BSPLINE);
     interpolator->Initialize();
     interpolator_y = y;
 }

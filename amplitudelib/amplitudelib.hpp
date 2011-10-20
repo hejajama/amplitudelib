@@ -17,7 +17,7 @@ class AmplitudeLib
         ~AmplitudeLib();
 
         // der w.r.t r der times.
-        REAL N(REAL r, REAL y, int der=0);
+        REAL N(REAL r, REAL y, int der=0, bool bspline=false);
 
         // S = 1-N
         REAL S(REAL r, REAL y, int der=0);
@@ -62,7 +62,7 @@ class AmplitudeLib
         // Saturation scale N(r, y) = Ns
         REAL SaturationScale(REAL y, REAL Ns);
 
-        void InitializeInterpolation(REAL y);
+        void InitializeInterpolation(REAL y, bool bspline=false);
         Interpolator* MakeInterpolator(REAL y);
     
         int YVals();
@@ -95,7 +95,7 @@ class AmplitudeLib
         bool out_of_range_errors;  // don't print "out of range" errors
 };
 
-const int INTERPOLATION_POINTS = 8;
+const int INTERPOLATION_POINTS = 12;
 const REAL UGD_IR_CUTOFF=0.3;   // ugd(k<UGD_IR_CUTOFF)=0     BAD?????
 
 const int FOURIER_ZEROS=1000;   // How many zeros of the Bessel functions is
