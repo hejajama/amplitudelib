@@ -44,7 +44,7 @@ class AmplitudeLib
 
         // Differential forward hadron production multiplicity
         // dN_h / (dy_h d^2 p_T)
-        REAL dHadronMultiplicity_dyd2pt(REAL y, REAL pt, REAL sqrts);
+        REAL dHadronMultiplicity_dyd2pt(REAL y, REAL pt, REAL sqrts, bool deuteron=false);
 
         // Unintegrated gluon density
         REAL UGD(REAL k, REAL y, Interpolator* interp=NULL);
@@ -71,6 +71,8 @@ class AmplitudeLib
         REAL MaxR();
         REAL MaxY();
 
+        REAL X0();
+
         void SetOutOfRangeErrors(bool er);
         
         
@@ -91,6 +93,8 @@ class AmplitudeLib
         REAL minr;
         REAL rmultiplier;
         int rpoints;
+
+        REAL x0;
 
         bool out_of_range_errors;  // don't print "out of range" errors
 };

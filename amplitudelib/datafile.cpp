@@ -8,12 +8,15 @@
 #include "datafile.hpp"
 #include <fstream>
 #include <sstream>
+#include <iostream>
+#include <cstdlib>
 using std::ifstream;
 using std::getline;
 using std::stringstream;
 
 DataFile::DataFile(string fname)
 {
+    x0=0.01;    // Default value if not given in the file
     filename=fname;
     ifstream file(fname.c_str());
     if (!file.is_open())
@@ -22,7 +25,7 @@ DataFile::DataFile(string fname)
         return;
     }
     int confid=0;
-    while(!file.eof() and confid < 3)
+    while(!file.eof() and confid < 4)
     {
         string line;
         getline(file, line);
@@ -39,6 +42,14 @@ DataFile::DataFile(string fname)
                 case 2:
                     rpoints = StrToInt(line.substr(3,line.length()-3));
                     break;
+                case 3:
+                    x0 = StrToReal(line.substr(3,line.length()-3));
+                    if (x0 < 1e-4)
+                    {
+                        cerr <<"Invalid x0! " << LINEINFO << endl;
+                        exit(1);
+                    }
+                    break;
                 default:
                     cerr << "File " << fname << " is formatted incorrectly!" << endl;
                     break;
@@ -46,10 +57,6 @@ DataFile::DataFile(string fname)
             confid++; 
         }
     }
-
-    //TODO: It's impossible that this condition doesn't hold
-    if (confid < 3)
-        cerr << "File " << fname << " doesn't have enough metadata!" << endl;
 
     // Ok, configurations are read, then read all yvals
     REAL y=-1;
@@ -137,3 +144,7 @@ REAL DataFile::MaxY()
 	return yvals[yvals.size()-1];
 }
 
+REAL DataFile::X0()
+{
+    return x0;
+}

@@ -95,6 +95,15 @@ REAL Interpolator::Evaluate(REAL x)
         cerr << "Interpolator is not ready! Did you forget to call Interpolator::Initialize()?" << endl;
         return 0;
     }
+
+    if (x<minx or x>maxx)
+    {
+        cerr << "x is not within limits [" << minx << ", " << maxx << "], forcing "
+            << "it in that interval!" << endl;
+            if (x<minx) x=minx*1.00001;
+            if (x>maxx) x=maxx*0.999999;
+    }
+    
     REAL res, yerr; int status;
     switch(method)
     {
@@ -178,6 +187,8 @@ Interpolator::Interpolator(REAL *x, REAL *y, int p)
     points=p;
     xdata=x;
     ydata=y;
+    minx=x[0];
+    maxx=x[p-1];
     method = INTERPOLATE_SPLINE;
     ready=false;
 }

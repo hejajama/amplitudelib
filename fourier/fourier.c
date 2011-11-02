@@ -90,7 +90,10 @@ double fourier_J0_int(double k,void *param){
   /* changed by H.M. */
   double result = j0(k*(dt->x))*(dt->function)(k,dt->params);
   if (isinf(result) || isnan(result))
-    fprintf(stderr, "Inf/nan result %f at k=%f\n", result, k);
+  {
+    fprintf(stderr, "Inf/nan result %f at k=%f. %s:%d \n", result, k, __FILE__,__LINE__);
+    exit(1);
+  }
   return result;
 #else
   return j0(k*(dt->x))*(dt->function)(&k,dt->params);

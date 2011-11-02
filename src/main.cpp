@@ -45,6 +45,7 @@ int main(int argc, char* argv[])
     REAL Qsqr=10;
     bool kspace=false;
     bool bspline=false;
+    bool deuteron=false;
     string datafile="output.dat";
 
     if (string(argv[1])=="-help")
@@ -57,7 +58,7 @@ int main(int argc, char* argv[])
         cout << "-x_to_k: FT ampltiudet from x to k space" << endl;
         cout << "-k_to_x: FT amplitude from k to x space" << endl;
         cout << "-ugd: print unintegrated gluon distribution" << endl;
-        cout << "-pt_spectrum: print dN/(d^2 p_T dy)" << endl;
+        cout << "-pt_spectrum p/d: print dN/(d^2 p_T dy), probe is proton or deuteron" << endl;
         cout << "-dsigmady: print d\\sigma/dy" << endl;
         cout << "-satscale Ns, print satscale r_s defined as N(r_s)=Ns" << endl;
         cout << "-F2 Qsqr" << endl;
@@ -89,7 +90,18 @@ int main(int argc, char* argv[])
         else if (string(argv[i])=="-dsigmady")
             mode=DSIGMADY;
         else if (string(argv[i])=="-pt_spectrum")
+        {
             mode=PTSPECTRUM;
+            if (string(argv[i+1])=="p")
+                deuteron=false;
+            else if (string(argv[i+1])=="d")
+                deuteron=true;
+            else
+            {
+                cerr << "Invalid probe particle type " << argv[i+1] << endl;
+                exit(1);
+            }
+        }
         else if (string(argv[i])=="-bspline")
             bspline=true;
         else if (string(argv[i])=="-satscale")
@@ -219,10 +231,11 @@ int main(int argc, char* argv[])
     {
         REAL sqrts=200;
         cout << "#d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
+        cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
         cout << "# p_T   d\\sigma" << endl;
-        for (REAL pt=0.5; pt<6; pt+=0.4)
+        for (REAL pt=0.5; pt<5; pt+=0.1)
         {
-            REAL result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts);
+            REAL result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, deuteron);
             cout << pt << " " << result << endl;
         }
     }
@@ -255,7 +268,7 @@ int main(int argc, char* argv[])
             // To go smoothly into the photoproduction region, scale
             // x -> x*(1 + 4m_f^2/Qsqr)
             double x2 = x*(1.0+4.0*SQR(0.14)/Qsqr);
-            double y = std::log(0.01/x);    // TODO: or x2?
+            double y = std::log(N.X0()/x);    // TODO: or x2?
             double xs_l = N.ProtonPhotonCrossSection(Qsqr, y, 0);
             double xs_t = N.ProtonPhotonCrossSection(Qsqr, y, 1);
             cout << x << " " << Qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t)

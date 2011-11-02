@@ -21,6 +21,7 @@ class DataFile
         REAL RMultiplier();
         int RPoints();
 		REAL MaxY();
+        REAL X0();
 
         void GetData(std::vector< std::vector<REAL> > &n,
             std::vector<REAL> &rapidities);
@@ -32,6 +33,7 @@ class DataFile
         REAL minr;
         REAL r_multiplier;
         int rpoints;
+        REAL x0;
 
 };
 

@@ -11,6 +11,10 @@
  * Interpolates given data using spline (goes trough every data point)
  * or bspline (=noisy data)
  * Uses GSL
+ *
+ * Xdata and ydata pointers are saved, but not used for interpolation purposes
+ * If user frees the allocated memory, one should be sure that these pointers
+ * are not asked from this class!s
  */
 
 #include <gsl/gsl_bspline.h>
@@ -47,6 +51,7 @@ class Interpolator
     private:
         INTERPOLATION_METHOD method;
         REAL* xdata, *ydata;
+        REAL minx,maxx;
         int points;
         bool ready;
         
