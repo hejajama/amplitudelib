@@ -28,7 +28,8 @@ class AmplitudeLib
         // Amplitude from k space to x space
         REAL N_k_to_x(REAL x, REAL y);
 
-        // Regular ft to k-space for S=1-N, normalization factor 1/(2\pi)^2
+        // Regular ft to k-space for S=1-N, NO normalization factor
+        // \int e^(ik.r) S(r)
         // if adjoint=true, then N is in adjoint representation
         REAL S_k(REAL kt, REAL y, bool adjoint=false);
 

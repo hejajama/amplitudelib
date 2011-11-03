@@ -63,7 +63,7 @@ REAL AmplitudeLib::N(REAL r, REAL y, int der, bool bspline)
     //REAL lnr = std::log(r);
 
     /// Use already initialized interpolator
-    if (std::abs(y - interpolator_y) < 0.01 and !bspline)
+    if (std::abs(y - interpolator_y) < 0.01 and !bspline )
     {
         REAL result=0;
         if (der==0) 

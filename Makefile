@@ -7,7 +7,7 @@ SOURCES = src/main.cpp amplitudelib/amplitudelib.cpp \
 	amplitudelib/ugd.cpp \
 	pdf/pdf.cpp pdf/cteq.cpp pdf/mrst.cpp pdf/mrst99.cpp \
 	fragmentation/fragmentation.cpp fragmentation/kkp.cpp \
-	amplitudelib/xs.cpp 
+	amplitudelib/xs.cpp tools/interpolation2d.cpp 
 FTSOURCES = fourier/fourier.c
 OBJECTS = $(SOURCES:.cpp=.o)
 FTOBJECTS = $(FTSOURCES:.c=.o)
