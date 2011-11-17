@@ -164,14 +164,11 @@ int main(int argc, char* argv[])
 
     else if (mode==X)
     {
-        if (!kspace)
-        {
-            cout <<"# Saturation scale r_s in 1/GeV (N(r_s) = " << Ns <<endl;
-            cout <<"### " << N.SaturationScale(y, Ns) << endl;
-        }
+        cout <<"# Saturation scale r_s in 1/GeV / k_s in GeV (N(r_s) = " << Ns <<endl;
+        cout <<"### " << N.SaturationScale(y, Ns) << endl;
         cout << "# r [1/GeV]     Amplitude   \\partial_r   \\partial2"
          << " r d ln N / d ln r^2" << endl;
-        REAL minr = N.MinR()*1.01; REAL maxr=N.MaxR();
+        REAL minr = N.MinR()*1.1; REAL maxr=N.MaxR()*0.99;
         for (REAL r=minr; r<maxr; r*=1.03)
         {
             cout << std::scientific << std::setprecision(7) << r << " " << N.N(r, y)  <<  " "
@@ -201,8 +198,12 @@ int main(int argc, char* argv[])
     else if (mode==LOGLOGDER)
     {
         cout <<"# d ln N / d ln x^2" << endl;
+        cout <<"# Saturation scale r_s in 1/GeV / k_s in GeV (N(r_s) = " << Ns <<endl;
+        cout <<"### " << N.SaturationScale(y, Ns) << endl;
+        cout << "# r [1/GeV]     Amplitude   \\partial_r   \\partial2"
+         << " r d ln N / d ln r^2" << endl;
         cout <<"# r    anomalous_dimension" << endl;
-        for (double x=N.MinR(); x<N.MaxR(); x*=1.03)
+        for (double x=N.MinR()*1.1; x<N.MaxR()*0.99; x*=1.03)
         {
             cout << x << " " << N.LogLogDerivative(x, y) << endl;
         }

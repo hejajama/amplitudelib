@@ -33,6 +33,7 @@ class Interpolator
 {
     public:
         Interpolator(REAL* x, REAL* y, int p);
+        Interpolator(std::vector<REAL> &x, std::vector<REAL> &y);
         Interpolator(Interpolator& inter);
         ~Interpolator();
         void Clear();
@@ -44,12 +45,14 @@ class Interpolator
 
         REAL* GetXData();
         REAL* GetYData();
+        gsl_spline* GetGslSpline();
         int GetNumOfPoints();
         INTERPOLATION_METHOD GetMethod();
 
     private:
         INTERPOLATION_METHOD method;
         REAL* xdata, *ydata;
+        bool allocated_data;    // true if we allocated xdata,ydata
         REAL minx,maxx;
         int points;
         bool ready;

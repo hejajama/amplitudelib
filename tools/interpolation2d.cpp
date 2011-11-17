@@ -67,7 +67,7 @@ REAL Interpolator2D::Evaluate(REAL x, REAL y)
     // Construct one new interpolator, we already have interpolators[]
     // evaluated at each y in the grid
     REAL* tmpdata = new REAL[interpolators.size()];
-    for (int yind=0; yind<interpolators.size(); yind++)
+    for (uint yind=0; yind<interpolators.size(); yind++)
     {
         tmpdata[yind] = interpolators[yind]->Evaluate(x);
     }
@@ -112,14 +112,14 @@ Interpolator2D::Interpolator2D(std::vector<double>  &grid,
     // interpolators which can be used to evaluate any point (x,y)
 
     ypoints = new double[grid.size()];
-    for (int i=0; i < grid.size(); i++)
+    for (uint i=0; i < grid.size(); i++)
     {
         ypoints[i] = grid[i];
     }
     double *tmpdata = new double[grid.size()];
-    for (int yind=0; yind < grid.size(); yind++)
+    for (uint yind=0; yind < grid.size(); yind++)
     {
-        for (int xind=0; xind<grid.size(); xind++)
+        for (uint xind=0; xind<grid.size(); xind++)
         {
             tmpdata[xind] = data[xind][yind];
         }
@@ -142,7 +142,7 @@ void Interpolator2D::SetMethod(INTERPOLATION_METHOD m)
 void Interpolator2D::Clear()
 {
     delete[] ypoints;
-    for (int i=0; i<interpolators.size(); i++)
+    for (uint i=0; i<interpolators.size(); i++)
     {
         delete interpolators[i];
     }

@@ -18,6 +18,12 @@
 int Interpolator::Initialize()
 {
     int status=0;
+    if (ready)
+    {
+        cerr << "Interpolator is already initialized, clear it before re-initializing! "
+            << LINEINFO << endl;
+        return -1;
+    }
     switch(method)
     {
         case INTERPOLATE_SPLINE:
@@ -98,8 +104,8 @@ REAL Interpolator::Evaluate(REAL x)
 
     if (x<minx or x>maxx)
     {
-        cerr << "x is not within limits [" << minx << ", " << maxx << "], forcing "
-            << "it in that interval!" << endl;
+        cerr << "x=" << x << " is not within limits [" << minx << ", " << maxx << "], forcing "
+            << "it in that interval! " << LINEINFO << endl;
             if (x<minx) x=minx*1.00001;
             if (x>maxx) x=maxx*0.999999;
     }
@@ -114,6 +120,7 @@ REAL Interpolator::Evaluate(REAL x)
                 cerr << "Interpolatioin failed at " << LINEINFO << ", error " << gsl_strerror(status)
                  << " (" << status << "), x=" << x << ", minx=" << xdata[0]
                  << ", maxx=" << xdata[points-1] << ", result=" << res << endl;
+                 exit(1);
             }
             return res;
             break;
@@ -190,6 +197,24 @@ Interpolator::Interpolator(REAL *x, REAL *y, int p)
     minx=x[0];
     maxx=x[p-1];
     method = INTERPOLATE_SPLINE;
+    allocated_data=false;
+    ready=false;
+}
+
+Interpolator::Interpolator(std::vector<REAL> &x, std::vector<REAL> &y)
+{
+    points = x.size();
+    xdata = new REAL[points];
+    ydata = new REAL[points];
+    allocated_data=true;
+
+    for (uint i=0; i<x.size(); i++)
+    {
+        xdata[i]=x[i];
+        ydata[i]=y[i];
+    }
+    minx=xdata[0]; maxx=xdata[x.size()-1];
+    method = INTERPOLATE_SPLINE;
     ready=false;
 }
 
@@ -216,6 +241,12 @@ void Interpolator::Clear()
             gsl_matrix_free(cov);
             gsl_multifit_linear_free(mw);
             break;
+    }
+
+    if (allocated_data)
+    {
+        delete[] xdata;
+        delete[] ydata;
     }
 }
 
@@ -247,9 +278,24 @@ INTERPOLATION_METHOD Interpolator::GetMethod()
 Interpolator::Interpolator(Interpolator& inter)
 {
     points=inter.GetNumOfPoints();
-    xdata = inter.GetXData();
-    ydata = inter.GetYData();
- 
+    xdata = new REAL[points];
+    ydata = new REAL[points];
+    allocated_data=true;
+
+
+    gsl_spline *tmpspline = inter.GetGslSpline();
+    for (int i=0; i<points; i++)
+    {
+        xdata[i] = tmpspline->x[i];
+        ydata[i] = tmpspline->y[1];
+    }
+    minx = xdata[0]; maxx=xdata[points-1];
     method = inter.GetMethod();
+    ready=false;
     Initialize();
+}
+
+gsl_spline* Interpolator::GetGslSpline()
+{
+    return spline;
 }

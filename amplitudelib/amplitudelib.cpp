@@ -16,6 +16,7 @@
 #include <gsl/gsl_monte_plain.h>
 #include <gsl/gsl_monte_miser.h>
 #include <gsl/gsl_sf_bessel.h>
+#include <gsl/gsl_min.h>
 
 
 #include <algorithm>
@@ -347,11 +348,15 @@ REAL AmplitudeLib::LogLogDerivative(REAL r, REAL y)
 /*
  * Calculate saturation scale, definition is
  * N(r_s, y) = Ns = (for example) 0.5
+ *
+ * In kspace: satscale = max of k^(2\gamma_c), \gamma_c=0.6275
+ * Ref. hep-ph/0504080
  */
 struct SatscaleSolverHelper
 {
     REAL y;
     REAL Ns;
+    REAL gammac;
     AmplitudeLib* N;
 };
 REAL SatscaleSolverHelperf(double r, void* p)
@@ -360,21 +365,32 @@ REAL SatscaleSolverHelperf(double r, void* p)
     return par->N->N(r, par->y) - par->Ns;
 }
 
+REAL SatscaleSolverHelperf_k(REAL kt, void* p)
+{
+   
+    SatscaleSolverHelper* par = (SatscaleSolverHelper*)p;
+    REAL val = -std::pow(kt, 2.0*par->gammac)
+        *par->N->N(kt, par->y);
+    return val;
+    
+}
+
+
 REAL AmplitudeLib::SaturationScale(REAL y, REAL Ns)
 {
+    
+    SatscaleSolverHelper helper;
+    helper.y=y; helper.Ns=Ns; helper.N=this; helper.gammac=0.6275;
     const int MAX_ITER = 300;
     const REAL ROOTFINDACCURACY = 0.01;
-
-    SatscaleSolverHelper helper;
-    helper.y=y; helper.Ns=Ns; helper.N=this;
-    
     gsl_function f;
     f.params = &helper;
+        
     f.function = &SatscaleSolverHelperf;
 
     const gsl_root_fsolver_type *T = gsl_root_fsolver_bisection;
     gsl_root_fsolver *s = gsl_root_fsolver_alloc(T);
-    
+        
     gsl_root_fsolver_set(s, &f, MinR()*1.0001, MaxR()*0.999);
     int iter=0; int status; double min,max;
     do
@@ -384,19 +400,67 @@ REAL AmplitudeLib::SaturationScale(REAL y, REAL Ns)
         min = gsl_root_fsolver_x_lower(s);
         max = gsl_root_fsolver_x_upper(s);
         status = gsl_root_test_interval(min, max, 0, ROOTFINDACCURACY);    
-
     } while (status == GSL_CONTINUE and iter < MAX_ITER);
 
     if (iter>=MAX_ITER)
-    {
-        cerr << "Solving failed at y=" << y << endl;
-    }
+        cerr << "Solving failed at y=" << y << " " << LINEINFO << endl;
 
-    REAL res = gsl_root_fsolver_root(s);
+
+    REAL sat = gsl_root_fsolver_root(s);
 
     gsl_root_fsolver_free(s);
 
-    return res;
+    if (!kspace)
+        return sat;
+    
+
+    
+    f.function=&SatscaleSolverHelperf_k;
+  
+    const gsl_min_fminimizer_type *Tm = gsl_min_fminimizer_brent;
+    gsl_min_fminimizer *sm = gsl_min_fminimizer_alloc(Tm);
+
+    // Interpolation doesn't work well at the edge of the ktsqr range, so limit
+    // the studied interval
+    REAL interval_min = MinR()*1.0001;
+    REAL interval_max = MaxR()*0.999;
+
+    //gsl_error_handler_t* handler = gsl_set_error_handler_off();
+    if (gsl_min_fminimizer_set(sm, &f, sat, interval_min, interval_max)
+        == GSL_EINVAL)
+    {
+        // Endpoints do not enclose a minimum (on the other hand
+        // helper(pos) > helper(min),helper(max), but we can anyway continue
+        cerr << "Endpoints do not enclose a minumum! " << LINEINFO << endl;
+    }
+    //gsl_set_error_handler(handler);
+
+
+    iter=0;
+    do
+    {
+        iter++;
+        gsl_min_fminimizer_iterate(sm);
+        sat = gsl_min_fminimizer_x_minimum(sm);
+        interval_min = gsl_min_fminimizer_x_lower (sm);
+        interval_max = gsl_min_fminimizer_x_upper (sm);
+        ///TODO: relerror/abserror from ktsqrval difference
+        status = gsl_min_test_interval (interval_min, interval_max, 0.0, 0.01);
+        
+    } while (status == GSL_CONTINUE and iter < MAX_ITER);
+
+    if (status == GSL_CONTINUE)
+    {
+        cerr << "Didn't find saturation scale when y=" << y  << ", iterated "
+            << iter << "/" << MAX_ITER << " times at " << LINEINFO << endl;
+    }
+
+    gsl_min_fminimizer_free(sm);
+
+    //cout << "start: " << std::exp(0.4*y) << " min: " << Ktsqrval(1) << " max: " << Ktsqrval(KtsqrPoints()-2)
+    //    << " minimumsqr: " << pos << " iterations: " << iter << endl;
+
+    return sat;
 }
 
 /*
