@@ -5,6 +5,7 @@
 
 #include "../tools/tools.hpp"
 #include "../amplitudelib/amplitudelib.hpp"
+#include "../tools/interpolation.hpp"
 #include <iostream>
 #include <gsl/gsl_errno.h>
 #include <string>
@@ -188,11 +189,29 @@ int main(int argc, char* argv[])
     else if (mode==SATSCALE)
     {
         cout <<"# Saturation scale N(r_s) = " << Ns << endl;
-        cout <<"# y    r_s [1/GeV]" << endl;
-        for (REAL y=0; y < N.MaxY(); y+=0.1)
+        cout <<"# y    Q_s [GeV]    d ln Q_s/dy" << endl;
+
+        // Solve satscale and save it to array, then interpolate=>get also derivative
+        int points = (int)(N.MaxY()/0.1);
+        REAL* rapidities = new REAL[points];
+        REAL* lnqs = new REAL[points];
+
+        for (int i=0; i<points; i++)
         {
-            cout << y << " " << N.SaturationScale(y, Ns) << endl;
+            rapidities[i]=(REAL)i*0.1;
+            lnqs[i] = std::log(1.0/N.SaturationScale(rapidities[i], Ns));
         }
+        Interpolator interp(rapidities, lnqs, points);
+        interp.Initialize();
+
+        for (REAL y=0; y < rapidities[points-1]; y+=0.1)
+        {
+            cout << y << " " << std::exp(interp.Evaluate(y)) << " "
+                << interp.Derivative(y) << endl;
+        }
+
+        delete[] rapidities;
+        delete[] lnqs;
     }
 
     else if (mode==LOGLOGDER)

@@ -380,9 +380,9 @@ REAL AmplitudeLib::SaturationScale(REAL y, REAL Ns)
 {
     
     SatscaleSolverHelper helper;
-    helper.y=y; helper.Ns=Ns; helper.N=this; helper.gammac=0.6275;
-    const int MAX_ITER = 300;
-    const REAL ROOTFINDACCURACY = 0.01;
+    helper.y=y; helper.Ns=Ns; helper.N=this; helper.gammac=0.5;
+    const int MAX_ITER = 1000;
+    const REAL ROOTFINDACCURACY = 0.00001;
     gsl_function f;
     f.params = &helper;
         
