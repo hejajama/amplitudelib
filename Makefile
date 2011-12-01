@@ -1,23 +1,13 @@
 CXXFLAGS = `gsl-config --cflags` -O3 -Wall -pedantic -fopenmp# -I ./libbci-1.1.0/ 
 LDFLAGS = `gsl-config --libs` -lm 
 
-SOURCES = src/main.cpp amplitudelib/amplitudelib.cpp \
-	amplitudelib/datafile.cpp tools/interpolation.cpp tools/tools.cpp \
-	amplitudelib/wave_function.cpp amplitudelib/virtual_photon.cpp \
-	amplitudelib/ugd.cpp \
-	pdf/pdf.cpp pdf/cteq.cpp pdf/mrst.cpp pdf/mrst99.cpp \
-	fragmentation/fragmentation.cpp fragmentation/kkp.cpp \
-	amplitudelib/xs.cpp tools/interpolation2d.cpp 
-FTSOURCES = fourier/fourier.c
-OBJECTS = $(SOURCES:.cpp=.o)
-FTOBJECTS = $(FTSOURCES:.c=.o)
-FSOURCES = fragmentation/fragmentation_kkp.f pdf/CT10Pdf.f
-FOBJECTS = $(FSOURCES:.f=.o)
+include filelist.m
 
-all: amplitudelib 
+all: amplitude
 
-amplitudelib: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS)
-	g++ $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) -lgfortran -o amplitude
+amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp libamplitude.a
+	g++ $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp -lgfortran -o amplitude
+	ar cru libamplitude.a $(OBJECTS) $(FTOBJECTS) $(FOBJECTS)
 .cpp.o:
 	 g++ $(CXXFLAGS) $< -c -o $@
 .c.o:
@@ -27,5 +17,6 @@ amplitudelib: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS)
 
 
 clean:
-	rm -f $(OBJECTS) $(FTOBJECTS) $(FOBJECTS)
+	rm -f $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.o
 	rm -f amplitude	
+	rm libamplitude.a

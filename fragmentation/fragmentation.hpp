@@ -12,19 +12,27 @@
 enum Hadron
 {
     PI,   // pi+, pi-
+    PIP,    // pi^+
+    PIM,    // pi^-
     K,      // k+, k-
+    KP,     // k^+
+    KM,     // k^-
     K0,      // K^0, \bar K^0
     P,      // P, \bar P
+    PP,     // p^-
+    PM,     // p^+
     PI0,    // \pi^0
     NE,      // N, \bar N
-    H       // sum of pions, kaons and protons
+    H,       // h^+ + h^- sum of charged hadrons
+    HP,     // h^+
+    HM      // h^-
 };
 
 class FragmentationFunction
 {
     public:
         // D_{p->h}, x: long. mom. fraction, qs: scale (GeV)
-        virtual REAL Evaluate(Parton p, Hadron h, REAL x, REAL qs)=0;
+        virtual REAL Evaluate(Parton p, Hadron h, REAL x, REAL qs);
         FragmentationFunction();
         virtual std::string GetString();
     private:
