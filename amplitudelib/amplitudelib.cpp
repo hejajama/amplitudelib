@@ -324,7 +324,7 @@ REAL AmplitudeLib::ProtonPhotonCrossSection(REAL Qsqr, REAL y, int pol)
     0, 0.01,  &result, &abserr, &eval);
     
     if(status){ std::cerr<< "r integral in ProtonPhotonCrossSection failed with code " 
-        << status << " (Qsqr=" << Qsqr << ", y=" << y 
+        << status << " (Qsqr=" << Qsqr << ", y=" << y << " result " << result  
         << " relerr=" << abserr/result << ") at " << LINEINFO << std::endl;
     }
 
@@ -539,13 +539,17 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
         minr=std::sqrt(minr);
         rmultiplier = std::sqrt(rmultiplier);
     }
-    
-    cout << "# Data read from file " << datafile << ", minr: " << minr
-        << " maxr: " << MaxR() << " rpoints: " << rpoints << " maxy "
-        << yvals[yvals.size()-1] << " x0 " << X0() << endl;
 
     interpolator_y=-1;  // if >=0, interpolator is initialized, must free
     // memory (delete tmprarray and tmpnarray at the end)
+
+    REAL satscale = 1.0/SaturationScale(0, 0.22);
+    
+    cout << "# Data read from file " << datafile << ", minr: " << minr
+        << " maxr: " << MaxR() << " rpoints: " << rpoints << " maxy "
+        << yvals[yvals.size()-1] << " x0 " << X0()
+        << " Q_{s,0}^2 = " << SQR(satscale) << " GeV^2 [ N(r=1/Q_s) = 0.22]" << endl;
+
 }
 
 /*

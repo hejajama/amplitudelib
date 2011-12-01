@@ -6,6 +6,12 @@
 #include "../tools/tools.hpp"
 #include "../amplitudelib/amplitudelib.hpp"
 #include "../tools/interpolation.hpp"
+#include "../fragmentation/fragmentation.hpp"
+#include "../fragmentation/kkp.hpp"
+#include "../fragmentation/pkhff.hpp"
+#include "../fragmentation/hkns.hpp"
+#include "../pdf/cteq.hpp"
+#include "../amplitudelib/virtual_photon.hpp"
 #include <iostream>
 #include <gsl/gsl_errno.h>
 #include <string>
@@ -26,7 +32,8 @@ enum Mode
     DSIGMADY,
     PTSPECTRUM,
     F2,
-    LOGLOGDER
+    LOGLOGDER,
+    DPS
 };
 
 int main(int argc, char* argv[])
@@ -39,6 +46,8 @@ int main(int argc, char* argv[])
     
     gsl_set_error_handler(&ErrHandler);
 
+    FragmentationFunction *fragfun=NULL;
+
     Mode mode=X;
     REAL Ns=0.22;
     REAL y=0;
@@ -47,6 +56,9 @@ int main(int argc, char* argv[])
     bool kspace=false;
     bool bspline=false;
     bool deuteron=false;
+    REAL sqrts=200;
+    Hadron final_particle = PI0;    // final state particle in single particle
+                                    // production
     string datafile="output.dat";
 
     if (string(argv[1])=="-help")
@@ -59,15 +71,27 @@ int main(int argc, char* argv[])
         cout << "-x_to_k: FT ampltiudet from x to k space" << endl;
         cout << "-k_to_x: FT amplitude from k to x space" << endl;
         cout << "-ugd: print unintegrated gluon distribution" << endl;
-        cout << "-pt_spectrum p/d: print dN/(d^2 p_T dy), probe is proton or deuteron" << endl;
+        cout << "-pt_spectrum p/d pi0/ch/hn: print dN/(d^2 p_T dy), probe is proton or deuteron"
+            << " final state pi0/charged/negative hadron" << endl;
+        cout << "-dps: doupe parton scattering, same arguments as -pt_spectrum" << endl;
         cout << "-dsigmady: print d\\sigma/dy" << endl;
         cout << "-satscale Ns, print satscale r_s defined as N(r_s)=Ns" << endl;
         cout << "-F2 Qsqr" << endl;
         cout << "-loglogder: print d ln N / d ln x^2" << endl;
         cout << "-bspline: use bspline interpolation (for noisy data)" << endl;
+        cout << "-fragfun [kkp, pkhff, hkns]: select fragmentation function" << endl;
+        cout << "-sqrts sqrts (in GeV)" << endl;
         return 0;
     }
-    
+/*
+    HKNS hk;
+    KKP kkp;
+    PKHFF pkh;
+    FragmentationFunction ff;
+    for (double z=0.1; z<0.9; z+=0.05)
+        cout << z << " " <<z*hk.Evaluate(U, PM, z, std::sqrt(2)) << " "
+        << z*hk.Evaluate(D, PM, z, std::sqrt(2)) << endl;
+    return 0;*/
     for (int i=1; i<argc; i++)
     {
         if (string(argv[i])=="-y")
@@ -78,6 +102,8 @@ int main(int argc, char* argv[])
             kspace=true;
         else if (string(argv[i])=="-x")
             mode=X;
+        else if (string(argv[i])=="-sqrts")
+            sqrts = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-ydep")
         {
             mode=YDEP; r=StrToReal(argv[i+1]);
@@ -102,6 +128,43 @@ int main(int argc, char* argv[])
                 cerr << "Invalid probe particle type " << argv[i+1] << endl;
                 exit(1);
             }
+
+            if (string(argv[i+2])=="pi0")
+                final_particle = PI0;
+            else if (string(argv[i+2])=="ch")
+                final_particle = H; // charged hadrons
+            else if (string(argv[i+2])=="hm")    // negative hadrons
+                final_particle = HM;
+            else
+            {
+                cerr << "Invalid final state particle " << argv[i+2] << endl;
+                exit(1);
+            }
+        }
+        else if (string(argv[i])=="-dps")
+        {
+            mode=DPS;
+            if (string(argv[i+1])=="p")
+                deuteron=false;
+            else if (string(argv[i+1])=="d")
+                deuteron=true;
+            else
+            {
+                cerr << "Invalid probe particle type " << argv[i+1] << endl;
+                exit(1);
+            }
+
+            if (string(argv[i+2])=="pi0")
+                final_particle = PI0;
+            else if (string(argv[i+2])=="ch")
+                final_particle = H; // charged hadrons
+            else if (string(argv[i+2])=="hm")    // negative hadrons
+                final_particle = HM;
+            else
+            {
+                cerr << "Invalid final state particle " << argv[i+2] << endl;
+                exit(1);
+            }
         }
         else if (string(argv[i])=="-bspline")
             bspline=true;
@@ -117,6 +180,20 @@ int main(int argc, char* argv[])
         }
         else if (string(argv[i])=="-loglogder")
             mode = LOGLOGDER;
+        else if (string(argv[i])=="-fragfun")
+        {
+            if (string(argv[i+1])=="kkp")
+                fragfun = new KKP();
+            else if (string(argv[i+1])=="pkhff")
+                fragfun = new PKHFF();
+            else if (string(argv[i+1])=="hkns")
+                fragfun = new HKNS();
+            else
+            {
+                cerr << "Fragmentation function type " << argv[i+1] << " is not valid!" << endl;
+                return -1;
+            }
+        }
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -129,7 +206,6 @@ int main(int argc, char* argv[])
     AmplitudeLib N(datafile, kspace);
     N.InitializeInterpolation(y,bspline);
     cout << "# y = " << y << endl;
-
     if (mode==X_TO_K)
     {
         REAL mink = 1e-5; REAL maxk = 1.0/N.MinR()*100;
@@ -167,7 +243,7 @@ int main(int argc, char* argv[])
     {
         cout <<"# Saturation scale r_s in 1/GeV / k_s in GeV (N(r_s) = " << Ns <<endl;
         cout <<"### " << N.SaturationScale(y, Ns) << endl;
-        cout << "# r [1/GeV]     Amplitude   \\partial_r   \\partial2"
+        cout << "# r [1/GeV]     Amplitude   \\partial_r   \\partial2 "
          << " r d ln N / d ln r^2" << endl;
         REAL minr = N.MinR()*1.1; REAL maxr=N.MaxR()*0.99;
         for (REAL r=minr; r<maxr; r*=1.03)
@@ -249,15 +325,35 @@ int main(int argc, char* argv[])
 
     else if (mode==PTSPECTRUM)
     {
-        REAL sqrts=200;
-        cout << "#d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
+        CTEQ pdf;
+        pdf.Initialize();
+        if (fragfun==NULL)
+        {
+            cerr << "Fragfun not spesified!" << endl;
+            return -1;
+        }
+        cout << "# d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
+        cout << "# Fragfun: " << fragfun->GetString() << endl;
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
         cout << "# p_T   d\\sigma" << endl;
-        for (REAL pt=0.5; pt<5; pt+=0.1)
+        for (REAL pt=1; pt<5; pt+=0.1)
         {
-            REAL result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, deuteron);
+            REAL result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, &pdf,
+                deuteron, final_particle);
             cout << pt << " " << result << endl;
         }
+    }
+    else if (mode==DPS)
+    {
+        if (fragfun==NULL)
+        {
+            cerr << "Fragfun not spesified!" << endl;
+            return -1;
+        }
+        cout << "# DPS integrated over pt1,pt2,y1,y2" << endl;
+        cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
+        cout << "# sqrt(s)=" << sqrts << " GeV" << endl;
+        cout << N.DPS(2.4,4,2,1,sqrts, fragfun, deuteron, final_particle) << endl;
     }
     
     else if (mode==DSIGMADY)
@@ -282,13 +378,15 @@ int main(int argc, char* argv[])
     else if (mode==F2)
     {
         cout <<"# F_2 at Q^2=" << Qsqr << " GeV^2" << endl;
+        VirtualPhoton wf;
+        cout << "# Virtual photon wavef params: " << wf.GetParamString() << endl;
         cout <<"# x   F_2   F_L   scaled_x     y" << endl;
-        for (double x=1e-6; x<=1e-2; x*=1.1)
+        for (double x=1e-6; x<=N.X0(); x*=1.1)
         {
             // To go smoothly into the photoproduction region, scale
             // x -> x*(1 + 4m_f^2/Qsqr)
             double x2 = x*(1.0+4.0*SQR(0.14)/Qsqr);
-            double y = std::log(N.X0()/x);    // TODO: or x2?
+            double y = std::log(N.X0()/x2);    // TODO: or x2?
             double xs_l = N.ProtonPhotonCrossSection(Qsqr, y, 0);
             double xs_t = N.ProtonPhotonCrossSection(Qsqr, y, 1);
             cout << x << " " << Qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t)
@@ -303,6 +401,8 @@ int main(int argc, char* argv[])
         cerr << "Unkown mode " << argv[3] << endl;
         return -1;
     }
+
+    delete fragfun;
     return 0;
     
 

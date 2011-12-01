@@ -159,8 +159,7 @@ std::string VirtualPhoton::GetParamString()
 {
     std::stringstream str;
     str << "e_f[0]=" << e_f[0] << ", e_f[1]=" << e_f[1] << ", e_f[2]=" << e_f[2]
-    << ", m_f[0]=" << m_f[0] << ", m_f[1]=" << m_f[1] << ", m_f[2]=" << m_f[2]
-    << ", m_f[3]=" << m_f[3] << endl;
+    << ", m_f[0]=" << m_f[0] << ", m_f[1]=" << m_f[1] << ", m_f[2]=" << m_f[2];
     return str.str();
 }
 

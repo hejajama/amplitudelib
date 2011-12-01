@@ -8,6 +8,8 @@
 
 #include "../tools/config.hpp"
 #include "../tools/interpolation.hpp"
+#include "../fragmentation/fragmentation.hpp"
+#include "../pdf/pdf.hpp"
 #include <vector>
 
 class AmplitudeLib
@@ -45,7 +47,13 @@ class AmplitudeLib
 
         // Differential forward hadron production multiplicity
         // dN_h / (dy_h d^2 p_T)
-        REAL dHadronMultiplicity_dyd2pt(REAL y, REAL pt, REAL sqrts, bool deuteron=false);
+        REAL dHadronMultiplicity_dyd2pt(REAL y, REAL pt, REAL sqrts,
+            FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0 );
+        // Douple parton scattering, integrate products of two dHadronMultiplicity_dyd2pt
+        // over kinematical regions
+        // pt2<pt1
+        REAL DPS(REAL miny, REAL maxy, REAL minpt1, REAL minpt2, REAL sqrts,
+            FragmentationFunction* fragfun, bool deuteron=false, Hadron final=PI0);
 
         // Unintegrated gluon density
         REAL UGD(REAL k, REAL y, Interpolator* interp=NULL);
