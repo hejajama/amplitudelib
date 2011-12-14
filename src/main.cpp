@@ -10,8 +10,10 @@
 #include "../fragmentation/kkp.hpp"
 #include "../fragmentation/pkhff.hpp"
 #include "../fragmentation/hkns.hpp"
+#include "../fragmentation/dss.hpp"
 #include "../pdf/cteq.hpp"
 #include "../amplitudelib/virtual_photon.hpp"
+#include "../tools/config.hpp"
 #include <iostream>
 #include <gsl/gsl_errno.h>
 #include <string>
@@ -33,7 +35,8 @@ enum Mode
     PTSPECTRUM,
     F2,
     LOGLOGDER,
-    DPS
+    DPS,
+    PRINT_FF
 };
 
 int main(int argc, char* argv[])
@@ -59,7 +62,8 @@ int main(int argc, char* argv[])
     REAL sqrts=200;
     Hadron final_particle = PI0;    // final state particle in single particle
                                     // production
-    string datafile="output.dat";
+    Parton parton=U;
+    string datafile="amplitude.dat";
 
     if (string(argv[1])=="-help")
     {
@@ -79,8 +83,9 @@ int main(int argc, char* argv[])
         cout << "-F2 Qsqr" << endl;
         cout << "-loglogder: print d ln N / d ln x^2" << endl;
         cout << "-bspline: use bspline interpolation (for noisy data)" << endl;
-        cout << "-fragfun [kkp, pkhff, hkns]: select fragmentation function" << endl;
+        cout << "-fragfun [kkp, pkh, hkns, dss]: select fragmentation function" << endl;
         cout << "-sqrts sqrts (in GeV)" << endl;
+        cout << "-print_ff [u,d,s,g] [pi0,pim,pip,hm,hp] qsqr" << endl;
         return 0;
     }
 /*
@@ -184,15 +189,51 @@ int main(int argc, char* argv[])
         {
             if (string(argv[i+1])=="kkp")
                 fragfun = new KKP();
-            else if (string(argv[i+1])=="pkhff")
+            else if (string(argv[i+1])=="pkh")
                 fragfun = new PKHFF();
             else if (string(argv[i+1])=="hkns")
                 fragfun = new HKNS();
+            else if (string(argv[i+1])=="dss")
+                fragfun = new DSS();
             else
             {
                 cerr << "Fragmentation function type " << argv[i+1] << " is not valid!" << endl;
                 return -1;
             }
+        }
+        else if (string(argv[i])=="-print_ff")
+        {
+            mode =  PRINT_FF;
+            if (string(argv[i+1])=="u")
+                parton=U;
+            else if (string(argv[i+1])=="d")
+                parton=D;
+            else if (string(argv[i+1])=="s")
+                parton=S;
+            else if (string(argv[i+1])=="g")
+                parton=G;
+            else
+            {
+                cerr << "Paron " << string(argv[i+1]) << " is unknown! " << endl;
+                return -1;
+            }
+            if (string(argv[i+2])=="pi0")
+                final_particle = PI0;
+            else if (string(argv[i+2])=="pim")
+                final_particle = PIM;
+            else if (string(argv[i+2])=="pip")
+                final_particle = PIP;
+            else if (string(argv[i+2])=="hm")
+                final_particle = HM;
+            else if (string(argv[i+2])=="hp")
+                final_particle = HP;
+            else
+            {
+                cerr << "Hadron " << string(argv[i+1]) << " is not supported" << endl;
+                return -1;
+            }
+
+            Qsqr = StrToReal(string(argv[i+3]));
         }
         else if (string(argv[i]).substr(0,1)=="-")
         {
@@ -206,6 +247,8 @@ int main(int argc, char* argv[])
     AmplitudeLib N(datafile, kspace);
     N.InitializeInterpolation(y,bspline);
     cout << "# y = " << y << endl;
+
+    
     if (mode==X_TO_K)
     {
         REAL mink = 1e-5; REAL maxk = 1.0/N.MinR()*100;
@@ -379,9 +422,9 @@ int main(int argc, char* argv[])
     {
         cout <<"# F_2 at Q^2=" << Qsqr << " GeV^2" << endl;
         VirtualPhoton wf;
-        cout << "# Virtual photon wavef params: " << wf.GetParamString() << endl;
+        cout << "# Virtual photon wavef params: " << wf.GetParamString() << endl;       
         cout <<"# x   F_2   F_L   scaled_x     y" << endl;
-        for (double x=1e-6; x<=N.X0(); x*=1.1)
+        for(double x=1e-5; x<=N.X0(); x*=1.2)
         {
             // To go smoothly into the photoproduction region, scale
             // x -> x*(1 + 4m_f^2/Qsqr)
@@ -392,7 +435,29 @@ int main(int argc, char* argv[])
             cout << x << " " << Qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t)
                 << " " << Qsqr/(4.0*SQR(M_PI)*ALPHA_e)*xs_l << " "
                 << x2 << " " << y << endl;
+
+            
         }
+        double xs_l = N.ProtonPhotonCrossSection(Qsqr, 0, 0);
+        double xs_t = N.ProtonPhotonCrossSection(Qsqr, 0, 1);
+        cout << N.X0() << " " << Qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t)
+                << " " << Qsqr/(4.0*SQR(M_PI)*ALPHA_e)*xs_l << " "
+                << N.X0()*(1.0+4.0*SQR(0.14)/Qsqr) << " " << 0 << endl;
+
+    }
+
+    else if (mode == PRINT_FF)
+    {
+        cout << "# Fragmentation function " << fragfun->GetString() << " at "
+         << "Q^2 = " << Qsqr << " GeV^2" << endl;
+         cout << "# x  D   x*D" << endl;
+
+        for (double x=0.1; x<1; x*=1.05)
+        {
+            cout << x << " " << fragfun->Evaluate(parton, final_particle, x, std::sqrt(Qsqr))
+             << " " << x*fragfun->Evaluate(parton, final_particle, x, std::sqrt(Qsqr)) << endl;
+            
+        }         
 
     }
 

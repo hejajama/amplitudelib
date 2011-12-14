@@ -28,6 +28,12 @@ enum Hadron
     HM      // h^-
 };
 
+enum Order
+{
+    LO,
+    NLO
+};
+
 class FragmentationFunction
 {
     public:
@@ -35,8 +41,10 @@ class FragmentationFunction
         virtual REAL Evaluate(Parton p, Hadron h, REAL x, REAL qs);
         FragmentationFunction();
         virtual std::string GetString();
-    private:
-
+        Order GetOrder();
+        void SetOrder(Order order_);
+    protected:
+        Order order;  // 0: LO, 1: NLO
 
 };
 

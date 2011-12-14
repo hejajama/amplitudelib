@@ -27,6 +27,9 @@ VirtualPhoton::VirtualPhoton()
     // Parameters same as in Ref. 0902.1112
     e_f[0]=2.0/3.0; e_f[1]=-1.0/3.0; e_f[2]=-1.0/3.0;
     m_f[0]=0.14; m_f[1]=0.14; m_f[2]=0.14;
+    
+    /*e_f[0]=2.0/3.0; e_f[1]=-1.0/3.0; e_f[2]=-1.0/3.0;
+    m_f[0]=0.0024; m_f[1]=0.0048; m_f[2]=0.104;*/
 }
 
 /*
@@ -111,7 +114,7 @@ double VirtualPhoton::PsiSqr_T_intz(double Qsqr, double r)
     //int status = gsl_integration_qng(&int_helper, MINZ, MAXZ,  0, ZINTACCURACY, 
     //    &result, &abserr, &eval);
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_ZINT);
-    int status = gsl_integration_qag(&int_helper, 0, 1, 0, ZINTACCURACY,
+    int status = gsl_integration_qag(&int_helper, 1e-10, 1.0-1e-10, 0, ZINTACCURACY,
         MAXITER_ZINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
     gsl_integration_workspace_free(ws);
 
@@ -137,7 +140,7 @@ double VirtualPhoton::PsiSqr_L_intz(double Qsqr, double r)
     //int status = gsl_integration_qng(&int_helper, MINZ, MAXZ, 0, ZINTACCURACY, 
     //    &result, &abserr, &eval);
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_ZINT);
-    int status = gsl_integration_qag(&int_helper, 0, 1, 0, ZINTACCURACY,
+    int status = gsl_integration_qag(&int_helper, 1e-10, 1.0-1e-10, 0, ZINTACCURACY,
         MAXITER_ZINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
     gsl_integration_workspace_free(ws);
     

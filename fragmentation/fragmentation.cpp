@@ -58,11 +58,21 @@ REAL FragmentationFunction::Evaluate(Parton p, Hadron h, REAL x, REAL q)
 
 FragmentationFunction::FragmentationFunction()
 {
-
+    order = NLO;
 
 }
 
 std::string FragmentationFunction::GetString()
 {
     return "not specified";
+}
+
+void FragmentationFunction::SetOrder(Order o)
+{
+    order = o;
+}
+
+Order FragmentationFunction::GetOrder()
+{
+    return order;
 }

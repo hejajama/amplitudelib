@@ -83,6 +83,10 @@ REAL AmplitudeLib::N(REAL r, REAL y, int der, bool bspline)
 
     }
 
+    if (interpolator_y > 0)
+        cerr << "Interpolator was initialized but can't use it at y=" << y << " "
+        << LINEINFO << endl;
+
     /// Initialize new interpolator and use it
     int yind = FindIndex(y, yvals);
     int rind = FindIndex(r, rvals);
@@ -317,11 +321,18 @@ REAL AmplitudeLib::ProtonPhotonCrossSection(REAL Qsqr, REAL y, int pol)
 
     gsl_function fun; fun.function=Inthelperf_totxs;
     fun.params=&par;
+
+    SetOutOfRangeErrors(false);
     
 
     REAL result,abserr; size_t eval;
-    int status = gsl_integration_qng(&fun, MinR(), MaxR(),
-    0, 0.01,  &result, &abserr, &eval);
+    const int MAXITER_RINT=1000;
+    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_RINT);
+    int status = gsl_integration_qag(&fun, 0.1*MinR(), 100.0*MaxR(), 0, 0.001,
+        MAXITER_RINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
+    gsl_integration_workspace_free(ws);
+    //int status = gsl_integration_qng(&fun, MinR(), MaxR(),
+    //0, 0.001,  &result, &abserr, &eval);
     
     if(status){ std::cerr<< "r integral in ProtonPhotonCrossSection failed with code " 
         << status << " (Qsqr=" << Qsqr << ", y=" << y << " result " << result  
@@ -413,8 +424,6 @@ REAL AmplitudeLib::SaturationScale(REAL y, REAL Ns)
     if (!kspace)
         return sat;
     
-
-    
     f.function=&SatscaleSolverHelperf_k;
   
     const gsl_min_fminimizer_type *Tm = gsl_min_fminimizer_brent;
@@ -456,7 +465,6 @@ REAL AmplitudeLib::SaturationScale(REAL y, REAL Ns)
     }
 
     gsl_min_fminimizer_free(sm);
-
     //cout << "start: " << std::exp(0.4*y) << " min: " << Ktsqrval(1) << " max: " << Ktsqrval(KtsqrPoints()-2)
     //    << " minimumsqr: " << pos << " iterations: " << iter << endl;
 
