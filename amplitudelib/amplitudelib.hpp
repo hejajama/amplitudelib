@@ -72,6 +72,8 @@ class AmplitudeLib
         REAL SaturationScale(REAL y, REAL Ns);
 
         void InitializeInterpolation(REAL y, bool bspline=false);
+        bool InterpolatorInitialized(REAL y); // Returns whether or not the interpolator
+                                    // is initialized
         Interpolator* MakeInterpolator(REAL y);
     
         int YVals();

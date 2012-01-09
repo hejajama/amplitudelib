@@ -5,7 +5,7 @@ include filelist.m
 
 all: amplitude
 
-amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp libamplitude.a
+amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp
 	g++ $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp -lgfortran -o amplitude
 	ar cru libamplitude.a $(OBJECTS) $(FTOBJECTS) $(FOBJECTS)
 .cpp.o:
@@ -13,7 +13,7 @@ amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp libamplitude.a
 .c.o:
 	gcc $(CXXFLAGS) $< -c -o $@
 .f.o:
-	gfortran -c $< -c -o $@
+	gfortran -O3 -c $< -c -o $@
 
 
 clean:

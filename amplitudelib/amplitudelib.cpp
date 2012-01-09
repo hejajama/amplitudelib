@@ -153,6 +153,14 @@ REAL AmplitudeLib::N(REAL r, REAL y, int der, bool bspline)
 
 }
 
+bool AmplitudeLib::InterpolatorInitialized(REAL y)
+{
+    if (std::abs(y - interpolator_y) < 0.01)
+        return true;
+    else
+        return false;
+}
+
 REAL AmplitudeLib::S(REAL r, REAL y, int der)
 {
     double s = 1.0 - N(r,y,der);
