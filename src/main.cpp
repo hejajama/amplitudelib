@@ -33,6 +33,7 @@ enum Mode
     GD,
     DSIGMADY,
     PTSPECTRUM,
+    INT_HADRONPROD,
     F2,
     LOGLOGDER,
     DPS,
@@ -77,6 +78,7 @@ int main(int argc, char* argv[])
         cout << "-ugd: print unintegrated gluon distribution" << endl;
         cout << "-pt_spectrum p/d pi0/ch/hn: print dN/(d^2 p_T dy), probe is proton or deuteron"
             << " final state pi0/charged/negative hadron" << endl;
+        cout << "-hadronprod_int p/d pi0/ch/hn: integrated over pt and y range" << endl;
         cout << "-dps: doupe parton scattering, same arguments as -pt_spectrum" << endl;
         cout << "-dsigmady: print d\\sigma/dy" << endl;
         cout << "-satscale Ns, print satscale r_s defined as N(r_s)=Ns" << endl;
@@ -124,6 +126,31 @@ int main(int argc, char* argv[])
         else if (string(argv[i])=="-pt_spectrum")
         {
             mode=PTSPECTRUM;
+            if (string(argv[i+1])=="p")
+                deuteron=false;
+            else if (string(argv[i+1])=="d")
+                deuteron=true;
+            else
+            {
+                cerr << "Invalid probe particle type " << argv[i+1] << endl;
+                exit(1);
+            }
+
+            if (string(argv[i+2])=="pi0")
+                final_particle = PI0;
+            else if (string(argv[i+2])=="ch")
+                final_particle = H; // charged hadrons
+            else if (string(argv[i+2])=="hm")    // negative hadrons
+                final_particle = HM;
+            else
+            {
+                cerr << "Invalid final state particle " << argv[i+2] << endl;
+                exit(1);
+            }
+        }
+        else if (string(argv[i])=="-hadronprod_int")
+        {
+            mode=INT_HADRONPROD;
             if (string(argv[i+1])=="p")
                 deuteron=false;
             else if (string(argv[i+1])=="d")
@@ -386,6 +413,27 @@ int main(int argc, char* argv[])
             cout << pt << " " << result << endl;
         }
     }
+    else if (mode==INT_HADRONPROD)
+    {
+        if (fragfun==NULL)
+        {
+            cerr << "Fragfun not spesified!" << endl;
+            return -1;
+        }
+        CTEQ pdf;
+        pdf.Initialize();
+        REAL minpt=2; REAL maxpt=4;
+        //REAL miny=2.4; REAL maxy=4;
+        REAL miny=2.4,maxy=4;
+        cout << "# Hadron production integrated over pt: " << minpt << " - " << maxpt << endl;
+        cout << "# y: " << miny << " - " << maxy << endl;
+        cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
+        cout << "# sqrt(s)=" << sqrts << " GeV" << endl;
+        cout << "# Fragfun: " << fragfun->GetString() << endl;
+        cout << N.HadronMultiplicity(miny, maxy, minpt, maxpt, sqrts, fragfun, &pdf,
+            deuteron, final_particle) << endl;
+    }
+
     else if (mode==DPS)
     {
         if (fragfun==NULL)

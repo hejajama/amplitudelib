@@ -49,6 +49,9 @@ class AmplitudeLib
         // dN_h / (dy_h d^2 p_T)
         REAL dHadronMultiplicity_dyd2pt(REAL y, REAL pt, REAL sqrts,
             FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0 );
+        // Integrated over rapidity and pt range
+        REAL HadronMultiplicity(REAL miny, REAL maxy, REAL minpt, REAL maxpt, REAL sqrts,
+            FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0 );
         // Douple parton scattering, integrate products of two dHadronMultiplicity_dyd2pt
         // over kinematical regions
         // pt2<pt1

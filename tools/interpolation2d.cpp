@@ -167,5 +167,5 @@ INTERPOLATION_METHOD Interpolator2D::GetMethod()
 // the copy constructor
 Interpolator2D::Interpolator2D(Interpolator2D& inter)
 {
-    
+    cerr << "Interpolator2D copy constructor may not work???? " << LINEINFO << endl;
 }
