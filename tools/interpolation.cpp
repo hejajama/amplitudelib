@@ -199,6 +199,20 @@ Interpolator::Interpolator(REAL *x, REAL *y, int p)
     method = INTERPOLATE_SPLINE;
     allocated_data=false;
     ready=false;
+
+    for (int i=0; i<p; i++)
+    {
+        // Check that x values are monotonically increasing
+        if (i>0)
+        {
+            if (xdata[i-1]>=xdata[i])
+            {
+                cerr << "Grid points are not monotonically increasing! grid["
+                    << i-1 <<"]=" << xdata[i-1] <<", grid["<<i<<"]="<< xdata[i]
+                    << " " << LINEINFO << endl;
+            }
+        }
+    }
 }
 
 Interpolator::Interpolator(std::vector<REAL> &x, std::vector<REAL> &y)
@@ -212,6 +226,17 @@ Interpolator::Interpolator(std::vector<REAL> &x, std::vector<REAL> &y)
     {
         xdata[i]=x[i];
         ydata[i]=y[i];
+
+        // Check that x values are monotonically increasing
+        if (i>0)
+        {
+            if (xdata[i-1]>=xdata[i])
+            {
+                cerr << "Grid points are not monotonically increasing! grid["
+                    << i-1 <<"]=" << xdata[i-1] <<", grid["<<i<<"]="<< xdata[i]
+                    << " " << LINEINFO << endl;
+            }
+        }
     }
     minx=xdata[0]; maxx=xdata[x.size()-1];
     method = INTERPOLATE_SPLINE;

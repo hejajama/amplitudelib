@@ -115,6 +115,17 @@ Interpolator2D::Interpolator2D(std::vector<double>  &grid,
     for (uint i=0; i < grid.size(); i++)
     {
         ypoints[i] = grid[i];
+        if (i>0)
+        {
+            if (ypoints[i-1]>=ypoints[i])
+            {
+                cerr << "Grid[" << i-1 << "]=" << ypoints[i-1]
+                    << " >= Grid[" << i << "]=" << ypoints[i]
+                    << ", gridsize=" << grid.size()
+                    << ", can't initialize 2D interpolator! " << LINEINFO << endl;
+                return;
+            }
+        }
     }
     double *tmpdata = new double[grid.size()];
     for (uint yind=0; yind < grid.size(); yind++)

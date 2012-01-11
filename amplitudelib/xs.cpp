@@ -353,8 +353,8 @@ REAL Inthelperf_dps_pt1(REAL pt1, void* p)
         cerr << "pt2 integral failed at " << LINEINFO <<": result " << result
         << " relerror " << std::abs(abserr/result) << endl;
     ptint++;
-    cout << "pt2 int " << ptint << " / " << 15*DPS_PTINTPOINTS << " done" << endl;
-    return result;
+    cout << "#pt2 int " << ptint << " / " << 15*DPS_PTINTPOINTS << " done" << endl;
+    return result*SQR(2.0*M_PI);    //(2\pi)^2: angular part
 }
 
 REAL Inthelperf_dps_pt2(REAL pt2, void* p)
@@ -373,5 +373,5 @@ REAL Inthelperf_dps_pt2(REAL pt2, void* p)
                 par->fragfun, par->pdf, par->deuteron, par->final);
     
     
-    return n1*n2;
+    return n1*n2*par->pt1*pt2;
 }
