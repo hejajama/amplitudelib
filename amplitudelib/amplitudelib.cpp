@@ -82,11 +82,11 @@ REAL AmplitudeLib::N(REAL r, REAL y, int der, bool bspline)
         return result;
 
     }
-
+/*
     if (interpolator_y > 0)
         cerr << "Interpolator was initialized but can't use it at y=" << y << " "
         << LINEINFO << endl;
-
+*/
     /// Initialize new interpolator and use it
     int yind = FindIndex(y, yvals);
     int rind = FindIndex(r, rvals);
@@ -560,12 +560,13 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
     // memory (delete tmprarray and tmpnarray at the end)
 
     REAL satscale = 1.0/SaturationScale(0, 0.22);
-    
+
+    /*
     cout << "# Data read from file " << datafile << ", minr: " << minr
         << " maxr: " << MaxR() << " rpoints: " << rpoints << " maxy "
         << yvals[yvals.size()-1] << " x0 " << X0()
         << " Q_{s,0}^2 = " << SQR(satscale) << " GeV^2 [ N(r=1/Q_s) = 0.22]" << endl;
-
+    */
 }
 
 /*

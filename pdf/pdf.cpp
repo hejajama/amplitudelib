@@ -29,3 +29,25 @@ void PDF::PlotPdf(double Q)
     }
 
 }
+
+double PDF::MaxX()
+{
+    cerr << "PDF::MaxX() is not implemented! " << LINEINFO << endl;
+    return 1;
+}
+double PDF::MaxQ()
+{
+    cerr << "PDF::MaxQ() is not implemented! " << LINEINFO << endl;
+    return 1e9;
+}
+
+double PDF::MinX()
+{
+    cerr << "PDF::MinX() is not implemented! " << LINEINFO << endl;
+    return 0;
+}
+double PDF::MinQ()
+{
+    cerr << "PDF::MinQ() is not implemented! " << LINEINFO << endl;
+    return 0;
+}

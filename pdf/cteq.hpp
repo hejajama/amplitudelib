@@ -20,6 +20,9 @@ class CTEQ : public PDF
         void Initialize(int param=-1);
         std::string GetString();
 
+        double MinQ();
+        double MaxQ();
+
 };
 
 // The following functions are implemented in CT10Pdf.f file

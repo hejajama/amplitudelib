@@ -16,6 +16,10 @@ class PDF
         virtual double xq(double x, double q, Parton p)=0;    // return x*q(x,q)
         virtual void Initialize(int param=-1);
         virtual std::string GetString();
+        virtual double MinX();
+        virtual double MinQ();   // GeV
+        virtual double MaxX();
+        virtual double MaxQ();
 
         void PlotPdf(double Q);
 };

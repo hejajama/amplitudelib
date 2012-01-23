@@ -79,3 +79,13 @@ std::string CTEQ::GetString()
 {
     return "CTEQ-TEA  CT10";
 }
+
+double CTEQ::MinQ()
+{
+    return 0.3;
+}
+
+double CTEQ::MaxQ()
+{
+    return 100000;
+}
