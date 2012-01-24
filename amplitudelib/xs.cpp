@@ -23,6 +23,7 @@ struct Inthelper_hadronprod
     REAL y, pt, xf;
     REAL sqrts;
     REAL miny,maxy;
+    REAL minpt,maxpt;
     PDF* pdf;
     FragmentationFunction* frag;
     bool deuteron;
@@ -96,7 +97,7 @@ REAL AmplitudeLib::dHadronMultiplicity_dyd2pt(REAL y, REAL pt, REAL sqrts,
     helper.pdf=pdf; helper.frag=fragfun;
 
     REAL result=0; REAL abserr=0;
-    const int MULTIPLICITYXINTPOINTS=50;
+    const int MULTIPLICITYXINTPOINTS=10;
 
     
     gsl_function fun;
@@ -142,17 +143,18 @@ REAL AmplitudeLib::HadronMultiplicity(REAL miny, REAL maxy, REAL minpt, REAL max
     helper.final=final;
     helper.pdf=pdf; helper.frag=fragfun;
     helper.sqrts=sqrts;
+    helper.maxpt=maxpt; helper.minpt=minpt;
 
     gsl_function fun;
-    fun.function=Inthelperf_hadronprod_ptint;
+    fun.function=Inthelperf_hadronprod_yint;
     fun.params=&helper;
 
     gsl_integration_workspace *workspace 
-     = gsl_integration_workspace_alloc(HADRONPROD_PTINTPOINTS);
+     = gsl_integration_workspace_alloc(HADRONPROD_YINTPOINTS);
 
     int status=0; REAL abserr, result;
     status=gsl_integration_qag(&fun, minpt, maxpt,
-            0, HADRONPROD_INTACCURACY, HADRONPROD_PTINTPOINTS,
+            0, HADRONPROD_INTACCURACY, HADRONPROD_YINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
 
     if (status)
@@ -163,52 +165,42 @@ REAL AmplitudeLib::HadronMultiplicity(REAL miny, REAL maxy, REAL minpt, REAL max
     
     gsl_integration_workspace_free(workspace);
 
-    return result*2.0*M_PI;
-}
-
-REAL Inthelperf_hadronprod_ptint(REAL pt, void* p)
-{
-    Inthelper_hadronprod* par = (Inthelper_hadronprod*)p;
-
-    if (std::abs(par->maxy-par->miny)<0.05) // Don't integrate over yrange
-    {
-        return pt*par->N->dHadronMultiplicity_dyd2pt(par->miny, pt, par->sqrts, par->frag,
-            par->pdf, par->deuteron, par->final);
-    }
-
-    else
-    {
-        gsl_function fun;
-        fun.function=Inthelperf_hadronprod_yint;
-        par->pt = pt;
-        fun.params=par;
-    
-        int status=0; REAL abserr, result;
-        gsl_integration_workspace *workspace 
-            = gsl_integration_workspace_alloc(HADRONPROD_YINTPOINTS);
-        status=gsl_integration_qag(&fun, par->miny, par->maxy,
-                0, HADRONPROD_INTACCURACY, HADRONPROD_YINTPOINTS,
-                GSL_INTEG_GAUSS15, workspace, &result, &abserr);
-
-        if (status)
-        {
-            cerr << "yint failed at " << LINEINFO <<", result " << result
-                << " relerr " << std::abs(abserr/result) << " pt " << pt << endl;
-        }
-    
-        gsl_integration_workspace_free(workspace);
-
-        return result;
-
-    }
-    // Shouldn't end here
-    return -1;
+    return result;
 }
 
 REAL Inthelperf_hadronprod_yint(REAL y, void* p)
 {
     Inthelper_hadronprod* par = (Inthelper_hadronprod*)p;
-    return par->pt*par->N->dHadronMultiplicity_dyd2pt(y, par->pt, par->sqrts, par->frag,
+
+    gsl_function fun;
+    fun.function=Inthelperf_hadronprod_ptint;
+    par->y = y;
+    par->N->InitializeInterpolation(y);
+    fun.params=par;
+    
+    int status=0; REAL abserr, result;
+    gsl_integration_workspace *workspace 
+        = gsl_integration_workspace_alloc(HADRONPROD_PTINTPOINTS);
+    status=gsl_integration_qag(&fun, par->minpt, par->maxpt,
+            0, HADRONPROD_INTACCURACY, HADRONPROD_PTINTPOINTS,
+            GSL_INTEG_GAUSS15, workspace, &result, &abserr);
+
+    if (status)
+    {
+        cerr << "yint failed at " << LINEINFO <<", result " << result
+            << " relerr " << std::abs(abserr/result) << " y " << y << endl;
+    }
+    
+    gsl_integration_workspace_free(workspace);
+
+    return result*2.0*M_PI; // 2\pi from angular integral
+
+}
+
+REAL Inthelperf_hadronprod_ptint(REAL pt, void* p)
+{
+    Inthelper_hadronprod* par = (Inthelper_hadronprod*)p;
+    return par->pt*par->N->dHadronMultiplicity_dyd2pt(par->y, pt, par->sqrts, par->frag,
         par->pdf, par->deuteron, par->final);   
 }
 

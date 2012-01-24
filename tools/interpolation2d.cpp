@@ -55,7 +55,7 @@ REAL Interpolator2D::Evaluate(REAL x, REAL y)
     {
         cerr << "x or y is not within limits [" << ypoints[0] << ", " <<
             maxy << "], forcing "
-            << "it in that interval!" << endl;
+            << "it in that interval! " << LINEINFO << endl;
         if (x<ypoints[0]) x=ypoints[0]*1.00001;
         if (y<ypoints[0]) y=ypoints[0]*1.00001;
         if (x>maxy) y=maxy*0.999999;
@@ -66,25 +66,23 @@ REAL Interpolator2D::Evaluate(REAL x, REAL y)
 
     // Construct one new interpolator, we already have interpolators[]
     // evaluated at each y in the grid
-    REAL* tmpdata = new REAL[interpolators.size()];
+    std::vector<double> tmpdata;
     for (uint yind=0; yind<interpolators.size(); yind++)
     {
-        tmpdata[yind] = interpolators[yind]->Evaluate(x);
+        tmpdata.push_back(interpolators[yind]->Evaluate(x));
     }
-    Interpolator inter(ypoints, tmpdata, interpolators.size());
+    Interpolator inter(ypoints, tmpdata);
     inter.SetMethod(INTERPOLATE_SPLINE);
     status = inter.Initialize();
 
     if (status)
     {
         cerr << "Interpolator initialization failed at " << LINEINFO << endl;
-        delete[] tmpdata;
         return 0;
     }
 
     res = inter.Evaluate(y);
 
-    delete[] tmpdata;
 
     return res;
 }
@@ -110,37 +108,36 @@ Interpolator2D::Interpolator2D(std::vector<double>  &grid,
 {
     // Construct interpolators in x direction, we get # of ypoints
     // interpolators which can be used to evaluate any point (x,y)
-
-    ypoints = new double[grid.size()];
+    ypoints.clear();
     for (uint i=0; i < grid.size(); i++)
     {
-        ypoints[i] = grid[i];
+        ypoints.push_back(grid[i]);
         if (i>0)
         {
-            if (ypoints[i-1]>=ypoints[i])
+            if (grid[i-1]>=grid[i])
             {
-                cerr << "Grid[" << i-1 << "]=" << ypoints[i-1]
-                    << " >= Grid[" << i << "]=" << ypoints[i]
+                cerr << "Grid[" << i-1 << "]=" << grid[i-1]
+                    << " >= Grid[" << i << "]=" << grid[i]
                     << ", gridsize=" << grid.size()
                     << ", can't initialize 2D interpolator! " << LINEINFO << endl;
                 return;
             }
         }
     }
-    double *tmpdata = new double[grid.size()];
+    std::vector<double> tmpdata;
     for (uint yind=0; yind < grid.size(); yind++)
     {
+        tmpdata.clear();
         for (uint xind=0; xind<grid.size(); xind++)
         {
-            tmpdata[xind] = data[xind][yind];
+            tmpdata.push_back(data[xind][yind]);
         }
-        Interpolator* interp = new Interpolator(ypoints, tmpdata, grid.size());
+        Interpolator* interp = new Interpolator(grid, tmpdata);
         interpolators.push_back(interp);
         interp->SetMethod(INTERPOLATE_SPLINE);
         interp->Initialize();
     }
     
-    delete[] tmpdata;
 
     ready=true;
 }
@@ -152,7 +149,7 @@ void Interpolator2D::SetMethod(INTERPOLATION_METHOD m)
 
 void Interpolator2D::Clear()
 {
-    delete[] ypoints;
+    ypoints.clear();
     for (uint i=0; i<interpolators.size(); i++)
     {
         delete interpolators[i];

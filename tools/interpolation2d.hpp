@@ -48,7 +48,7 @@ class Interpolator2D
 
     private:
         INTERPOLATION_METHOD method;
-        REAL* ypoints;
+        std::vector<double> ypoints;
         std::vector<Interpolator*> interpolators;
 
         bool ready;
