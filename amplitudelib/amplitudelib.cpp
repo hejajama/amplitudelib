@@ -256,7 +256,7 @@ REAL AmplitudeLib::S_k(REAL kt, REAL y, bool adjoint)
 
     REAL result=0;
 
-    if (kt < 1e-5)  // k_T \approx 0 -> integrate just \int d^2 r S(r)
+    if (kt < 1e-3)  // k_T \approx 0 -> integrate just \int d^2 r S(r)
     {
         gsl_function fun; fun.function=S_k_helperf;
         fun.params=&par;

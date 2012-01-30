@@ -128,8 +128,8 @@ REAL AmplitudeLib::dHadronMultiplicity_dyd2pt(REAL y, REAL pt, REAL sqrts,
  */
 REAL Inthelperf_hadronprod_yint(REAL y, void *p);
 REAL Inthelperf_hadronprod_ptint(REAL pt, void *p);
-const int HADRONPROD_YINTPOINTS=2;
-const int HADRONPROD_PTINTPOINTS=3;
+const int HADRONPROD_YINTPOINTS=1;
+const int HADRONPROD_PTINTPOINTS=2;
 const REAL HADRONPROD_INTACCURACY=0.01;
 
 REAL AmplitudeLib::HadronMultiplicity(REAL miny, REAL maxy, REAL minpt, REAL maxpt, REAL sqrts,
@@ -153,13 +153,13 @@ REAL AmplitudeLib::HadronMultiplicity(REAL miny, REAL maxy, REAL minpt, REAL max
      = gsl_integration_workspace_alloc(HADRONPROD_YINTPOINTS);
 
     int status=0; REAL abserr, result;
-    status=gsl_integration_qag(&fun, minpt, maxpt,
+    status=gsl_integration_qag(&fun, miny, maxy,
             0, HADRONPROD_INTACCURACY, HADRONPROD_YINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
 
     if (status)
     {
-        cerr << "Ptint failed at " << LINEINFO <<", result " << result <<", relerr "
+        cerr << "Yint failed at " << LINEINFO <<", result " << result <<", relerr "
             << std::abs(abserr/result) << endl;
     }
     
@@ -171,11 +171,11 @@ REAL AmplitudeLib::HadronMultiplicity(REAL miny, REAL maxy, REAL minpt, REAL max
 REAL Inthelperf_hadronprod_yint(REAL y, void* p)
 {
     Inthelper_hadronprod* par = (Inthelper_hadronprod*)p;
+    cout << "# yint y=" << y << endl;
 
     gsl_function fun;
     fun.function=Inthelperf_hadronprod_ptint;
     par->y = y;
-    par->N->InitializeInterpolation(y);
     fun.params=par;
     
     int status=0; REAL abserr, result;
@@ -200,7 +200,7 @@ REAL Inthelperf_hadronprod_yint(REAL y, void* p)
 REAL Inthelperf_hadronprod_ptint(REAL pt, void* p)
 {
     Inthelper_hadronprod* par = (Inthelper_hadronprod*)p;
-    return par->pt*par->N->dHadronMultiplicity_dyd2pt(par->y, pt, par->sqrts, par->frag,
+    return pt*par->N->dHadronMultiplicity_dyd2pt(par->y, pt, par->sqrts, par->frag,
         par->pdf, par->deuteron, par->final);   
 }
 

@@ -1,5 +1,6 @@
 CXXFLAGS = `gsl-config --cflags` -O3 -Wall -pedantic -fopenmp# -I ./libbci-1.1.0/ 
 LDFLAGS = `gsl-config --libs` -lm 
+FORTRANFLAGS = -O3 
 
 include filelist.m
 
@@ -13,7 +14,7 @@ amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp
 .c.o:
 	gcc $(CXXFLAGS) $< -c -o $@
 .f.o:
-	gfortran -O3 -c $< -c -o $@
+	gfortran $(FORTRANFLAGS) -c $< -c -o $@
 
 
 clean:
