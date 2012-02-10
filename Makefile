@@ -9,6 +9,10 @@ all: amplitude
 amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp
 	g++ $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp -lgfortran -o amplitude
 	ar cru libamplitude.a $(OBJECTS) $(FTOBJECTS) $(FOBJECTS)
+
+interpolator: tools/interpolator.o tools/interpolation.o
+	g++ $(CXXFLAGS) $(LDFLAGS) tools/interpolator.o tools/interpolation.o -o interpolator
+
 .cpp.o:
 	 g++ $(CXXFLAGS) $< -c -o $@
 .c.o:
