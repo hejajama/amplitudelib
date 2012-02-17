@@ -87,7 +87,7 @@ class AmplitudeLib
 
         REAL X0();
 
-        void SetOutOfRangeErrors(bool er);
+        bool SetOutOfRangeErrors(bool er);
         
         
     private:

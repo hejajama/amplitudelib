@@ -128,8 +128,8 @@ REAL AmplitudeLib::dHadronMultiplicity_dyd2pt(REAL y, REAL pt, REAL sqrts,
  */
 REAL Inthelperf_hadronprod_yint(REAL y, void *p);
 REAL Inthelperf_hadronprod_ptint(REAL pt, void *p);
-const int HADRONPROD_YINTPOINTS=1;
-const int HADRONPROD_PTINTPOINTS=2;
+const int HADRONPROD_YINTPOINTS=3;
+const int HADRONPROD_PTINTPOINTS=3;
 const REAL HADRONPROD_INTACCURACY=0.01;
 
 REAL AmplitudeLib::HadronMultiplicity(REAL miny, REAL maxy, REAL minpt, REAL maxpt, REAL sqrts,

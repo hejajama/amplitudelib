@@ -73,8 +73,8 @@ double integrate(double a,double b,gsl_function F,\
 
   if (status && fabs(term_n)>epsilon1)
   {
-      fprintf(stderr, "Integration failed at fourier.c:integrate interval "
-       " [%f, %f], result %E, relerr %E\n", a,b,term_n, fabs(error/term_n)); 
+      fprintf(stderr, "Integration failed at fourier.c:%d integrate interval "
+       " [%f, %f], result %E, relerr %E\n", __LINE__, a,b,term_n, fabs(error/term_n)); 
   }
 
   return term_n;

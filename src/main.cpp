@@ -422,8 +422,7 @@ int main(int argc, char* argv[])
         }
         CTEQ pdf;
         pdf.Initialize();
-        REAL minpt=2; REAL maxpt=4;
-        //REAL miny=2.4; REAL maxy=4;
+        REAL minpt=2; REAL maxpt=7;
         REAL miny=2.4,maxy=4;
         cout << "# Hadron production integrated over pt: " << minpt << " - " << maxpt << endl;
         cout << "# y: " << miny << " - " << maxy << endl;

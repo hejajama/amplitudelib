@@ -55,7 +55,7 @@ REAL AmplitudeLib::N(REAL r, REAL y, int der, bool bspline)
 
     if (y<0 or y>yvals[yvals.size()-1] )
     {
-        if (out_of_range_errors)
+        //if (out_of_range_errors)
             cerr << "y must be between limits [" << 0 << ", "
                 << yvals[yvals.size()-1] << "], asked y=" << y << " "
                 << LINEINFO << endl;
@@ -164,7 +164,7 @@ bool AmplitudeLib::InterpolatorInitialized(REAL y)
 REAL AmplitudeLib::S(REAL r, REAL y, int der)
 {
     double s = 1.0 - N(r,y,der);
-    if (s<=1e-14) return 0;
+    if (s<=0) return 0;
     return s;
 }
 
@@ -188,11 +188,13 @@ REAL AmplitudeLib::N_k(REAL kt, REAL y)
     // Some initialisation stuff -
     set_fpu_state();
     init_workspace_fourier(FOURIER_ZEROS);   // number of bessel zeroes, max 2000
-    SetOutOfRangeErrors(false);
+    bool tmp_range = SetOutOfRangeErrors(false);
     
     N_k_helper par;
     par.y=y; par.N=this; par.kt=kt;
     REAL result = fourier_j0(kt,N_k_helperf,&par);
+
+    SetOutOfRangeErrors(tmp_range);
     return result;
 }
 
@@ -224,12 +226,14 @@ REAL AmplitudeLib::N_k_to_x(REAL x, REAL y)
     // Some initialisation stuff -
     set_fpu_state();
     init_workspace_fourier(FOURIER_ZEROS);   // number of bessel zeroes, max 2000
-    SetOutOfRangeErrors(false);
+    bool tmp_range = SetOutOfRangeErrors(false);
     
     N_k_to_x_helper par;
     par.y=y; par.N=this; par.x=x;
     REAL result = fourier_j0(x,N_k_to_x_helperf,&par);
     return x*x*result;
+
+    SetOutOfRangeErrors(tmp_range);
 }
 
 
@@ -559,7 +563,7 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
     interpolator_y=-1;  // if >=0, interpolator is initialized, must free
     // memory (delete tmprarray and tmpnarray at the end)
 
-    REAL satscale = 1.0/SaturationScale(0, 0.22);
+    //REAL satscale = 1.0/SaturationScale(0, 0.22);
 
     /*
     cout << "# Data read from file " << datafile << ", minr: " << minr
@@ -645,9 +649,11 @@ REAL AmplitudeLib::MaxY()
     return yvals[yvals.size()-1];
 }
 
-void AmplitudeLib::SetOutOfRangeErrors(bool er)
+bool AmplitudeLib::SetOutOfRangeErrors(bool er)
 {
+    bool outofrange = out_of_range_errors;
     out_of_range_errors=er;
+    return outofrange;    
 }
 
 REAL AmplitudeLib::X0()
