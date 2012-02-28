@@ -63,12 +63,16 @@ REAL AmplitudeLib::N(REAL r, REAL y, int der, bool bspline)
     }
     //REAL lnr = std::log(r);
 
+	
     /// Use already initialized interpolator
     if (std::abs(y - interpolator_y) < 0.01 and !bspline )
     {
         REAL result=0;
-        if (der==0) 
-            result = interpolator->Evaluate(r);
+        if (der==0)
+        { 
+			if (r >= maxr_interpolate and maxr_interpolate>0 and !kspace) return 1.0;
+			result = interpolator->Evaluate(r);
+        }
         if (der==1)
         {
             result = interpolator->Derivative(r);
@@ -88,9 +92,8 @@ REAL AmplitudeLib::N(REAL r, REAL y, int der, bool bspline)
         << LINEINFO << endl;
 */
     /// Initialize new interpolator and use it
-    int yind = FindIndex(y, yvals);
     int rind = FindIndex(r, rvals);
-
+    int yind = FindIndex(y, yvals);
     int interpolation_points = INTERPOLATION_POINTS;
     if (bspline) interpolation_points += 10;
 
@@ -588,7 +591,7 @@ void AmplitudeLib::InitializeInterpolation(REAL y, bool bspline)
     for (int i=0; i<rpoints; i++)
     {
         REAL tmpr = tmprarray[i];
-        if (i==0) tmpr*=1.001; if (i==rpoints-1) tmpr*=0.999;
+        if (i==0) tmpr*=1.0001; if (i==rpoints-1) tmpr*=0.9999;
         tmpnarray[i] = N(tmpr, y);
     }
     interpolator = new Interpolator(tmprarray, tmpnarray, rpoints);
@@ -596,7 +599,36 @@ void AmplitudeLib::InitializeInterpolation(REAL y, bool bspline)
         interpolator->SetMethod(INTERPOLATE_BSPLINE);
     interpolator->Initialize();
     interpolator_y = y;
+    
+    maxr_interpolate=-1;
+    int iter=0;
+    // Find r s.t. N(r)==1
+    double step=2; double prevr=0.1;
+    const int MAXITER=30;
+    for (REAL r=0.01; r<=MaxR(); r+=step)
+    {
+		if (N(r,y)>=0.999999)
+		{
+			if (step<1e-2)
+			{
+				maxr_interpolate = r;
+				break;
+			}
+			step /= 1.5;
+			r=prevr;
+		}
+		prevr=r;
+		iter++;
+		if (iter > MAXITER)
+		{
+			cerr << "Didn't find maxr_interpolate at " << LINEINFO 
+				<< ", best guess " << r << endl;
+			break;	// Didn't find, dont force any upper limit
+		}
+	}
 }
+
+
 
 /*
  * Initializes interpolator and returns it

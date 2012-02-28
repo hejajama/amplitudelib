@@ -36,7 +36,7 @@ REAL Interpolator2D::Evaluate(REAL x, REAL y)
     if (x<ypoints[0] or x>maxy or y<ypoints[0]
         or y>maxy)
     {
-        cerr << "x or y is not within limits [" << ypoints[0] << ", " <<
+        cerr << "(x, y)=(" << x << ", " << y << ")  is not within limits [" << ypoints[0] << ", " <<
             maxy << "], forcing "
             << "it in that interval! " << LINEINFO << endl;
         if (x<ypoints[0]) x=ypoints[0]*1.00001;

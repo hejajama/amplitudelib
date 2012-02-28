@@ -106,6 +106,10 @@ class AmplitudeLib
 
         REAL minr;
         REAL rmultiplier;
+        
+        REAL maxr_interpolate;	// When interpolating in coordinate space,
+					// force N(r>maxr_interpolate)=1 (avoid osciallatory 
+					// artifacts from interpolation code)
         int rpoints;
 
         REAL x0;
