@@ -55,6 +55,7 @@ int main(int argc, char* argv[])
     Mode mode=X;
     REAL Ns=0.22;
     REAL y=0;
+    double xbj=-1;
     REAL r=-1;
     REAL Qsqr=10;
     bool kspace=false;
@@ -69,6 +70,7 @@ int main(int argc, char* argv[])
     if (string(argv[1])=="-help")
     {
         cout << "-y y: set rapidity" << endl;
+        cout << "-xbj bjorken_x (overrides -y)" << endl;
         cout << "-data datafile" << endl;
         cout << "-kspace: data is in k space" << endl;
         cout << "-x: print amplitude (space-indep.)" << endl;
@@ -90,19 +92,13 @@ int main(int argc, char* argv[])
         cout << "-print_ff [u,d,s,g] [pi0,pim,pip,hm,hp] qsqr" << endl;
         return 0;
     }
-/*
-    HKNS hk;
-    KKP kkp;
-    PKHFF pkh;
-    FragmentationFunction ff;
-    for (double z=0.1; z<0.9; z+=0.05)
-        cout << z << " " <<z*hk.Evaluate(U, PM, z, std::sqrt(2)) << " "
-        << z*hk.Evaluate(D, PM, z, std::sqrt(2)) << endl;
-    return 0;*/
+
     for (int i=1; i<argc; i++)
     {
         if (string(argv[i])=="-y")
             y = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-xbj")
+            xbj = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-data")
             datafile = argv[i+1];
         else if (string(argv[i])=="-kspace")
@@ -273,7 +269,8 @@ int main(int argc, char* argv[])
     cout << "# Reading data from file " << datafile << endl;
     AmplitudeLib N(datafile, kspace);
     N.InitializeInterpolation(y,bspline);
-    cout << "# y = " << y << endl;
+    if (xbj>=0) y = std::log(N.X0()/xbj);
+    cout << "# y = " << y << ", x_0 = " << N.X0() << " x = " << N.X0()*std::exp(-y) << endl;
 
     
     if (mode==X_TO_K)
@@ -335,7 +332,7 @@ int main(int argc, char* argv[])
     else if (mode==SATSCALE)
     {
         cout <<"# Saturation scale N(r_s) = " << Ns << endl;
-        cout <<"# y    Q_s [GeV]    d ln Q_s/dy" << endl;
+        cout <<"# y    Q_s [GeV]    d ln Q_s/dy   x" << endl;
 
         // Solve satscale and save it to array, then interpolate=>get also derivative
         int points = (int)(N.MaxY()/0.1);
@@ -353,7 +350,7 @@ int main(int argc, char* argv[])
         for (REAL y=0; y < rapidities[points-1]; y+=0.1)
         {
             cout << y << " " << std::exp(interp.Evaluate(y)) << " "
-                << interp.Derivative(y) << endl;
+                << interp.Derivative(y) <<  " " << N.X0()*std::exp(-y) << endl;
         }
 
         delete[] rapidities;
