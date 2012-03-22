@@ -17,23 +17,23 @@ class DataFile
 {
     public:
         DataFile(string fname);
-        REAL MinR();
-        REAL RMultiplier();
+        double MinR();
+        double RMultiplier();
         int RPoints();
-		REAL MaxY();
-        REAL X0();
+        double MaxY();
+        double X0();
 
-        void GetData(std::vector< std::vector<REAL> > &n,
-            std::vector<REAL> &rapidities);
+        void GetData(std::vector< std::vector<double> > &n,
+            std::vector<double> &rapidities);
 
     private:
         string filename;
-        std::vector<std::vector <REAL> > data;
-        std::vector<REAL> yvals;
-        REAL minr;
-        REAL r_multiplier;
+        std::vector<std::vector <double> > data;
+        std::vector<double> yvals;
+        double minr;
+        double r_multiplier;
         int rpoints;
-        REAL x0;
+        double x0;
 
 };
 

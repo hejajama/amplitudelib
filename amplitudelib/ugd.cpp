@@ -29,11 +29,11 @@ extern "C"
 
 struct UGDHelper
 {
-    REAL y;
+    double y;
     AmplitudeLib* N;
     Interpolator* interp;
 };
-REAL UGDHelperf(REAL x, void* p);
+double UGDHelperf(double x, void* p);
 
 /*
  * Calculate unintegrated gluon distribution
@@ -42,7 +42,7 @@ REAL UGDHelperf(REAL x, void* p);
  * If interp != null, we know that it is already initialized with given y
  * and thus we can use it. Default value of interp is NULL
  */
-REAL AmplitudeLib::UGD(REAL k, REAL y, Interpolator* interp)
+double AmplitudeLib::UGD(double k, double y, Interpolator* interp)
 {
     //if (k < UGD_IR_CUTOFF) return 0;
     
@@ -51,9 +51,9 @@ REAL AmplitudeLib::UGD(REAL k, REAL y, Interpolator* interp)
 
     UGDHelper par;
     par.y=y; par.N=this; par.interp=interp;
-    REAL result = fourier_j0(k,UGDHelperf,&par);
+    double result = fourier_j0(k,UGDHelperf,&par);
 
-    REAL Cf = (SQR(Nc)-1.0)/(2.0*Nc);
+    double Cf = (SQR(Nc)-1.0)/(2.0*Nc);
     result *= Cf/Alpha_s(SQR(k));  //Todo: scaling?
     result /= SQR(2.0*M_PI);
 
@@ -61,11 +61,11 @@ REAL AmplitudeLib::UGD(REAL k, REAL y, Interpolator* interp)
 
 }
 
-REAL UGDHelperf(REAL r, void* p)
+double UGDHelperf(double r, void* p)
 {
     UGDHelper* par = (UGDHelper*) p;
-    REAL result=0;
-    REAL dern=0, der2n=0, n=0;
+    double result=0;
+    double dern=0, der2n=0, n=0;
     if (r >= par->N->MaxR()) // N==1 for all r>MaxR()
     {
         n=1; dern=0; der2n=0;
@@ -102,21 +102,21 @@ struct Inthelper_dsigmadyd2pt
     AmplitudeLib* N;
     Interpolator* amplitude_y1;
     Interpolator* amplitude_y2;
-    REAL pt;
-    REAL y1,y2;
-    REAL kt;
+    double pt;
+    double y1,y2;
+    double kt;
 };
-REAL Inthelperf_dN_gluon_dyd2pt_kint(REAL kt, void* p);
-REAL Inthelperf_dN_gluon_dyd2pt_thetaint(REAL kt, void* p);
-REAL AmplitudeLib::dN_gluon_dyd2pt(REAL pt, REAL y, REAL sqrts)
+double Inthelperf_dN_gluon_dyd2pt_kint(double kt, void* p);
+double Inthelperf_dN_gluon_dyd2pt_thetaint(double kt, void* p);
+double AmplitudeLib::dN_gluon_dyd2pt(double pt, double y, double sqrts)
 {
     const int KTINTPOINTS = 100;
-    const REAL KTINTACCURACY = 0.05;
+    const double KTINTACCURACY = 0.05;
     
     Inthelper_dsigmadyd2pt helper;
     helper.N=this; helper.pt=pt;
     helper.amplitude_y1=NULL; helper.amplitude_y2=NULL;
-    REAL y1 = pt/sqrts*std::exp(y); REAL y2 = pt/sqrts*std::exp(-y);
+    double y1 = pt/sqrts*std::exp(y); double y2 = pt/sqrts*std::exp(-y);
     helper.y1=y1; helper.y2=y2;
     if (y1<0 or y2<0)
     {
@@ -135,10 +135,10 @@ REAL AmplitudeLib::dN_gluon_dyd2pt(REAL pt, REAL y, REAL sqrts)
     gsl_integration_workspace *workspace 
      = gsl_integration_workspace_alloc(KTINTPOINTS);
 
-    REAL minkt = 0;
-    REAL maxkt = pt;
+    double minkt = 0;
+    double maxkt = pt;
 
-    int status; REAL result, abserr;
+    int status; double result, abserr;
     status=gsl_integration_qag(&fun, minkt, maxkt,
             0, KTINTACCURACY, KTINTPOINTS,
             GSL_INTEG_GAUSS51, workspace, &result, &abserr);
@@ -157,10 +157,10 @@ REAL AmplitudeLib::dN_gluon_dyd2pt(REAL pt, REAL y, REAL sqrts)
     return result/(4.0*SQR(pt));    // 4.0 is in the integration measure d^2k/4
 }
 
-REAL Inthelperf_dN_gluon_dyd2pt_kint(REAL kt, void* p)
+double Inthelperf_dN_gluon_dyd2pt_kint(double kt, void* p)
 {
     const int THETAINTPOINTS = 40;
-    const REAL THETAINTACCURACY = 0.05;
+    const double THETAINTACCURACY = 0.05;
     
     Inthelper_dsigmadyd2pt* par = (Inthelper_dsigmadyd2pt*) p;
     par->kt=kt;
@@ -170,7 +170,7 @@ REAL Inthelperf_dN_gluon_dyd2pt_kint(REAL kt, void* p)
     gsl_integration_workspace *workspace 
      = gsl_integration_workspace_alloc(THETAINTPOINTS);
 
-    int status; REAL result, abserr;
+    int status; double result, abserr;
     status=gsl_integration_qag(&fun, 0, M_PI,
             0, THETAINTACCURACY, THETAINTPOINTS,
             GSL_INTEG_GAUSS51, workspace, &result, &abserr);
@@ -188,18 +188,18 @@ REAL Inthelperf_dN_gluon_dyd2pt_kint(REAL kt, void* p)
     
 }
 
-REAL Inthelperf_dN_gluon_dyd2pt_thetaint(REAL theta, void* p)
+double Inthelperf_dN_gluon_dyd2pt_thetaint(double theta, void* p)
 {
     Inthelper_dsigmadyd2pt* par = (Inthelper_dsigmadyd2pt*) p;
-    REAL costheta = std::cos(theta);
-    REAL ktpluspt = SQR(par->kt) + SQR(par->pt) + 2.0*par->kt*par->pt*costheta;
+    double costheta = std::cos(theta);
+    double ktpluspt = SQR(par->kt) + SQR(par->pt) + 2.0*par->kt*par->pt*costheta;
     ktpluspt = std::sqrt(ktpluspt);
-    REAL ktminuspt = SQR(par->kt) + SQR(par->pt) - 2.0*par->kt*par->pt*costheta;
+    double ktminuspt = SQR(par->kt) + SQR(par->pt) - 2.0*par->kt*par->pt*costheta;
     ktminuspt = std::sqrt(ktminuspt);
     
-    REAL Q = std::max(ktpluspt/2.0, ktminuspt/2.0);
-    REAL ugd1 = par->N->UGD(ktpluspt/2.0, par->y1, par->amplitude_y1);
-    REAL ugd2 = par->N->UGD(ktminuspt/2.0, par->y2, par->amplitude_y2);
+    double Q = std::max(ktpluspt/2.0, ktminuspt/2.0);
+    double ugd1 = par->N->UGD(ktpluspt/2.0, par->y1, par->amplitude_y1);
+    double ugd2 = par->N->UGD(ktminuspt/2.0, par->y2, par->amplitude_y2);
 
     if (isnan(ugd1) or isnan(ugd2) or Q<1e-10)
     {
@@ -213,14 +213,14 @@ REAL Inthelperf_dN_gluon_dyd2pt_thetaint(REAL theta, void* p)
  * Rapidity distribution
  * d\sigma/dy = \int d^2 pt dSigmadydp2t
  */
-REAL Inthelperf_dsigmady(REAL pt, void* p);
-REAL AmplitudeLib::dSigmady(REAL y, REAL sqrts)
+double Inthelperf_dsigmady(double pt, void* p);
+double AmplitudeLib::dSigmady(double y, double sqrts)
 {
-    /*REAL PTINTPOINTS = 400;
-    REAL PTINTACCURACY = 0.05;
+    /*double PTINTPOINTS = 400;
+    double PTINTACCURACY = 0.05;
     
-    REAL minpt = 0;
-    REAL maxpt = 12;    // As in ref. 1011.5161
+    double minpt = 0;
+    double maxpt = 12;    // As in ref. 1011.5161
 
     Inthelper_dsigmadyd2pt helper;
     helper.N=this; helper.sqrts=sqrts; helper.y=y;
@@ -232,7 +232,7 @@ REAL AmplitudeLib::dSigmady(REAL y, REAL sqrts)
     gsl_integration_workspace *workspace 
      = gsl_integration_workspace_alloc(PTINTPOINTS);
 
-    int status; REAL result, abserr;
+    int status; double result, abserr;
     status=gsl_integration_qag(&fun, minpt, maxpt,
             0, PTINTACCURACY, PTINTPOINTS,
             GSL_INTEG_GAUSS51, workspace, &result, &abserr);
@@ -248,11 +248,11 @@ REAL AmplitudeLib::dSigmady(REAL y, REAL sqrts)
     return 0;
 }
 
-REAL Inthelperf_dsigmady(REAL pt, void* p)
+double Inthelperf_dsigmady(double pt, void* p)
 {
     /*Inthelper_dsigmadyd2pt* par = (Inthelper_dsigmadyd2pt*)p;
-    REAL x1 = pt/par->sqrts*std::exp(par->y);
-    REAL x2 = pt/par->sqrts*std::exp(-par->y);
+    double x1 = pt/par->sqrts*std::exp(par->y);
+    double x2 = pt/par->sqrts*std::exp(-par->y);
 
     return par->N->dN_gluon_dyd2pt(pt, x1, x2);
     */
@@ -264,40 +264,40 @@ REAL Inthelperf_dsigmady(REAL pt, void* p)
  */
 
 // x[0]=p, x[1]=k, x[2]=theta
-REAL Inthelperf_dsigmadymc(REAL* x, size_t dim, void* p)
+double Inthelperf_dsigmadymc(double* x, size_t dim, void* p)
 {
     /*Inthelper_dsigmadyd2pt* par = (Inthelper_dsigmadyd2pt*)p;
     if (x[1]>x[0])  return 0;
     
 
-    REAL x1 = x[0]/par->sqrts*std::exp(par->y);
-    REAL x2 = x[0]/par->sqrts*std::exp(-par->y);
-    REAL costheta = std::cos(x[2]);
-    REAL ktpluspt = SQR(x[1]) + SQR(x[0]) + 2.0*x[1]*x[0]*costheta;
+    double x1 = x[0]/par->sqrts*std::exp(par->y);
+    double x2 = x[0]/par->sqrts*std::exp(-par->y);
+    double costheta = std::cos(x[2]);
+    double ktpluspt = SQR(x[1]) + SQR(x[0]) + 2.0*x[1]*x[0]*costheta;
     ktpluspt = std::sqrt(ktpluspt);
-    REAL ktminuspt = SQR(x[1]) + SQR(x[0]) - 2.0*x[1]*x[0]*costheta;
+    double ktminuspt = SQR(x[1]) + SQR(x[0]) - 2.0*x[1]*x[0]*costheta;
     ktminuspt = std::sqrt(ktminuspt);
     
-    REAL Q = std::max(ktpluspt/2.0, ktminuspt/2.0);
-    REAL ugd1 = par->N->UGD(ktpluspt/2.0, x1);
-    REAL ugd2 = par->N->UGD(ktminuspt/2.0, x2);
+    double Q = std::max(ktpluspt/2.0, ktminuspt/2.0);
+    double ugd1 = par->N->UGD(ktpluspt/2.0, x1);
+    double ugd2 = par->N->UGD(ktminuspt/2.0, x2);
 
     return 1.0/x[0]*x[1]*Alpha_s(SQR(Q))*ugd1*ugd2;
     */
     return 0;
 }
  
-REAL AmplitudeLib::dSigmady_mc(REAL y, REAL sqrts)
+double AmplitudeLib::dSigmady_mc(double y, double sqrts)
 {
     /*
-    REAL maxpt = 12;    // As in ref. 1011.5161
+    double maxpt = 12;    // As in ref. 1011.5161
 
-    REAL lower[3] = {1e-8, 1e-8, 0};
-    REAL upper[3] = {maxpt, maxpt, 2*M_PI};
+    double lower[3] = {1e-8, 1e-8, 0};
+    double upper[3] = {maxpt, maxpt, 2*M_PI};
     Inthelper_dsigmadyd2pt helper;
     helper.N=this; helper.y=y; helper.sqrts=sqrts;
 
-    REAL res,err;
+    double res,err;
     
     const gsl_rng_type *T;
     gsl_rng *r;

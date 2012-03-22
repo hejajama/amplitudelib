@@ -59,8 +59,8 @@ DataFile::DataFile(string fname)
     }
 
     // Ok, configurations are read, then read all yvals
-    REAL y=-1;
-    std::vector<REAL> tmpvec;
+    double y=-1;
+    std::vector<double> tmpvec;
     while (!file.eof())
     {
         string line;
@@ -102,16 +102,16 @@ DataFile::DataFile(string fname)
     }
 }
 
-void DataFile::GetData(std::vector< std::vector<REAL> > &n,
-                        std::vector<REAL> &rapidities)
+void DataFile::GetData(std::vector< std::vector<double> > &n,
+                        std::vector<double> &rapidities)
 {
-	n.clear();
+    n.clear();
     rapidities.clear();
     // Return vector where indexes are vec[y][r] containing amplitude
 
     for (uint yind=0; yind < data.size(); yind++)
     {
-        std::vector<REAL> tmpvec;
+        std::vector<double> tmpvec;
         for (uint rind=0; rind<rpoints; rind++)
         {
             tmpvec.push_back(data[yind][rind]);
@@ -124,12 +124,12 @@ void DataFile::GetData(std::vector< std::vector<REAL> > &n,
     
 }
 
-REAL DataFile::MinR()
+double DataFile::MinR()
 {
     return minr;
 }
 
-REAL DataFile::RMultiplier()
+double DataFile::RMultiplier()
 {
     return r_multiplier;
 }
@@ -139,12 +139,12 @@ int DataFile::RPoints()
         return rpoints;
 }
 
-REAL DataFile::MaxY()
+double DataFile::MaxY()
 {
-	return yvals[yvals.size()-1];
+    return yvals[yvals.size()-1];
 }
 
-REAL DataFile::X0()
+double DataFile::X0()
 {
     return x0;
 }

@@ -53,15 +53,15 @@ int main(int argc, char* argv[])
     FragmentationFunction *fragfun=NULL;
 
     Mode mode=X;
-    REAL Ns=0.22;
-    REAL y=0;
+    double Ns=0.22;
+    double y=0;
     double xbj=-1;
-    REAL r=-1;
-    REAL Qsqr=10;
+    double r=-1;
+    double Qsqr=10;
     bool kspace=false;
     bool bspline=false;
     bool deuteron=false;
-    REAL sqrts=200;
+    double sqrts=200;
     Hadron final_particle = PI0;    // final state particle in single particle
                                     // production
     Parton parton=U;
@@ -275,14 +275,14 @@ int main(int argc, char* argv[])
     
     if (mode==X_TO_K)
     {
-        REAL mink = 1e-5; REAL maxk = 1.0/N.MinR()*100;
+        double mink = 1e-5; double maxk = 1.0/N.MinR()*100;
         int kpoints=100;
-        REAL kmultiplier = std::pow(maxk/mink, 1.0/(kpoints-1.0));
+        double kmultiplier = std::pow(maxk/mink, 1.0/(kpoints-1.0));
         cout << "# k [GeV]     Amplitude  " << endl;
         for (int kind=0; kind<kpoints; kind++)
         {
-            REAL tmpk = mink*std::pow(kmultiplier, kind);
-            REAL res = N.N_k(tmpk, y);
+            double tmpk = mink*std::pow(kmultiplier, kind);
+            double res = N.N_k(tmpk, y);
             #pragma omp critical
             {
                 cout <<tmpk << " " << res << endl;
@@ -291,14 +291,14 @@ int main(int argc, char* argv[])
     }
     else if (mode==K_TO_X)
     {
-        REAL minx = 1e-6; REAL maxx = 50;
+        double minx = 1e-6; double maxx = 50;
         int xpoints=100;
-        REAL xmultiplier = std::pow(maxx/minx, 1.0/(xpoints-1.0));
+        double xmultiplier = std::pow(maxx/minx, 1.0/(xpoints-1.0));
         cout << "# x [1/GeV]     Amplitude  " << endl;
         for (int xind=0; xind<xpoints; xind++)
         {
-            REAL tmpx = minx*std::pow(xmultiplier, xind);
-            REAL res = N.N_k_to_x(tmpx, y);
+            double tmpx = minx*std::pow(xmultiplier, xind);
+            double res = N.N_k_to_x(tmpx, y);
             #pragma omp critical
             {
                 cout <<tmpx << " " << res << endl;
@@ -312,8 +312,8 @@ int main(int argc, char* argv[])
         cout <<"### " << N.SaturationScale(y, Ns) << endl;
         cout << "# r [1/GeV]     Amplitude   \\partial_r   \\partial2 "
          << " r d ln N / d ln r^2" << endl;
-        REAL minr = N.MinR()*1.1; REAL maxr=N.MaxR()*0.99;
-        for (REAL r=minr; r<maxr; r*=1.03)
+        double minr = N.MinR()*1.1; double maxr=N.MaxR()*0.99;
+        for (double r=minr; r<maxr; r*=1.03)
         {
             cout << std::scientific << std::setprecision(9) << r << " " << N.N(r, y)  <<  " "
              << N.N(r,y,1) << " " << N.N(r,y,2) <<
@@ -323,7 +323,7 @@ int main(int argc, char* argv[])
     else if (mode==YDEP)
     {
         cout << "# N(r=" << r <<", y) as sa function of y" << endl;
-        for (REAL y=0; y<N.MaxY(); y+=0.1)
+        for (double y=0; y<N.MaxY(); y+=0.1)
         {
             cout << y << " " << N.N(r,y) << endl;
         }
@@ -336,18 +336,18 @@ int main(int argc, char* argv[])
 
         // Solve satscale and save it to array, then interpolate=>get also derivative
         int points = (int)(N.MaxY()/0.1);
-        REAL* rapidities = new REAL[points];
-        REAL* lnqs = new REAL[points];
+        double* rapidities = new double[points];
+        double* lnqs = new double[points];
 
         for (int i=0; i<points; i++)
         {
-            rapidities[i]=(REAL)i*0.1;
+            rapidities[i]=(double)i*0.1;
             lnqs[i] = std::log(1.0/N.SaturationScale(rapidities[i], Ns));
         }
         Interpolator interp(rapidities, lnqs, points);
         interp.Initialize();
 
-        for (REAL y=0; y < rapidities[points-1]; y+=0.1)
+        for (double y=0; y < rapidities[points-1]; y+=0.1)
         {
             cout << y << " " << std::exp(interp.Evaluate(y)) << " "
                 << interp.Derivative(y) <<  " " << N.X0()*std::exp(-y) << endl;
@@ -374,15 +374,15 @@ int main(int argc, char* argv[])
     
     else if (mode==GD)
     {
-        REAL mink=0.1; REAL maxk=20;
+        double mink=0.1; double maxk=20;
         int kpoints=250;
-        REAL kmultiplier = std::pow(maxk/mink, 1.0/(kpoints-1.0));
+        double kmultiplier = std::pow(maxk/mink, 1.0/(kpoints-1.0));
         cout << "# UGD" << endl << "# k_T [GeV]   UGD   \\alpha_s(k)" << endl;
         //#pragma omp parallel for schedule(dynamic, 5)
         for (int kind=0; kind<kpoints; kind++)
         {
-            REAL tmpk = mink*std::pow(kmultiplier, kind);
-            REAL result = N.UGD(tmpk, y);
+            double tmpk = mink*std::pow(kmultiplier, kind);
+            double result = N.UGD(tmpk, y);
             //#pragma omp critical
             {
                 cout << tmpk << " " << result << " " << Alpha_s(SQR(tmpk)) <<endl;
@@ -403,9 +403,9 @@ int main(int argc, char* argv[])
         cout << "# Fragfun: " << fragfun->GetString() << endl;
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
         cout << "# p_T   d\\sigma" << endl;
-        for (REAL pt=1; pt<5; pt+=0.1)
+        for (double pt=1; pt<5; pt+=0.1)
         {
-            REAL result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, &pdf,
+            double result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, &pdf,
                 deuteron, final_particle);
             cout << pt << " " << result << endl;
         }
@@ -419,8 +419,8 @@ int main(int argc, char* argv[])
         }
         CTEQ pdf;
         pdf.Initialize();
-        REAL minpt=2; REAL maxpt=7;
-        REAL miny=2.4,maxy=4;
+        double minpt=2; double maxpt=7;
+        double miny=2.4,maxy=4;
         cout << "# Hadron production integrated over pt: " << minpt << " - " << maxpt << endl;
         cout << "# y: " << miny << " - " << maxy << endl;
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
@@ -445,17 +445,17 @@ int main(int argc, char* argv[])
     
     else if (mode==DSIGMADY)
     {
-        REAL miny=-3;
-        REAL maxy=3;
+        double miny=-3;
+        double maxy=3;
         int ypoints=30;
         cout << "#d\\sigma/dy, sqrt(s) = 200" << endl;
         cout << "# y     d\\sigma/dy" << endl;
         #pragma omp parallel for
         for (int yind=0; yind<=ypoints; yind++)
         {
-            REAL tmpy = miny + (maxy-miny)/ypoints*yind;
-            REAL result = N.dSigmady_mc(y, 200);
-            //REAL result = N.dSigmadyd2pt(3, 3.0/200.0*std::exp(tmpy), 3.0/200.0*std::exp(-tmpy));
+            double tmpy = miny + (maxy-miny)/ypoints*yind;
+            double result = N.dSigmady_mc(y, 200);
+            //double result = N.dSigmadyd2pt(3, 3.0/200.0*std::exp(tmpy), 3.0/200.0*std::exp(-tmpy));
             #pragma omp critical
             {
                 cout << tmpy << " " << result << endl;

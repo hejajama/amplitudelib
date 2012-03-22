@@ -36,8 +36,10 @@ extern "C"
  *  (useful for noisy data), affects only if there is no previously allocated
  *  interpolator
  */
-REAL AmplitudeLib::N(REAL r, REAL y, int der, bool bspline)
+double AmplitudeLib::N(double r, double y, int der, bool bspline)
 {    
+    if (bspline)
+        cerr << "AmplitudeLib::N() with bspline is not supported (may not work) " << LINEINFO << endl;
     if (der>2 or der<0)
     {
         cerr << "Derivative degree " << der << " is not 0, 1 or 2! " << LINEINFO
@@ -61,17 +63,17 @@ REAL AmplitudeLib::N(REAL r, REAL y, int der, bool bspline)
                 << LINEINFO << endl;
         if (y < 0) y=0; else if (y>yvals[yvals.size()-1]) y=yvals[yvals.size()-1];
     }
-    //REAL lnr = std::log(r);
+    //double lnr = std::log(r);
 
-	
+    
     /// Use already initialized interpolator
     if (std::abs(y - interpolator_y) < 0.01 and !bspline )
     {
-        REAL result=0;
+        double result=0;
         if (der==0)
         { 
-			if (r >= maxr_interpolate and maxr_interpolate>0 and !kspace) return 1.0;
-			result = interpolator->Evaluate(r);
+            if (r >= maxr_interpolate and maxr_interpolate>0 and !kspace) return 1.0;
+            result = interpolator->Evaluate(r);
         }
         if (der==1)
         {
@@ -100,42 +102,42 @@ REAL AmplitudeLib::N(REAL r, REAL y, int der, bool bspline)
     int interpolation_start, interpolation_end;
     if (rind - interpolation_points/2 < 0)
     {
-		interpolation_start=0;
-		interpolation_end=interpolation_points;
-	}
-	else if (rind + interpolation_points/2 > RPoints()-1 )
-	{
-		interpolation_end = RPoints()-1;
-		interpolation_start = RPoints()-interpolation_points-3;
-	}
-	else
-	{
-		interpolation_start = rind - interpolation_points/2;
-		interpolation_end = rind + interpolation_points/2;
-	}
+        interpolation_start=0;
+        interpolation_end=interpolation_points;
+    }
+    else if (rind + interpolation_points/2 > RPoints()-1 )
+    {
+        interpolation_end = RPoints()-1;
+        interpolation_start = RPoints()-interpolation_points-3;
+    }
+    else
+    {
+        interpolation_start = rind - interpolation_points/2;
+        interpolation_end = rind + interpolation_points/2;
+    }
 
     int interpo_points = interpolation_end - interpolation_start+1;
-    REAL *tmparray = new REAL[interpo_points];
-    REAL *tmpxarray = new REAL[interpo_points];
+    double *tmparray = new double[interpo_points];
+    double *tmpxarray = new double[interpo_points];
     for (int i=interpolation_start; i<= interpolation_end; i++)
     {
-		tmpxarray[i-interpolation_start]=rvals[i];
+        tmpxarray[i-interpolation_start]=rvals[i];
 
         tmparray[i-interpolation_start] = n[yind][i];
 
         // Interpolate in y if possible
-		if (yind < static_cast<int>(yvals.size()-1) )
+        if (yind < static_cast<int>(yvals.size()-1) )
         {
             tmparray[i-interpolation_start]=n[yind][i] 
                 + (y - yvals[yind]) * (n[yind+1][i] - n[yind][i])
                 / (yvals[yind+1]-yvals[yind]);
-		}
+        }
     }
     
     Interpolator interp(tmpxarray, tmparray, interpo_points);
     if (bspline) interp.SetMethod(INTERPOLATE_BSPLINE);
     interp.Initialize();
-    REAL result=0;
+    double result=0;
     if (der==0)
         result = interp.Evaluate(r);
     if (der==1)
@@ -156,7 +158,7 @@ REAL AmplitudeLib::N(REAL r, REAL y, int der, bool bspline)
 
 }
 
-bool AmplitudeLib::InterpolatorInitialized(REAL y)
+bool AmplitudeLib::InterpolatorInitialized(double y)
 {
     if (std::abs(y - interpolator_y) < 0.01)
         return true;
@@ -164,7 +166,7 @@ bool AmplitudeLib::InterpolatorInitialized(REAL y)
         return false;
 }
 
-REAL AmplitudeLib::S(REAL r, REAL y, int der)
+double AmplitudeLib::S(double r, double y, int der)
 {
     double s = 1.0 - N(r,y,der);
     if (s<=0) return 0;
@@ -181,12 +183,12 @@ REAL AmplitudeLib::S(REAL r, REAL y, int der)
  */
 struct N_k_helper
 {
-    REAL y; REAL kt;
+    double y; double kt;
     bool adjoint;
     AmplitudeLib* N;
 };
-REAL N_k_helperf(REAL r, void* p);
-REAL AmplitudeLib::N_k(REAL kt, REAL y)
+double N_k_helperf(double r, void* p);
+double AmplitudeLib::N_k(double kt, double y)
 {
     // Some initialisation stuff -
     set_fpu_state();
@@ -195,13 +197,13 @@ REAL AmplitudeLib::N_k(REAL kt, REAL y)
     
     N_k_helper par;
     par.y=y; par.N=this; par.kt=kt;
-    REAL result = fourier_j0(kt,N_k_helperf,&par);
+    double result = fourier_j0(kt,N_k_helperf,&par);
 
     SetOutOfRangeErrors(tmp_range);
     return result;
 }
 
-REAL N_k_helperf(REAL r, void* p)
+double N_k_helperf(double r, void* p)
 {
     N_k_helper* par = (N_k_helper*) p;
     if (r < par->N->MinR()) return 0;
@@ -216,15 +218,15 @@ REAL N_k_helperf(REAL r, void* p)
  */
 struct N_k_to_x_helper
 {
-    REAL y; REAL x;
+    double y; double x;
     AmplitudeLib* N;
 };
-REAL N_k_to_x_helperf(REAL k, void* p)
+double N_k_to_x_helperf(double k, void* p)
 {
     N_k_to_x_helper* par = (N_k_to_x_helper*)p;
     return par->N->N(k, par->y)*k;
 }
-REAL AmplitudeLib::N_k_to_x(REAL x, REAL y)
+double AmplitudeLib::N_k_to_x(double x, double y)
 {
     // Some initialisation stuff -
     set_fpu_state();
@@ -233,7 +235,7 @@ REAL AmplitudeLib::N_k_to_x(REAL x, REAL y)
     
     N_k_to_x_helper par;
     par.y=y; par.N=this; par.x=x;
-    REAL result = fourier_j0(x,N_k_to_x_helperf,&par);
+    double result = fourier_j0(x,N_k_to_x_helperf,&par);
     return x*x*result;
 
     SetOutOfRangeErrors(tmp_range);
@@ -251,8 +253,8 @@ REAL AmplitudeLib::N_k_to_x(REAL x, REAL y)
  * if adjoint==true, then use adjoint representation for N
  * Default value for adjoint is false
  */
-REAL S_k_helperf(REAL r, void* p);
-REAL AmplitudeLib::S_k(REAL kt, REAL y, bool adjoint)
+double S_k_helperf(double r, void* p);
+double AmplitudeLib::S_k(double kt, double y, bool adjoint)
 {
     // Some initialisation stuff -
     set_fpu_state();
@@ -261,7 +263,7 @@ REAL AmplitudeLib::S_k(REAL kt, REAL y, bool adjoint)
     N_k_helper par;
     par.y=y; par.N=this; par.kt=kt; par.adjoint=adjoint;
 
-    REAL result=0;
+    double result=0;
 
     if (kt < 1e-3)  // k_T \approx 0 -> integrate just \int d^2 r S(r)
     {
@@ -269,7 +271,7 @@ REAL AmplitudeLib::S_k(REAL kt, REAL y, bool adjoint)
         fun.params=&par;
     
 
-        REAL abserr; size_t eval;
+        double abserr; size_t eval;
         int status = gsl_integration_qng(&fun, MinR(), MaxR(),
             0, 0.01,  &result, &abserr, &eval);
         if (status)
@@ -283,10 +285,10 @@ REAL AmplitudeLib::S_k(REAL kt, REAL y, bool adjoint)
     return result*2.0*M_PI; 
 }
 
-REAL S_k_helperf(REAL r, void* p)
+double S_k_helperf(double r, void* p)
 {
     N_k_helper* par = (N_k_helper*) p;
-    REAL result;
+    double result;
     if (!par->adjoint)
     {
         if (r > par->N->MaxR()) return 0;
@@ -308,15 +310,15 @@ struct Inthelper_totxs
 {
     AmplitudeLib* N;
     int pol;    // 0: L, 1: T
-    REAL Qsqr,y;
+    double Qsqr,y;
     WaveFunction* wf;
 };
 
-REAL Inthelperf_totxs(REAL r, void* p)
+double Inthelperf_totxs(double r, void* p)
 {
     Inthelper_totxs* par = (Inthelper_totxs*)p;
 
-    REAL result = r*par->N->N(r,par->y);
+    double result = r*par->N->N(r,par->y);
     if (par->pol==0)    // Longitudinal
         result *= par->wf->PsiSqr_L_intz(par->Qsqr, r);
     else if (par->pol==1)   // Transverse
@@ -327,7 +329,7 @@ REAL Inthelperf_totxs(REAL r, void* p)
     return result;
 }
 
-REAL AmplitudeLib::ProtonPhotonCrossSection(REAL Qsqr, REAL y, int pol)
+double AmplitudeLib::ProtonPhotonCrossSection(double Qsqr, double y, int pol)
 {
     Inthelper_totxs par; par.N=this;
     par.pol=pol; par.Qsqr=Qsqr; par.y=y;
@@ -340,7 +342,7 @@ REAL AmplitudeLib::ProtonPhotonCrossSection(REAL Qsqr, REAL y, int pol)
     SetOutOfRangeErrors(false);
     
 
-    REAL result,abserr; size_t eval;
+    double result,abserr; size_t eval;
     const int MAXITER_RINT=1000;
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_RINT);
     int status = gsl_integration_qag(&fun, 0.1*MinR(), 100.0*MaxR(), 0, 0.001,
@@ -365,9 +367,9 @@ REAL AmplitudeLib::ProtonPhotonCrossSection(REAL Qsqr, REAL y, int pol)
  * d ln N / d ln r^2 = 1/N * d N / d ln r^2 = 1/N d N / dr^2  dr^2 / d ln r^2
  *  = 1/N d N / dr^2 r^2 = 1/N d N / dr  dr / dr^2  r^2 = r/(2N) * dN/dr
  */
-REAL AmplitudeLib::LogLogDerivative(REAL r, REAL y)
+double AmplitudeLib::LogLogDerivative(double r, double y)
 {
-    REAL dndr = N(r,y,1);
+    double dndr = N(r,y,1);
     return r/(2.0*N(r,y))*dndr;
 }
 
@@ -380,35 +382,35 @@ REAL AmplitudeLib::LogLogDerivative(REAL r, REAL y)
  */
 struct SatscaleSolverHelper
 {
-    REAL y;
-    REAL Ns;
-    REAL gammac;
+    double y;
+    double Ns;
+    double gammac;
     AmplitudeLib* N;
 };
-REAL SatscaleSolverHelperf(double r, void* p)
+double SatscaleSolverHelperf(double r, void* p)
 {
     SatscaleSolverHelper* par = (SatscaleSolverHelper*)p;
     return par->N->N(r, par->y) - par->Ns;
 }
 
-REAL SatscaleSolverHelperf_k(REAL kt, void* p)
+double SatscaleSolverHelperf_k(double kt, void* p)
 {
    
     SatscaleSolverHelper* par = (SatscaleSolverHelper*)p;
-    REAL val = -std::pow(kt, 2.0*par->gammac)
+    double val = -std::pow(kt, 2.0*par->gammac)
         *par->N->N(kt, par->y);
     return val;
     
 }
 
 
-REAL AmplitudeLib::SaturationScale(REAL y, REAL Ns)
+double AmplitudeLib::SaturationScale(double y, double Ns)
 {
     
     SatscaleSolverHelper helper;
     helper.y=y; helper.Ns=Ns; helper.N=this; helper.gammac=0.5;
     const int MAX_ITER = 1000;
-    const REAL ROOTFINDACCURACY = 0.00001;
+    const double ROOTFINDACCURACY = 0.00001;
     gsl_function f;
     f.params = &helper;
         
@@ -432,7 +434,7 @@ REAL AmplitudeLib::SaturationScale(REAL y, REAL Ns)
         cerr << "Solving failed at y=" << y << " " << LINEINFO << endl;
 
 
-    REAL sat = gsl_root_fsolver_root(s);
+    double sat = gsl_root_fsolver_root(s);
 
     gsl_root_fsolver_free(s);
 
@@ -446,8 +448,8 @@ REAL AmplitudeLib::SaturationScale(REAL y, REAL Ns)
 
     // Interpolation doesn't work well at the edge of the ktsqr range, so limit
     // the studied interval
-    REAL interval_min = MinR()*1.0001;
-    REAL interval_max = MaxR()*0.999;
+    double interval_min = MinR()*1.0001;
+    double interval_max = MaxR()*0.999;
 
     //gsl_error_handler_t* handler = gsl_set_error_handler_off();
     if (gsl_min_fminimizer_set(sm, &f, sat, interval_min, interval_max)
@@ -490,7 +492,7 @@ REAL AmplitudeLib::SaturationScale(REAL y, REAL Ns)
  * Amplitude in adjoint representation
  * Coordinate space: N_A(r) = 2N(r)-N(r)^2
  */
-REAL AmplitudeLib::N_A(REAL r, REAL y, int der)
+double AmplitudeLib::N_A(double r, double y, int der)
 {
     if (kspace)
     {
@@ -502,24 +504,24 @@ REAL AmplitudeLib::N_A(REAL r, REAL y, int der)
         cerr << "Derivative order " << der << " is not valid. " << LINEINFO << endl;
         return -1;
     }
-    REAL result=0;
+    double result=0;
 
     if (der==0)
     {
-        REAL n = N(r,y);
+        double n = N(r,y);
         result = 2.0*n - n*n;
     }
     else if (der==1)
     {
-        REAL n = N(r,y);
-        REAL dn = N(r,y,1);
+        double n = N(r,y);
+        double dn = N(r,y,1);
         result= 2.0*dn - 2.0*n*dn;
     }
     else if (der==2)
     {
-        REAL n = N(r,y);
-        REAL dn = N(r,y,1);
-        REAL d2n = N(r,y,2);
+        double n = N(r,y);
+        double dn = N(r,y,1);
+        double d2n = N(r,y,2);
         result = 2.0*d2n - 2.0*dn*dn - 2.0*n*d2n;
     }
     
@@ -545,11 +547,11 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
     rpoints = data.RPoints();
     x0 = data.X0();
 
-    tmprarray = new REAL[data.RPoints()];
-    tmpnarray = new REAL[data.RPoints()];
+    tmprarray = new double[data.RPoints()];
+    tmpnarray = new double[data.RPoints()];
     for (int i=0; i<rpoints; i++)
     {
-        REAL tmpr = std::log(minr*std::pow(rmultiplier, i));
+        double tmpr = std::log(minr*std::pow(rmultiplier, i));
         if (kspace)
             tmpr = 0.5*tmpr;    // take square root if kspace, so k^2 -> k
         lnrvals.push_back(tmpr);
@@ -566,7 +568,7 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
     interpolator_y=-1;  // if >=0, interpolator is initialized, must free
     // memory (delete tmprarray and tmpnarray at the end)
 
-    //REAL satscale = 1.0/SaturationScale(0, 0.22);
+    //double satscale = 1.0/SaturationScale(0, 0.22);
 
     /*
     cout << "# Data read from file " << datafile << ", minr: " << minr
@@ -580,7 +582,7 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
  * Initializes interpolation method with all read data points at given y
  * If bspline is true, then use bspline interpolation, default is false
  */
-void AmplitudeLib::InitializeInterpolation(REAL y, bool bspline)
+void AmplitudeLib::InitializeInterpolation(double y, bool bspline)
 {
     if (std::abs(interpolator_y - y) < 0.01) return;    // Already done it
     if (interpolator_y>=0)
@@ -590,7 +592,7 @@ void AmplitudeLib::InitializeInterpolation(REAL y, bool bspline)
     }
     for (int i=0; i<rpoints; i++)
     {
-        REAL tmpr = tmprarray[i];
+        double tmpr = tmprarray[i];
         if (i==0) tmpr*=1.0001; if (i==rpoints-1) tmpr*=0.9999;
         tmpnarray[i] = N(tmpr, y);
     }
@@ -605,27 +607,27 @@ void AmplitudeLib::InitializeInterpolation(REAL y, bool bspline)
     // Find r s.t. N(r)==1
     double step=2; double prevr=0.1;
     const int MAXITER=30;
-    for (REAL r=0.01; r<=MaxR(); r+=step)
+    for (double r=0.01; r<=MaxR(); r+=step)
     {
-		if (N(r,y)>=0.999999)
-		{
-			if (step<1e-2)
-			{
-				maxr_interpolate = r;
-				break;
-			}
-			step /= 1.5;
-			r=prevr;
-		}
-		prevr=r;
-		iter++;
-		if (iter > MAXITER)
-		{
-			cerr << "Didn't find maxr_interpolate at " << LINEINFO 
-				<< ", best guess " << r << endl;
-			break;	// Didn't find, dont force any upper limit
-		}
-	}
+        if (N(r,y)>=0.999999)
+        {
+            if (step<1e-2)
+            {
+                maxr_interpolate = r;
+                break;
+            }
+            step /= 1.5;
+            r=prevr;
+        }
+        prevr=r;
+        iter++;
+        if (iter > MAXITER)
+        {
+            cerr << "Didn't find maxr_interpolate at " << LINEINFO 
+                << ", best guess " << r << endl;
+            break;  // Didn't find, dont force any upper limit
+        }
+    }
 }
 
 
@@ -633,9 +635,9 @@ void AmplitudeLib::InitializeInterpolation(REAL y, bool bspline)
 /*
  * Initializes interpolator and returns it
  */
-Interpolator* AmplitudeLib::MakeInterpolator(REAL y)
+Interpolator* AmplitudeLib::MakeInterpolator(double y)
 {
-    REAL* interp_narray = new REAL[rpoints];
+    double* interp_narray = new double[rpoints];
     for (int i=0; i<rpoints; i++)
     {
         tmpnarray[i] = N(tmprarray[i], y);
@@ -661,12 +663,12 @@ int AmplitudeLib::RPoints()
 {
     return rpoints;
 }
-REAL AmplitudeLib::MinR()
+double AmplitudeLib::MinR()
 {
     return minr;
 }
 
-REAL AmplitudeLib::MaxR()
+double AmplitudeLib::MaxR()
 {
     return minr*std::pow(rmultiplier, rpoints-1);
 }
@@ -676,7 +678,7 @@ int AmplitudeLib::YVals()
     return yvals.size();
 }
 
-REAL AmplitudeLib::MaxY()
+double AmplitudeLib::MaxY()
 {
     return yvals[yvals.size()-1];
 }
@@ -688,7 +690,7 @@ bool AmplitudeLib::SetOutOfRangeErrors(bool er)
     return outofrange;    
 }
 
-REAL AmplitudeLib::X0()
+double AmplitudeLib::X0()
 {
     return x0;
 }

@@ -19,107 +19,107 @@ class AmplitudeLib
         ~AmplitudeLib();
 
         // der w.r.t r der times.
-        REAL N(REAL r, REAL y, int der=0, bool bspline=false);
+        double N(double r, double y, int der=0, bool bspline=false);
 
         // S = 1-N
-        REAL S(REAL r, REAL y, int der=0);
+        double S(double r, double y, int der=0);
         
         // Amplitude in k-space, ft with 1/r^2 prefactor
-        REAL N_k(REAL kt, REAL y);
+        double N_k(double kt, double y);
 
         // Amplitude from k space to x space
-        REAL N_k_to_x(REAL x, REAL y);
+        double N_k_to_x(double x, double y);
 
         // Regular ft to k-space for S=1-N, NO normalization factor
         // \int e^(ik.r) S(r)
         // if adjoint=true, then N is in adjoint representation
-        REAL S_k(REAL kt, REAL y, bool adjoint=false);
+        double S_k(double kt, double y, bool adjoint=false);
 
         // Amplitude in adjoint representation
-        REAL N_A(REAL r, REAL y, int der=0);
+        double N_A(double r, double y, int der=0);
 
 
         // Virtual photon-proton cross sections, longitudinal and transverse
         // Notice that these are not normalized, as we don't integrate over
         // impact parameter
         // pol 0=longitudinal, 1=transverse
-        REAL ProtonPhotonCrossSection(REAL Qsqr, REAL y, int pol);
+        double ProtonPhotonCrossSection(double Qsqr, double y, int pol);
 
         // Differential forward hadron production multiplicity
         // dN_h / (dy_h d^2 p_T)
-        REAL dHadronMultiplicity_dyd2pt(REAL y, REAL pt, REAL sqrts,
+        double dHadronMultiplicity_dyd2pt(double y, double pt, double sqrts,
             FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0 );
         // Integrated over rapidity and pt range
-        REAL HadronMultiplicity(REAL miny, REAL maxy, REAL minpt, REAL maxpt, REAL sqrts,
+        double HadronMultiplicity(double miny, double maxy, double minpt, double maxpt, double sqrts,
             FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0 );
         // Douple parton scattering, integrate products of two dHadronMultiplicity_dyd2pt
         // over kinematical regions
         // pt2<pt1
-        REAL DPS(REAL miny, REAL maxy, REAL minpt1, REAL minpt2, REAL sqrts,
+        double DPS(double miny, double maxy, double minpt1, double minpt2, double sqrts,
             FragmentationFunction* fragfun, bool deuteron=false, Hadron final=PI0);
 
         // Unintegrated gluon density
-        REAL UGD(REAL k, REAL y, Interpolator* interp=NULL);
+        double UGD(double k, double y, Interpolator* interp=NULL);
 
         // k_T factorization: d\sigma / (dyd^2p_T)
         // = const * 1/p_T^2 \int d^2 k_T/4 \alphas_(Q) \psi(|p_t+k_T|/2,x1)
         //   * \psi(|p_t-k_T|/2, x2)
-        REAL dN_gluon_dyd2pt(REAL pt, REAL y, REAL sqrts);
-        REAL dSigmady(REAL y, REAL sqrts);
-        REAL dSigmady_mc(REAL y, REAL sqrts);
+        double dN_gluon_dyd2pt(double pt, double y, double sqrts);
+        double dSigmady(double y, double sqrts);
+        double dSigmady_mc(double y, double sqrts);
 
         // d ln N / d ln r^2
-        REAL LogLogDerivative(REAL r, REAL y);
+        double LogLogDerivative(double r, double y);
 
         // Saturation scale N(r, y) = Ns
-        REAL SaturationScale(REAL y, REAL Ns);
+        double SaturationScale(double y, double Ns);
 
-        void InitializeInterpolation(REAL y, bool bspline=false);
-        bool InterpolatorInitialized(REAL y); // Returns whether or not the interpolator
+        void InitializeInterpolation(double y, bool bspline=false);
+        bool InterpolatorInitialized(double y); // Returns whether or not the interpolator
                                     // is initialized
-        Interpolator* MakeInterpolator(REAL y);
+        Interpolator* MakeInterpolator(double y);
     
         int YVals();
         int RPoints();
-        REAL MinR();
-        REAL MaxR();
-        REAL MaxY();
+        double MinR();
+        double MaxR();
+        double MaxY();
 
-        REAL X0();
+        double X0();
 
         bool SetOutOfRangeErrors(bool er);
         
         
     private:
         // [yind][r/kind]
-        std::vector< std::vector<REAL> > n;
-        std::vector<REAL> yvals;
-        std::vector<REAL> lnrvals;
-        std::vector<REAL> rvals;
+        std::vector< std::vector<double> > n;
+        std::vector<double> yvals;
+        std::vector<double> lnrvals;
+        std::vector<double> rvals;
         Interpolator *interpolator;
 
         bool kspace;    // true if data is in kspace
 
-        REAL interpolator_y;
-        REAL* tmprarray;
-        REAL* tmpnarray;
+        double interpolator_y;
+        double* tmprarray;
+        double* tmpnarray;
 
-        REAL minr;
-        REAL rmultiplier;
+        double minr;
+        double rmultiplier;
         
-        REAL maxr_interpolate;	// When interpolating in coordinate space,
-					// force N(r>maxr_interpolate)=1 (avoid osciallatory 
-					// artifacts from interpolation code)
+        double maxr_interpolate;  // When interpolating in coordinate space,
+                    // force N(r>maxr_interpolate)=1 (avoid osciallatory 
+                    // artifacts from interpolation code)
         int rpoints;
 
-        REAL x0;
+        double x0;
 
         bool out_of_range_errors;  // don't print "out of range" errors
 };
 
 const int INTERPOLATION_POINTS = 12;
-const REAL UGD_IR_CUTOFF=0.3;   // ugd(k<UGD_IR_CUTOFF)=0     BAD?????
+const double UGD_IR_CUTOFF=0.3;   // ugd(k<UGD_IR_CUTOFF)=0     BAD?????
 
-const int FOURIER_ZEROS=1000;   // How many zeros of the Bessel functions is
+const int FOURIER_ZEROS=700;   // How many zeros of the Bessel functions is
                     // used when Fourier transforming
 #endif
