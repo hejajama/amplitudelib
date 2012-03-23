@@ -30,6 +30,8 @@ const REAL Cf = (Nc*Nc-1.0)/(2.0*Nc);
 const REAL ALPHA_e = 1.0/137.035999679; 
 const REAL e = sqrt(4.0*M_PI*ALPHA_e);
 
+const double FMGEV = 5.068;
+
 // Reqularization of the running coupling
 // Berger&Stasto 1010.0671: 0.3
 // Fit to HERA: 0.7 0902.1112

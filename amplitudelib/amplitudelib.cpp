@@ -623,7 +623,7 @@ void AmplitudeLib::InitializeInterpolation(double y, bool bspline)
         iter++;
         if (iter > MAXITER)
         {
-            cerr << "Didn't find maxr_interpolate at " << LINEINFO 
+            cerr << "Didn't find maxr_interpolate at y=" << y <<", line " << LINEINFO 
                 << ", best guess " << r << endl;
             break;  // Didn't find, dont force any upper limit
         }

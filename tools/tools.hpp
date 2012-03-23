@@ -22,6 +22,9 @@ REAL Alpha_s(REAL Qsqr, REAL scaling=1.0);
 REAL Alpha_s_r(REAL rsqr, REAL scaling=1.0);
 REAL Alphabar_s(REAL Qsqr, REAL scaling=1.0); // \alpha_s N_C / Pi
 
+double T_A(double b, int A);	// Transverse density profile of the nucleus normalized by A
+								// Unit: [b]=1/GeV!
+
 int FindIndex(REAL val, std::vector<REAL> &array);
 
 std::string Alpha_s_str();

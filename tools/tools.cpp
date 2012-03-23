@@ -9,6 +9,7 @@
 #include <sstream>
 #include <cmath>
 #include <vector>
+#include <gsl/gsl_integration.h>
 
 /*
  * Str to REAL/int
@@ -131,3 +132,54 @@ int FindIndex(REAL val, std::vector<REAL> &vec)
     if (ind == -1) return vec.size()-1;
     return ind;
 }
+
+/*
+ * Nuclear density profile
+ * Normalization: \int d^2 b T_A(b)=1
+ * All lenght units: 1/GeV!
+ */
+
+// Woodls-Saxon distribution
+double W_S(double r, int A)
+{
+	// R = 1.12 fm A^(1/3) - 0.86 fm * A^(-1/3)
+	double ra = 1.13 * std::pow(A, 1.0/3.0) - 0.86 * std::pow(A, -1.0/3.0);
+	double delta = 0.54 * FMGEV;
+	ra *= FMGEV;	// fm => 1/GeV
+	
+	double normalization = 1.0/1189.64555797/FMGEV;
+	if (A != 197)
+	{	cerr << "Woods-Saxon distribution is currently implemented only for A=197 :(" << endl;
+		return 0;
+	}
+	
+	return normalization / (std::exp((r - ra)/delta)+1);
+}
+
+struct inthelper_ta
+{
+	double b;
+	int A;
+};
+
+// Return W_S(\sqrt{ b^2 + z^2 } )
+double inthelperf_ta(double z, void* p)
+{
+	inthelper_ta* par = (inthelper_ta*)p;
+	return W_S(std::sqrt( SQR(par->b) + SQR(z) ), par->A); 
+}
+
+double T_A(double b, int A)
+{
+	gsl_integration_workspace *w = gsl_integration_workspace_alloc(10);
+	double res, abserr;
+	inthelper_ta par; par.A=A; par.b=b;
+	gsl_function f; f.params=&par; f.function=inthelperf_ta;
+	int status = gsl_integration_qag(&f, 0, 99, 0, 0.001, 10, GSL_INTEG_GAUSS61,
+		w, &res, &abserr);
+	if(status)
+		cerr << "T_A integration failed at " << LINEINFO <<", result " << res
+			<< ", relerr " << std::abs(res-abserr)/res <<", A=" << A << endl;
+	return 2.0*res;	// 2.0 as we integrate z in [0,\infty]
+}
+	

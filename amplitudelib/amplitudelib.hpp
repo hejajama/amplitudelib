@@ -52,6 +52,9 @@ class AmplitudeLib
         // Integrated over rapidity and pt range
         double HadronMultiplicity(double miny, double maxy, double minpt, double maxpt, double sqrts,
             FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0 );
+        // Average hadron multiplicity in rapidity range
+        double AverageHadronMultiplicity(double miny, double maxy, double pt, double sqrts, 
+            FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0 );
         // Douple parton scattering, integrate products of two dHadronMultiplicity_dyd2pt
         // over kinematical regions
         // pt2<pt1

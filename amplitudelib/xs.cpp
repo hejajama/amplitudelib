@@ -28,6 +28,7 @@ struct Inthelper_hadronprod
     FragmentationFunction* frag;
     bool deuteron;
     Hadron final;
+    bool ptint;     // if false, don't integrate over pt
 };
 
 double Inthelperf_hadronprod(double z, void *p)
@@ -43,7 +44,9 @@ double Inthelperf_hadronprod(double z, void *p)
     if (y_A<0)
     {
         cerr << "Negative rapidity at " << LINEINFO <<", z " << z << " xf " <<
-            par->xf << " x1 " << x1 << " x2 " << x2 << " y " << y_A << endl;
+            par->xf << " x1 " << x1 << " x2 " << x2 << " y_A " << y_A 
+            << " y " << par->y << " sqrts " 
+            << par->sqrts << " pt " << par->pt << endl ;
         return 0;
     }
 
@@ -89,12 +92,20 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrt
     const double K = 1.0; // normalization factor
     // We assume light hadrons
     double xf = pt/sqrts*std::exp(y);
+    
+    if (xf > 1 or sqrts < 10)
+    {
+        cerr << "Parameters don't make sense, xf=" << xf << ", sqrts="
+            << sqrts << ", y=" << y << " pt=" << pt << " " << LINEINFO << endl;
+    }
 
     Inthelper_hadronprod helper;
     helper.N=this; helper.y=y; helper.pt=pt; helper.xf=xf;
     helper.deuteron=deuteron;
     helper.final=final;
+    helper.sqrts=sqrts;
     helper.pdf=pdf; helper.frag=fragfun;
+    helper.y=y;
 
     double result=0; double abserr=0;
     const int MULTIPLICITYXINTPOINTS=10;
@@ -144,6 +155,7 @@ double AmplitudeLib::HadronMultiplicity(double miny, double maxy, double minpt, 
     helper.pdf=pdf; helper.frag=fragfun;
     helper.sqrts=sqrts;
     helper.maxpt=maxpt; helper.minpt=minpt;
+    helper.ptint=true;
 
     gsl_function fun;
     fun.function=Inthelperf_hadronprod_yint;
@@ -171,8 +183,14 @@ double AmplitudeLib::HadronMultiplicity(double miny, double maxy, double minpt, 
 double Inthelperf_hadronprod_yint(double y, void* p)
 {
     Inthelper_hadronprod* par = (Inthelper_hadronprod*)p;
-    cout << "# yint y=" << y << endl;
+    
 
+    // Don't integrate over pt
+    if (par->ptint == false)
+        return par->N->dHadronMultiplicity_dyd2pt(y, par->pt, 
+            par->sqrts, par->frag, par->pdf, par->deuteron, par->final); 
+    
+    cout << "# yint y=" << y << endl;
     gsl_function fun;
     fun.function=Inthelperf_hadronprod_ptint;
     par->y = y;
@@ -202,6 +220,45 @@ double Inthelperf_hadronprod_ptint(double pt, void* p)
     Inthelper_hadronprod* par = (Inthelper_hadronprod*)p;
     return pt*par->N->dHadronMultiplicity_dyd2pt(par->y, pt, par->sqrts, par->frag,
         par->pdf, par->deuteron, par->final);   
+}
+
+/*
+ * Average hadron yield in rapidity range
+ * Integrate HadronMultiplicity_dyd2pt over y region and averge
+ */
+double AmplitudeLib::AverageHadronMultiplicity(double miny, double maxy, double pt, double sqrts, 
+            FragmentationFunction *fragfun, PDF* pdf, bool deuteron, Hadron final )
+{
+    Inthelper_hadronprod helper;
+    helper.N=this; 
+    helper.deuteron=deuteron;
+    helper.final=final;
+    helper.pdf=pdf; helper.frag=fragfun;
+    helper.sqrts=sqrts;
+    helper.ptint=false;
+    helper.pt=pt;
+
+    gsl_function fun;
+    fun.function=Inthelperf_hadronprod_yint;
+    fun.params=&helper;
+    const int YINT_HADRONAVERAGE = 2;
+    
+    int status=0; double abserr, result;
+    gsl_integration_workspace *workspace 
+        = gsl_integration_workspace_alloc(YINT_HADRONAVERAGE);
+    status=gsl_integration_qag(&fun, miny, maxy,
+            0, 0.01, YINT_HADRONAVERAGE,
+            GSL_INTEG_GAUSS15, workspace, &result, &abserr);
+
+    if (status)
+    {
+        cerr << "yint failed at " << LINEINFO <<", result " << result
+            << " relerr " << std::abs(abserr/result) << " pt " << pt << endl;
+    }
+    
+    gsl_integration_workspace_free(workspace);
+    
+    return result / (maxy-miny);
 }
 
 /*

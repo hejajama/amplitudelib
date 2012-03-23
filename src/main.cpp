@@ -33,6 +33,7 @@ enum Mode
     GD,
     DSIGMADY,
     PTSPECTRUM,
+    PTSPECTRUM_AVG,
     INT_HADRONPROD,
     F2,
     LOGLOGDER,
@@ -61,6 +62,7 @@ int main(int argc, char* argv[])
     bool kspace=false;
     bool bspline=false;
     bool deuteron=false;
+    double miny=3; double maxy=4;
     double sqrts=200;
     Hadron final_particle = PI0;    // final state particle in single particle
                                     // production
@@ -80,7 +82,9 @@ int main(int argc, char* argv[])
         cout << "-ugd: print unintegrated gluon distribution" << endl;
         cout << "-pt_spectrum p/d pi0/ch/hn: print dN/(d^2 p_T dy), probe is proton or deuteron"
             << " final state pi0/charged/negative hadron" << endl;
+        cout << "-pt_spectrum_avg: same as above, but average over y region, must set miny and maxy" << endl;
         cout << "-hadronprod_int p/d pi0/ch/hn: integrated over pt and y range" << endl;
+        cout << "-miny y, -maxy y" << endl;
         cout << "-dps: doupe parton scattering, same arguments as -pt_spectrum" << endl;
         cout << "-dsigmady: print d\\sigma/dy" << endl;
         cout << "-satscale Ns, print satscale r_s defined as N(r_s)=Ns" << endl;
@@ -99,6 +103,10 @@ int main(int argc, char* argv[])
             y = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-xbj")
             xbj = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-miny")
+            miny = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-maxy")
+            maxy = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-data")
             datafile = argv[i+1];
         else if (string(argv[i])=="-kspace")
@@ -119,9 +127,12 @@ int main(int argc, char* argv[])
             mode=GD;
         else if (string(argv[i])=="-dsigmady")
             mode=DSIGMADY;
-        else if (string(argv[i])=="-pt_spectrum")
+        else if (string(argv[i])=="-pt_spectrum" or string(argv[i])=="-pt_spectrum_avg")
         {
-            mode=PTSPECTRUM;
+            if (string(argv[i])=="-pt_spectrum")
+                mode=PTSPECTRUM;
+            else
+                mode=PTSPECTRUM_AVG;
             if (string(argv[i+1])=="p")
                 deuteron=false;
             else if (string(argv[i+1])=="d")
@@ -410,6 +421,26 @@ int main(int argc, char* argv[])
             cout << pt << " " << result << endl;
         }
     }
+    else if (mode==PTSPECTRUM_AVG)
+    {
+        CTEQ pdf;
+        pdf.Initialize();
+        if (fragfun==NULL)
+        {
+            cerr << "Fragfun not spesified!" << endl;
+            return -1;
+        }
+        cout << "# <d\\sigma / d^2p_T>, sqrt(s) = " << sqrts << "GeV, average over y: " << miny << " - " << maxy  << endl;
+        cout << "# Fragfun: " << fragfun->GetString() << endl;
+        cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
+        cout << "# p_T   d\\sigma" << endl;
+        for (double pt=1; pt<4; pt+=0.1)
+        {
+            double result = N.AverageHadronMultiplicity(miny, maxy, pt, sqrts, fragfun, &pdf,
+                deuteron, final_particle);
+            cout << pt << " " << result << endl;
+        }
+    }
     else if (mode==INT_HADRONPROD)
     {
         if (fragfun==NULL)
@@ -420,7 +451,6 @@ int main(int argc, char* argv[])
         CTEQ pdf;
         pdf.Initialize();
         double minpt=2; double maxpt=7;
-        double miny=2.4,maxy=4;
         cout << "# Hadron production integrated over pt: " << minpt << " - " << maxpt << endl;
         cout << "# y: " << miny << " - " << maxy << endl;
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
