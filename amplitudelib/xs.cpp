@@ -37,7 +37,11 @@ double Inthelperf_hadronprod(double z, void *p)
     // x2: Bjorken x for the dense system
     Inthelper_hadronprod* par = (Inthelper_hadronprod*)p;
     double x1 = par->xf/z; double x2 = x1*std::exp(-2.0*par->y);
-    if (x1>1) return 0;
+    if (x1>1)
+    {
+		cerr << "Entering kinematically fobidden region at y=" << par->y <<", pt=" << par->pt << " " << LINEINFO << endl;
+		return 0;
+	}
     
     double y_A = std::log(par->N->X0()/x2);
 
@@ -93,10 +97,13 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrt
     // We assume light hadrons
     double xf = pt/sqrts*std::exp(y);
     
+    SetOutOfRangeErrors(false);
+    
     if (xf > 1 or sqrts < 10)
     {
         cerr << "Parameters don't make sense, xf=" << xf << ", sqrts="
             << sqrts << ", y=" << y << " pt=" << pt << " " << LINEINFO << endl;
+        return 0;
     }
 
     Inthelper_hadronprod helper;
@@ -121,7 +128,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrt
     int status;
     status=gsl_integration_qag(&fun, xf, 1.0,
             0, 0.01, MULTIPLICITYXINTPOINTS,
-            GSL_INTEG_GAUSS41, workspace, &result, &abserr);
+            GSL_INTEG_GAUSS51, workspace, &result, &abserr);
     gsl_integration_workspace_free(workspace);
 
     if (status)

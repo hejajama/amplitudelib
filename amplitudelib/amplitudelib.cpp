@@ -606,7 +606,7 @@ void AmplitudeLib::InitializeInterpolation(double y, bool bspline)
     int iter=0;
     // Find r s.t. N(r)==1
     double step=2; double prevr=0.1;
-    const int MAXITER=30;
+    const int MAXITER=40;
     for (double r=0.01; r<=MaxR(); r+=step)
     {
         if (N(r,y)>=0.999999)

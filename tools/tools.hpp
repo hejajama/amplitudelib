@@ -24,6 +24,7 @@ REAL Alphabar_s(REAL Qsqr, REAL scaling=1.0); // \alpha_s N_C / Pi
 
 double T_A(double b, int A);	// Transverse density profile of the nucleus normalized by A
 								// Unit: [b]=1/GeV!
+void InitializeWSDistribution(int A);
 
 int FindIndex(REAL val, std::vector<REAL> &array);
 

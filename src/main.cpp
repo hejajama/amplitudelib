@@ -29,6 +29,7 @@ enum Mode
     YDEP,
     X_TO_K,
     K_TO_X,
+    S_X_TO_K,
     SATSCALE,
     GD,
     DSIGMADY,
@@ -77,8 +78,9 @@ int main(int argc, char* argv[])
         cout << "-kspace: data is in k space" << endl;
         cout << "-x: print amplitude (space-indep.)" << endl;
         cout << "-ydep r: print N(r,y) as a function of y" << endl;
-        cout << "-x_to_k: FT ampltiudet from x to k space" << endl;
+        cout << "-x_to_k: FT ampltiude from x to k space" << endl;
         cout << "-k_to_x: FT amplitude from k to x space" << endl;
+        cout << "-s_x_to_k: FT S(r)" << endl;
         cout << "-ugd: print unintegrated gluon distribution" << endl;
         cout << "-pt_spectrum p/d pi0/ch/hn: print dN/(d^2 p_T dy), probe is proton or deuteron"
             << " final state pi0/charged/negative hadron" << endl;
@@ -123,6 +125,8 @@ int main(int argc, char* argv[])
             mode=X_TO_K;
         else if (string(argv[i])=="-k_to_x")
             mode=K_TO_X;
+        else if (string(argv[i])=="-s_x_to_k")
+			mode=S_X_TO_K;
         else if (string(argv[i])=="-ugd")
             mode=GD;
         else if (string(argv[i])=="-dsigmady")
@@ -286,18 +290,35 @@ int main(int argc, char* argv[])
     
     if (mode==X_TO_K)
     {
+		double qs = 1.0/N.SaturationScale(y, 0.22);
+		cout << "#FT of N(r)/r^2, Q_s = " << qs << endl;
         double mink = 1e-5; double maxk = 1.0/N.MinR()*100;
         int kpoints=100;
         double kmultiplier = std::pow(maxk/mink, 1.0/(kpoints-1.0));
-        cout << "# k [GeV]     Amplitude  " << endl;
+        cout << "# k [GeV]     Amplitude   k/Q_s" << endl;
         for (int kind=0; kind<kpoints; kind++)
         {
             double tmpk = mink*std::pow(kmultiplier, kind);
             double res = N.N_k(tmpk, y);
             #pragma omp critical
             {
-                cout <<tmpk << " " << res << endl;
+                cout <<tmpk << " " << res << " " << tmpk/qs << endl;
             }
+        }
+    }
+    else if (mode==S_X_TO_K)
+    {
+		double qs = 1.0/N.SaturationScale(y, 0.22);
+		cout << "#FT of S(r), Q_s = " << qs << endl;
+        double mink = 1e-5; double maxk = 1.0/N.MinR()*100;
+        int kpoints=100;
+        double kmultiplier = std::pow(maxk/mink, 1.0/(kpoints-1.0));
+        cout << "# k [GeV]     Amplitude   k/Q_s" << endl;
+        for (int kind=0; kind<kpoints; kind++)
+        {
+            double tmpk = mink*std::pow(kmultiplier, kind);
+            double res = N.S_k(tmpk, y);
+            cout <<tmpk << " " << res << " " << tmpk/qs << endl;
         }
     }
     else if (mode==K_TO_X)
@@ -417,7 +438,7 @@ int main(int argc, char* argv[])
         for (double pt=1; pt<5; pt+=0.1)
         {
             double result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, &pdf,
-                deuteron, final_particle);
+                deuteron, final_particle);;
             cout << pt << " " << result << endl;
         }
     }

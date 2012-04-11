@@ -94,6 +94,8 @@ DataFile::DataFile(string fname)
     // Add last entry
     ///TODO: tmpvec[rpoints+1] \approx 0 ???
     data.push_back(tmpvec);
+    
+    file.close();
 
     if (data[0].size() != rpoints)
     {

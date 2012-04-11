@@ -140,20 +140,21 @@ int FindIndex(REAL val, std::vector<REAL> &vec)
  */
 
 // Woodls-Saxon distribution
+double w_s_normalization=1;
+double w_s_normalization_A=-1;
 double W_S(double r, int A)
 {
+	if (A != w_s_normalization_A)
+	{
+		cerr << "Woods-Saxon distribution is not initialized for A="<< A << " " << LINEINFO << endl;
+		return 0;
+	}
 	// R = 1.12 fm A^(1/3) - 0.86 fm * A^(-1/3)
 	double ra = 1.13 * std::pow(A, 1.0/3.0) - 0.86 * std::pow(A, -1.0/3.0);
 	double delta = 0.54 * FMGEV;
 	ra *= FMGEV;	// fm => 1/GeV
-	
-	double normalization = 1.0/1189.64555797/FMGEV;
-	if (A != 197)
-	{	cerr << "Woods-Saxon distribution is currently implemented only for A=197 :(" << endl;
-		return 0;
-	}
-	
-	return normalization / (std::exp((r - ra)/delta)+1);
+
+	return w_s_normalization / (std::exp((r - ra)/delta)+1);
 }
 
 struct inthelper_ta
@@ -182,4 +183,28 @@ double T_A(double b, int A)
 			<< ", relerr " << std::abs(res-abserr)/res <<", A=" << A << endl;
 	return 2.0*res;	// 2.0 as we integrate z in [0,\infty]
 }
+
+// WS initialization, calculates normalization s.t. 
+// \int d^3 b WS(b)=1
+double inthelperf_ws(double r, void* p)
+{
+	return r*r*W_S(r, *((int*)p));
+}
 	
+void InitializeWSDistribution(int A)
+{
+	w_s_normalization = 1;
+	w_s_normalization_A = A;
+	gsl_integration_workspace *w = gsl_integration_workspace_alloc(10);
+	double res, abserr;
+	gsl_function f; f.params=&A; f.function=inthelperf_ws;
+	int status = gsl_integration_qag(&f, 0, 99, 0, 0.001, 10, GSL_INTEG_GAUSS61,
+		w, &res, &abserr);
+	if (status)
+		cerr << "WS normalization integral failed at " << LINEINFO <<", result "
+			<< res << " relerr " << std::abs(res-abserr)/res << endl;
+	
+	res *= 4.0*M_PI;
+	
+	w_s_normalization = 1.0/res;
+}
