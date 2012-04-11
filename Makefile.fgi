@@ -1,0 +1,31 @@
+CXXFLAGS = `gsl-config --cflags` -O3 -Wall -pedantic -fopenmp# -I ./libbci-1.1.0/ 
+LDFLAGS = `gsl-config --libs` -lm 
+FORTRANFLAGS = -O3 -nofor_main
+
+include filelist.m
+
+all: amplitude
+
+CC = icc
+CXX = icpc
+FORT = ifort
+
+amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp
+	$(CC) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp -lifcoremt -o amplitude
+	ar cru libamplitude.a $(OBJECTS) $(FTOBJECTS) $(FOBJECTS)
+
+interpolator: tools/interpolator.o tools/interpolation.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) tools/interpolator.o tools/interpolation.o -o interpolator
+
+.cpp.o:
+	 $(CXX) $(CXXFLAGS) $< -c -o $@
+.c.o:
+	$(CC) $(CXXFLAGS) $< -c -o $@
+.f.o:
+	$(FORT) $(FORTRANFLAGS) -c $< -c -o $@
+
+
+clean:
+	rm -f $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.o
+	rm -f amplitude	
+	rm libamplitude.a
