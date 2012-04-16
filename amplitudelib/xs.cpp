@@ -167,6 +167,10 @@ double AmplitudeLib::HadronMultiplicity(double miny, double maxy, double minpt, 
     gsl_function fun;
     fun.function=Inthelperf_hadronprod_yint;
     fun.params=&helper;
+    
+    // If miny=maxy, don't integrate over y, only over p_T
+    if (std::abs(maxy-miny)<0.001)
+		return Inthelperf_hadronprod_yint(maxy, &helper);
 
     gsl_integration_workspace *workspace 
      = gsl_integration_workspace_alloc(HADRONPROD_YINTPOINTS);
