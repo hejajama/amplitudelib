@@ -11,7 +11,7 @@ CXX = icpc
 FORT = ifort
 
 amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp
-	$(CC) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp -lifcoremt -o amplitude
+	$(CC) $(CXXFLAGS) $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp $(LDFLAGS) -lifcoremt -o amplitude
 	ar cru libamplitude.a $(OBJECTS) $(FTOBJECTS) $(FOBJECTS)
 
 interpolator: tools/interpolator.o tools/interpolation.o

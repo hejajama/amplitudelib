@@ -5,6 +5,7 @@
  */
 
 #include <string>
+#include "../tools/config.hpp"
 #include "fragmentation.hpp"
 
 extern "C"
@@ -16,8 +17,11 @@ extern "C"
 
 
 // D_{p->h}, x: long. mom. fraction, qs: scale (GeV)
-REAL FragmentationFunction::Evaluate(Parton p, Hadron h, REAL x, REAL q)
+double FragmentationFunction::Evaluate(Parton p, Hadron h, REAL x, REAL q)
 {
+    cout <<" FragFun class is not tested, most likely doesn't work... " << LINEINFO << endl;
+    return 0;
+    /*
     REAL partons[11];
 
     int ihadron=0;
@@ -53,6 +57,7 @@ REAL FragmentationFunction::Evaluate(Parton p, Hadron h, REAL x, REAL q)
         cerr << "Parton " << p << " is not supported!  " << LINEINFO << endl;
         return 0;
     }
+    */
 
 }
 

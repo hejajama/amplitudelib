@@ -14,7 +14,7 @@
 class DSS : public FragmentationFunction
 {
     public:
-        REAL Evaluate(Parton p, Hadron h, REAL x, REAL qs);
+        double Evaluate(Parton p, Hadron h, double x, double qs);
         DSS();
         std::string GetString();
     private:

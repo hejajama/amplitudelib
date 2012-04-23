@@ -11,6 +11,12 @@
 
 double CTEQ::xq(double x, double q, Parton p)
 {
+	if (!initialized)
+	{
+		cerr <<" CTEQ parton distribution function is not initialized, "
+			<< "can't evaluate CTEQ::xq() at " << LINEINFO << endl;
+		return 0;
+	}
     if (x<0 or x>1)
     {
         cerr << "x=" << x <<" out of range at " << LINEINFO << endl;
@@ -73,6 +79,7 @@ void CTEQ::Initialize(int param)
     if (param==-1)
         set=100;
     setct10_(set);
+    initialized=true;
 }
 
 std::string CTEQ::GetString()

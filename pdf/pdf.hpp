@@ -12,6 +12,7 @@
 class PDF
 {
     public:
+		PDF();
         ~PDF();
         virtual double xq(double x, double q, Parton p)=0;    // return x*q(x,q)
         virtual void Initialize(int param=-1);
@@ -22,6 +23,8 @@ class PDF
         virtual double MaxQ();
 
         void PlotPdf(double Q);
+	protected:
+		bool initialized;
 };
 
 #endif

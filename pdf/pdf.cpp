@@ -5,6 +5,11 @@
 
 #include "pdf.hpp"
 
+PDF::PDF()
+{
+	initialized=false;
+}
+
 void PDF::Initialize(int param)
 {
 }

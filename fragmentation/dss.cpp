@@ -23,7 +23,7 @@ extern "C"
 }
 
 // D_{p->h}, x: long. mom. fraction, qs: scale (GeV)
-REAL DSS::Evaluate(Parton p, Hadron h, REAL x, REAL qs)
+double DSS::Evaluate(Parton p, Hadron h, double x, double qs)
 {
     if (x<0.05 or x>1)
     {

@@ -1,6 +1,6 @@
 /*
  * AmplitudeLib cross section calculation methods
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2012
  */
 
 #include "amplitudelib.hpp"
@@ -115,7 +115,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrt
     helper.y=y;
 
     double result=0; double abserr=0;
-    const int MULTIPLICITYXINTPOINTS=10;
+    const int MULTIPLICITYXINTPOINTS=5;
 
     
     gsl_function fun;
@@ -127,7 +127,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrt
 
     int status;
     status=gsl_integration_qag(&fun, xf, 1.0,
-            0, 0.01, MULTIPLICITYXINTPOINTS,
+            0, 0.05, MULTIPLICITYXINTPOINTS,
             GSL_INTEG_GAUSS51, workspace, &result, &abserr);
     gsl_integration_workspace_free(workspace);
 
@@ -274,164 +274,273 @@ double AmplitudeLib::AverageHadronMultiplicity(double miny, double maxy, double 
 
 /*
  * Douple parton scattering
- * dHadronMultiplicity_dyd2pt integrated over miny<y1,y2<maxy
- * pt1>minpt1,  pt1>pt2>mintp2
- * See 1005.4065
  */
 struct Inthelper_dps
 {
-    double miny, maxy;
-    double minpt1, minpt2;
     double sqrts;
     FragmentationFunction* fragfun;
     bool deuteron;
     Hadron final;
     AmplitudeLib* N;
-    double y1,y2,pt1;
+    double y1,y2,pt1,pt2;
+    double xf1,xf2;
+    double z1;
     PDF *pdf;
 };
-double Inthelperf_dps_y1(double y1, void *p);
-double Inthelperf_dps_y2(double y1, void *p);
-double Inthelperf_dps_pt1(double y1, void *p);
-double Inthelperf_dps_pt2(double y1, void *p);
 
 
-const int DPS_YINTPOINTS=1;
-const int DPS_PTINTPOINTS=2;
-const double DPS_YINTACCURACY=0.05;
-const double DPS_PTINTACCURACY=0.05;
-const double DPS_MAXPT=3.5;
+const int DPS_ZINTPOINTS = 6;
 
-double AmplitudeLib::DPS(double miny, double maxy, double minpt1, double minpt2, double sqrts,
-            FragmentationFunction* fragfun, bool deuteron, Hadron final)
-{
-    Inthelper_dps helper;
-    helper.miny=miny; helper.maxy=maxy; helper.minpt1=minpt1; helper.minpt2=minpt2;
-    helper.fragfun=fragfun; helper.deuteron=deuteron; helper.final=final;
-    helper.sqrts=sqrts;
-    helper.N=this;
+double Inthelperf_dps_z1(double z1, void* p);
+double Inthelperf_dps_z2(double z2, void* p);
 
-    CTEQ pdf;
-    pdf.Initialize(); helper.pdf=&pdf;
+double AmplitudeLib::DPS(double y1, double y2, double pt1, double pt2, double sqrts,
+              FragmentationFunction* fragfun, PDF *pdf, bool deuteron, Hadron final)
+{	const double ncoll = 15.1;	// central d+Au
+	const double C_p = 3;
+	Inthelper_dps par;
+	par.xf1 = pt1/sqrts*std::exp(y1);
+	par.xf2 = pt2/sqrts*std::exp(y2);
+	par.y1=y1; par.y2=y2; par.pt1=pt1; par.pt2=pt2; par.N=this;
+	par.pdf= pdf; par.sqrts=sqrts; par.deuteron=deuteron; par.final=final;
+	par.fragfun=fragfun;
+	
+	gsl_function fun;
+    fun.function=Inthelperf_dps_z1;
+    fun.params=&par;
     
-    gsl_function fun;
-    fun.function=Inthelperf_dps_y1;
-    fun.params=&helper;
-
-    gsl_integration_workspace *workspace 
-     = gsl_integration_workspace_alloc(DPS_YINTPOINTS);
-
     int status=0; double abserr, result;
-    /*status=gsl_integration_qag(&fun, miny, maxy,
-            0, DPS_YINTACCURACY, DPS_YINTPOINTS,
+    gsl_integration_workspace *workspace 
+        = gsl_integration_workspace_alloc(DPS_ZINTPOINTS);
+    status=gsl_integration_qag(&fun, par.xf1, 1.0,
+            0, 0.1, DPS_ZINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
-    */
-    gsl_integration_workspace_free(workspace);
-    //result = 0.5*(maxy-miny)
-    //    * (Inthelperf_dps_y1(miny, &helper) + Inthelperf_dps_y1(maxy, &helper));
-    result = (maxy-miny)*Inthelperf_dps_y1(0.5*(maxy+miny), &helper);
 
     if (status)
-        cerr << "y1 integral failed at " << LINEINFO <<": result " << result
-        << " relerror " << std::abs(abserr/result) << endl;
+    {
+        cerr << "z1int failed at " << LINEINFO <<", result " << result
+            << " relerr " << std::abs(abserr/result) << endl;
+    }
     
-    return SQR(2.0*M_PI)*result;    // (2pi)^2 from angular integrals
-    
+    gsl_integration_workspace_free(workspace);
+	
+	
+	result *= (1.0 + 1.0/ncoll) * C_p / std::pow(2.0*M_PI, 4);
+	return result;
+	
 }
 
-double Inthelperf_dps_y1(double y1, void* p)
+double Inthelperf_dps_z1(double z1, void* p)
 {
-    Inthelper_dps* par = (Inthelper_dps*)p;
-    par->y1=y1;
-    gsl_function fun;
-    fun.function=Inthelperf_dps_y2;
+	Inthelper_dps* par = (Inthelper_dps*)p;
+	par->z1=z1;
+	gsl_function fun;
+    fun.function=Inthelperf_dps_z2;
     fun.params=par;
     
-    gsl_integration_workspace *workspace 
-     = gsl_integration_workspace_alloc(DPS_YINTPOINTS);
-
     int status=0; double abserr, result;
-    /*status=gsl_integration_qag(&fun, par->miny, par->maxy,
-            0, DPS_YINTACCURACY, DPS_YINTPOINTS,
+    gsl_integration_workspace *workspace 
+        = gsl_integration_workspace_alloc(DPS_ZINTPOINTS);
+    status=gsl_integration_qag(&fun, par->xf2, 1.0,
+            0, 0.1, DPS_ZINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
-            */
-    gsl_integration_workspace_free(workspace);
-
-    //result = 0.5*(par->maxy-par->miny)
-    //    * (Inthelperf_dps_y2(par->miny, par) + Inthelperf_dps_y2(par->maxy, par));
-    result = (par->maxy-par->miny) * Inthelperf_dps_y2(0.5*(par->maxy + par->miny), par);
 
     if (status)
-        cerr << "y2 integral failed at " << LINEINFO <<": result " << result
-        << " relerror " << std::abs(abserr/result) << endl;
-    cout << "y2 int done" << endl;
-    return result;
+    {
+        cerr << "z2int failed at " << LINEINFO <<", result " << result
+            << " relerr " << std::abs(abserr/result) << endl;
+    }
+
+    gsl_integration_workspace_free(workspace);
+    return result/SQR(z1);
+    
 }
-int ptint=0;
-double Inthelperf_dps_y2(double y2, void* p)
+
+double Inthelperf_dps_z2(double z2, void* p)
 {
-    Inthelper_dps* par = (Inthelper_dps*)p;
-    par->y2=y2;
-    gsl_function fun;
-    fun.function=Inthelperf_dps_pt1;
+	Inthelper_dps* par = (Inthelper_dps*)p;
+	double xp1 = par->xf1 / par->z1;
+	double xp2 = par->xf2 / z2;
+	double xa1 = xp1 * std::exp(-2.0*par->y1);
+	double xa2 = xp2 * std::exp(-2.0*par->y2);
+	double ya1 = std::log( par->N->X0() / xa1);
+	double ya2 = std::log( par->N->X0() / xa2);
+	if (ya1<0 or ya2<0)
+	{
+		cerr <<"Too large x_A: xa1=" << xa1 <<", xa2=" << xa2 <<", xp1=" << xp1 <<", xp2=" 
+			<< xp2 <<", z1=" << par->z1 <<", z2=" << z2 << ", xf1=" << par->xf1
+			<<", xf2=" << par->xf2 << " " << LINEINFO <<endl;
+		exit(1);
+	}
+	
+	if (xp2 / (1.0-xp1) >= 1.0)
+		return 0;
+	
+	par->N->SetOutOfRangeErrors(false);
+	par->N->InitializeInterpolation(ya1);
+	double nf1 = par->N->S_k(par->pt1/par->z1, ya1);
+	par->N->InitializeInterpolation(ya2);
+	double nf2 = par->N->S_k(par->pt2/z2, ya2);
+	
+	double scale = std::max(par->pt1, par->pt2);
+	
+	Parton partons[2] = {U, D};
+	double xf_d=0;	// x1*x2*f(x1,x2)*D(z1)*D(z2)
+	for (int p1ind=0; p1ind<=1; p1ind++)
+	{
+		for (int p2ind=0; p2ind<=1; p2ind++)
+		{
+			// Average over proton and neutron
+			xf_d += 0.5 * (
+				par->pdf->xq(xp1, scale , partons[p1ind])/(xp1)
+				* par->pdf->xq( xp2/(1.0-xp1), scale, partons[p2ind] ) / ( xp2/(1.0-xp1) ) 
+			   + par->pdf->xq(xp2, scale , partons[p2ind])/(xp2)
+				* par->pdf->xq( xp1/(1.0-xp2), scale, partons[p1ind] ) / ( xp1/(1.0-xp2) )
+			) * xp1*xp2	
+			*  par->fragfun->Evaluate(partons[p1ind], par->final, par->z1, scale)
+			 * par->fragfun->Evaluate(partons[p2ind], par->final, z2, scale);	
+		}
+	}		
+	double result = nf1*nf2*xf_d;		
+	
+	return result/SQR(z2);	
+}
+
+/*
+ * DPS integrated over pt and y range
+ */
+struct Inthelper_dpsint
+{
+	double miny,maxy,minpt,maxpt,sqrts;
+	double pt1,y1,y2;
+	AmplitudeLib* N;
+	FragmentationFunction* fragfun;
+	PDF* pdf;
+	bool deuteron;
+	Hadron final;
+};
+const int DPS_YINTPOINTS = 1;
+const int DPS_PTINTPOINTS = 3;
+double Inthelperf_dpsint_y1(double y1, void* p);
+double Inthelperf_dpsint_y2(double y2, void* p);
+double Inthelperf_dpsint_pt1(double pt1, void* p);
+double Inthelperf_dpsint_pt2(double pt2, void* p);
+double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, double maxpt, double sqrts,
+			FragmentationFunction* fragfun, PDF* pdf, bool deuteron, Hadron final)
+{
+	cout <<"# DPS contribution integrating yrange " << miny << " - " << maxy 
+		<<", ptrange " << minpt << " " << maxpt << endl;
+	Inthelper_dpsint par;
+	par.N=this;
+	par.pdf= pdf; par.sqrts=sqrts; par.deuteron=deuteron; par.final=final;
+	par.fragfun=fragfun; par.miny=miny; par.maxy=maxy; par.minpt=minpt;
+	par.maxpt=maxpt;
+	
+	gsl_function fun;
+    fun.function=Inthelperf_dpsint_y1;
+    fun.params=&par;
+
+	if (std::abs(miny-maxy)<0.1) 
+	{
+		cout <<"# Not integrating over rapidity range... setting y=" << miny << endl;
+		par.y1=miny; par.y2=miny;
+		return SQR(2.0*M_PI)*Inthelperf_dpsint_y2(miny, &par); //(2\pi)^2 from angural integrals
+	}
+    
+    int status=0; double abserr, result;
+    gsl_integration_workspace *workspace 
+        = gsl_integration_workspace_alloc(DPS_YINTPOINTS);
+    status=gsl_integration_qag(&fun, miny, maxy,
+            0, 0.1, DPS_YINTPOINTS,
+            GSL_INTEG_GAUSS15, workspace, &result, &abserr);
+
+    if (status)
+    {
+        cerr << "y1int failed at " << LINEINFO <<", result " << result
+            << " relerr " << std::abs(abserr/result) << endl;
+    }
+    gsl_integration_workspace_free(workspace);
+	return result*SQR(2.0*M_PI);
+	
+}
+double Inthelperf_dpsint_y1(double y1, void* p)
+{
+	Inthelper_dpsint* par = (Inthelper_dpsint*) p;
+	par->y1=y1;
+	gsl_function fun;
+	fun.function=Inthelperf_dpsint_y2;
     fun.params=par;
     
+    int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
-     = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
-
-    int status; double abserr, result;
-    status=gsl_integration_qag(&fun, par->minpt1, DPS_MAXPT,
-            0, DPS_PTINTACCURACY, DPS_PTINTPOINTS,
+        = gsl_integration_workspace_alloc(DPS_YINTPOINTS);
+    status=gsl_integration_qag(&fun, par->miny, par->maxy,
+            0, 0.1, DPS_YINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
-    gsl_integration_workspace_free(workspace);
 
     if (status)
-        cerr << "pt1 integral failed at " << LINEINFO <<": result " << result
-        << " relerror " << std::abs(abserr/result) << endl;
-    cout << "pt1 int done" << endl;
-    return result;
+    {
+        cerr << "y2int failed at " << LINEINFO <<", result " << result
+            << " relerr " << std::abs(abserr/result) << endl;
+    }
+    gsl_integration_workspace_free(workspace);
+	return result;
 }
-
-double Inthelperf_dps_pt1(double pt1, void* p)
+double Inthelperf_dpsint_y2(double y2, void* p)
 {
-    Inthelper_dps* par = (Inthelper_dps*)p;
-    par->pt1=pt1;
-    gsl_function fun;
-    fun.function=Inthelperf_dps_pt2;
+	Inthelper_dpsint* par = (Inthelper_dpsint*) p;
+	cout <<"# y1 " << par->y1 << " y2 "  << y2 << endl;
+	par->y2=y2;
+	gsl_function fun;
+	fun.function=Inthelperf_dpsint_pt1;
     fun.params=par;
     
+    int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
-     = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
-
-    int status; double abserr, result;
-    status=gsl_integration_qag(&fun, par->minpt2, pt1,
-            0, DPS_PTINTACCURACY, DPS_PTINTPOINTS,
+        = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
+    status=gsl_integration_qag(&fun, 2, 5,
+            0, 0.1, DPS_PTINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
-    gsl_integration_workspace_free(workspace);
 
     if (status)
-        cerr << "pt2 integral failed at " << LINEINFO <<": result " << result
-        << " relerror " << std::abs(abserr/result) << endl;
-    ptint++;
-    cout << "#pt2 int " << ptint << " / " << 15*DPS_PTINTPOINTS << " done" << endl;
-    return result*SQR(2.0*M_PI);    //(2\pi)^2: angular part
+    {
+        cerr << "pt1int failed at " << LINEINFO <<", result " << result
+            << " relerr " << std::abs(abserr/result) << endl;
+    }
+    gsl_integration_workspace_free(workspace);
+	return result;
 }
 
-double Inthelperf_dps_pt2(double pt2, void* p)
+double Inthelperf_dpsint_pt1(double pt1, void* p)
 {
-    Inthelper_dps* par = (Inthelper_dps*)p;
-
-    double n1,n2;
-
-    //cout << "Evaluating pt1=" << par->pt1 << " pt2=" << pt2 << " y1=" << par->y1
-    //<< " y2=" << par->y2 << endl;
-
-            n1 =par->N->dHadronMultiplicity_dyd2pt(par->y1,par->pt1, par->sqrts,
-                par->fragfun, par->pdf, par->deuteron, par->final);
-
-            n2 = par->N->dHadronMultiplicity_dyd2pt(par->y2,pt2, par->sqrts,
-                par->fragfun, par->pdf, par->deuteron, par->final);
+	Inthelper_dpsint* par = (Inthelper_dpsint*) p;
+	
+	par->pt1=pt1;
+	gsl_function fun;
+	fun.function=Inthelperf_dpsint_pt2;
+    fun.params=par;
     
-    
-    return n1*n2*par->pt1*pt2;
+    int status=0; double abserr, result;
+    gsl_integration_workspace *workspace 
+        = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
+    status=gsl_integration_qag(&fun, 1, pt1,
+            0, 0.1, DPS_PTINTPOINTS,
+            GSL_INTEG_GAUSS15, workspace, &result, &abserr);
+
+    if (status)
+    {
+        cerr << "pt2int failed at " << LINEINFO <<", result " << result
+            << " relerr " << std::abs(abserr/result) << endl;
+    }
+    gsl_integration_workspace_free(workspace);
+	return result;
+}
+
+double Inthelperf_dpsint_pt2(double pt2, void* p)
+{
+	Inthelper_dpsint* par = (Inthelper_dpsint*) p;
+	cout <<"# pt1 " << par->pt1 << " pt2 " << pt2 << endl;
+	
+	return pt2 * par->pt1 * par->N->DPS(par->y1, par->y2, par->pt1, pt2, 
+		par->sqrts, par->fragfun, par->pdf, par->deuteron, par->final);
 }

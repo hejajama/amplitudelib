@@ -39,7 +39,8 @@ enum Mode
     F2,
     LOGLOGDER,
     DPS,
-    PRINT_FF
+    PRINT_FF,
+    PRINT_PDF
 };
 
 int main(int argc, char* argv[])
@@ -96,6 +97,7 @@ int main(int argc, char* argv[])
         cout << "-fragfun [kkp, pkh, hkns, dss]: select fragmentation function" << endl;
         cout << "-sqrts sqrts (in GeV)" << endl;
         cout << "-print_ff [u,d,s,g] [pi0,pim,pip,hm,hp] qsqr" << endl;
+        cout << "-print_pdf [u,d,g] qsqr" << endl;
         return 0;
     }
 
@@ -232,7 +234,7 @@ int main(int argc, char* argv[])
             else if (string(argv[i+1])=="hkns")
                 fragfun = new HKNS();
             else if (string(argv[i+1])=="dss")
-                fragfun = new DSS();
+                fragfun = new DSS(); 
             else
             {
                 cerr << "Fragmentation function type " << argv[i+1] << " is not valid!" << endl;
@@ -252,7 +254,7 @@ int main(int argc, char* argv[])
                 parton=G;
             else
             {
-                cerr << "Paron " << string(argv[i+1]) << " is unknown! " << endl;
+                cerr << "Parton " << string(argv[i+1]) << " is unknown! " << endl;
                 return -1;
             }
             if (string(argv[i+2])=="pi0")
@@ -272,6 +274,11 @@ int main(int argc, char* argv[])
             }
 
             Qsqr = StrToReal(string(argv[i+3]));
+        }
+        else if (string(argv[i])=="-print_pdf")
+		{
+			mode = PRINT_PDF;
+            Qsqr = StrToReal(argv[i+1]);
         }
         else if (string(argv[i]).substr(0,1)=="-")
         {
@@ -488,10 +495,19 @@ int main(int argc, char* argv[])
             cerr << "Fragfun not spesified!" << endl;
             return -1;
         }
-        cout << "# DPS integrated over pt1,pt2,y1,y2" << endl;
+        CTEQ pdf; pdf.Initialize();
+        double pt1=1, pt2=2, y1=4.2, y2=4.1;
+        cout << "# DPS " << endl;
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
+        cout << "# Fragfun: " << fragfun->GetString() << endl;
         cout << "# sqrt(s)=" << sqrts << " GeV" << endl;
-        cout << N.DPS(2.4,4,2,1,sqrts, fragfun, deuteron, final_particle) << endl;
+        cout << "# pt1: " << pt1 << " pt2: " << pt2 << " y1: " << y1 << " y2: " << y2 << endl;
+        cout <<"# (a)+(c)  (b)   sum" << endl;
+        //double dps = N.DPS(y1,y2,pt1,pt2,sqrts, fragfun, &pdf, deuteron, final_particle);
+        double dps = N.DPSMultiplicity(2.4,4,1,2,sqrts,fragfun, &pdf, deuteron, final_particle);
+        //double single_sqr = N.dHadronMultiplicity_dyd2pt(y1, pt1, sqrts, fragfun, &pdf, deuteron, final_particle)
+		//		* N.dHadronMultiplicity_dyd2pt(y2, pt2, sqrts, fragfun, &pdf, deuteron, final_particle);
+		cout << dps << endl; //<< " " << single_sqr << " " << dps+single_sqr << endl;
     }
     
     else if (mode==DSIGMADY)
@@ -555,7 +571,20 @@ int main(int argc, char* argv[])
         }         
 
     }
-
+    
+    else if (mode == PRINT_PDF)
+    {
+		CTEQ pdf;
+		pdf.Initialize();
+		double q = std::sqrt(Qsqr);
+		cout <<"# PDF: " << pdf.GetString() << ", Q^2 = " << Qsqr << " GeV^2 " << endl;
+		cout << "# x    x*f_u  x*f_d  x*f_s  x_f_g " << endl;
+		for (double x=1e-3; x<1; x*=1.05)
+		{
+			cout << x << " " << pdf.xq(x, q, U) << " " << pdf.xq(x,q,D)
+				<< " " << pdf.xq(x,q,S) << " " << pdf.xq(x,q,G) << endl;
+		}
+	}
     else
     {
         cerr << "Unkown mode " << argv[3] << endl;

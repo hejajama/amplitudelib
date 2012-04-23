@@ -55,11 +55,11 @@ class AmplitudeLib
         // Average hadron multiplicity in rapidity range
         double AverageHadronMultiplicity(double miny, double maxy, double pt, double sqrts, 
             FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0 );
-        // Douple parton scattering, integrate products of two dHadronMultiplicity_dyd2pt
-        // over kinematical regions
-        // pt2<pt1
-        double DPS(double miny, double maxy, double minpt1, double minpt2, double sqrts,
-            FragmentationFunction* fragfun, bool deuteron=false, Hadron final=PI0);
+        // Douple parton scattering at fixed pt, y
+        double DPS(double y1, double y2, double pt1, double pt2, double sqrts,
+              FragmentationFunction* fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0);
+        double DPSMultiplicity(double miny, double maxy, double minpt, double maxpt, double sqrts,
+			FragmentationFunction* fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0);
 
         // Unintegrated gluon density
         double UGD(double k, double y, Interpolator* interp=NULL);
@@ -123,6 +123,6 @@ class AmplitudeLib
 const int INTERPOLATION_POINTS = 12;
 const double UGD_IR_CUTOFF=0.3;   // ugd(k<UGD_IR_CUTOFF)=0     BAD?????
 
-const int FOURIER_ZEROS=700;   // How many zeros of the Bessel functions is
+const int FOURIER_ZEROS=1000;   // How many zeros of the Bessel functions is
                     // used when Fourier transforming
 #endif
