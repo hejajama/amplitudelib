@@ -115,7 +115,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrt
     helper.y=y;
 
     double result=0; double abserr=0;
-    const int MULTIPLICITYXINTPOINTS=5;
+    const int MULTIPLICITYXINTPOINTS=1;
 
     
     gsl_function fun;
@@ -309,6 +309,7 @@ double AmplitudeLib::DPS(double y1, double y2, double pt1, double pt2, double sq
     fun.function=Inthelperf_dps_z1;
     fun.params=&par;
     
+    
     int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_ZINTPOINTS);
@@ -418,9 +419,10 @@ struct Inthelper_dpsint
 	PDF* pdf;
 	bool deuteron;
 	Hadron final;
+	bool dps_b;
 };
 const int DPS_YINTPOINTS = 1;
-const int DPS_PTINTPOINTS = 3;
+const int DPS_PTINTPOINTS = 1;
 double Inthelperf_dpsint_y1(double y1, void* p);
 double Inthelperf_dpsint_y2(double y2, void* p);
 double Inthelperf_dpsint_pt1(double pt1, void* p);
@@ -428,13 +430,15 @@ double Inthelperf_dpsint_pt2(double pt2, void* p);
 double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, double maxpt, double sqrts,
 			FragmentationFunction* fragfun, PDF* pdf, bool deuteron, Hadron final)
 {
-	cout <<"# DPS contribution integrating yrange " << miny << " - " << maxy 
-		<<", ptrange " << minpt << " " << maxpt << endl;
 	Inthelper_dpsint par;
+	par.dps_b = false;
 	par.N=this;
 	par.pdf= pdf; par.sqrts=sqrts; par.deuteron=deuteron; par.final=final;
 	par.fragfun=fragfun; par.miny=miny; par.maxy=maxy; par.minpt=minpt;
 	par.maxpt=maxpt;
+	
+	cout <<"# DPS contribution integrating yrange " << miny << " - " << maxy 
+		<<", ptrange " << minpt << " " << maxpt << " contrib b: " << par.dps_b << endl;
 	
 	gsl_function fun;
     fun.function=Inthelperf_dpsint_y1;
@@ -541,6 +545,13 @@ double Inthelperf_dpsint_pt2(double pt2, void* p)
 	Inthelper_dpsint* par = (Inthelper_dpsint*) p;
 	cout <<"# pt1 " << par->pt1 << " pt2 " << pt2 << endl;
 	
-	return pt2 * par->pt1 * par->N->DPS(par->y1, par->y2, par->pt1, pt2, 
-		par->sqrts, par->fragfun, par->pdf, par->deuteron, par->final);
+	
+	double result = 0;
+	if (!par->dps_b)	// a + c
+		result = par->N->DPS(par->y1, par->y2, par->pt1, pt2, 
+			par->sqrts, par->fragfun, par->pdf, par->deuteron, par->final);
+	else // b
+		result = par->N->dHadronMultiplicity_dyd2pt(par->y1, par->pt1, par->sqrts, par->fragfun, par->pdf, false, par->final)
+			*  par->N->dHadronMultiplicity_dyd2pt(par->y2, pt2, par->sqrts, par->fragfun, par->pdf, false, par->final);
+	return pt2 * par->pt1 * result;
 }

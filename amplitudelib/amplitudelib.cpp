@@ -256,6 +256,10 @@ double AmplitudeLib::N_k_to_x(double x, double y)
 double S_k_helperf(double r, void* p);
 double AmplitudeLib::S_k(double kt, double y, bool adjoint)
 {
+	if (!InterpolatorInitialized(y))
+		cerr << "Interpolator is not initialized and we are calculating S_k, are you sure? " 
+			<< LINEINFO << endl;
+	
     // Some initialisation stuff -
     set_fpu_state();
     init_workspace_fourier(FOURIER_ZEROS);   // number of bessel zeroes, max 2000

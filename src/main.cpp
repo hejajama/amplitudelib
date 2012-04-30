@@ -307,10 +307,7 @@ int main(int argc, char* argv[])
         {
             double tmpk = mink*std::pow(kmultiplier, kind);
             double res = N.N_k(tmpk, y);
-            #pragma omp critical
-            {
-                cout <<tmpk << " " << res << " " << tmpk/qs << endl;
-            }
+            cout <<tmpk << " " << res << " " << tmpk/qs << endl;
         }
     }
     else if (mode==S_X_TO_K)
@@ -338,10 +335,7 @@ int main(int argc, char* argv[])
         {
             double tmpx = minx*std::pow(xmultiplier, xind);
             double res = N.N_k_to_x(tmpx, y);
-            #pragma omp critical
-            {
-                cout <<tmpx << " " << res << endl;
-            }
+            cout <<tmpx << " " << res << endl;
         }
     }
 
@@ -417,15 +411,12 @@ int main(int argc, char* argv[])
         int kpoints=250;
         double kmultiplier = std::pow(maxk/mink, 1.0/(kpoints-1.0));
         cout << "# UGD" << endl << "# k_T [GeV]   UGD   \\alpha_s(k)" << endl;
-        //#pragma omp parallel for schedule(dynamic, 5)
         for (int kind=0; kind<kpoints; kind++)
         {
             double tmpk = mink*std::pow(kmultiplier, kind);
             double result = N.UGD(tmpk, y);
-            //#pragma omp critical
-            {
-                cout << tmpk << " " << result << " " << Alpha_s(SQR(tmpk)) <<endl;
-            }
+            cout << tmpk << " " << result << " " << Alpha_s(SQR(tmpk)) <<endl;
+            
         }
     }
 
