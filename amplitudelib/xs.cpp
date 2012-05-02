@@ -431,7 +431,7 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 			FragmentationFunction* fragfun, PDF* pdf, bool deuteron, Hadron final)
 {
 	Inthelper_dpsint par;
-	par.dps_b = false;
+	par.dps_b = true;
 	par.N=this;
 	par.pdf= pdf; par.sqrts=sqrts; par.deuteron=deuteron; par.final=final;
 	par.fragfun=fragfun; par.miny=miny; par.maxy=maxy; par.minpt=minpt;
@@ -450,8 +450,39 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 		par.y1=miny; par.y2=miny;
 		return SQR(2.0*M_PI)*Inthelperf_dpsint_y2(miny, &par); //(2\pi)^2 from angural integrals
 	}
+	std::vector<double> yvals; 
+    /*yvals.push_back(2.4); yvals.push_back(2.8); yvals.push_back(3.2);
+    yvals.push_back(3.6); yvals.push_back(4);*/
+    yvals.push_back(2.4); yvals.push_back(3.2); yvals.push_back(4);
+    double result=0;
+    for (int y1ind=0; y1ind<yvals.size(); y1ind++)
+    {
+		double tmpres=0;
+		for (int y2ind=0; y2ind<yvals.size(); y2ind++)
+		{
+			cout << "# y1 " << yvals[y1ind] << " y2 " << yvals[y2ind] << endl;
+			par.y1=yvals[y1ind]; par.y2=yvals[y2ind];
+			double res = Inthelperf_dpsint_y2(par.y2, &par);
+			/*if (y2ind==0 or y2ind==4) tmpres += res;
+			else if (y2ind==1 or y2ind==3) tmpres += 4.0*res;
+			else if (y2ind==2) tmpres += 2.0*res;*/
+			if (y2ind==1) tmpres += 4.0*res;
+			else tmpres += res;
+						
+		}
+		tmpres *= (1.6/6.0);
+		if (y1ind==1) result += 4.0*tmpres;
+		else result += tmpres;
+		/*
+		if (y1ind==0 or y1ind==4) result += res;
+		else if (y1ind==1 or y1ind==3) tmpres += 4.0*res;
+		else if (y1ind==2) tmpres += 2.0*res;
+		else cerr << "WTF\n";*/
+	}
+	//result *= 0.4/3.0;
+	result *= 1.6/6.0;
     
-    int status=0; double abserr, result;
+    /*int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_YINTPOINTS);
     status=gsl_integration_qag(&fun, miny, maxy,
@@ -464,7 +495,8 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
             << " relerr " << std::abs(abserr/result) << endl;
     }
     gsl_integration_workspace_free(workspace);
-	return result*SQR(2.0*M_PI);
+	*/
+	return result*SQR(2.0*M_PI);	// 4\pi^2 from angular integrals
 	
 }
 double Inthelperf_dpsint_y1(double y1, void* p)
@@ -493,7 +525,7 @@ double Inthelperf_dpsint_y1(double y1, void* p)
 double Inthelperf_dpsint_y2(double y2, void* p)
 {
 	Inthelper_dpsint* par = (Inthelper_dpsint*) p;
-	cout <<"# y1 " << par->y1 << " y2 "  << y2 << endl;
+	//cout <<"# y1 " << par->y1 << " y2 "  << y2 << endl;
 	par->y2=y2;
 	gsl_function fun;
 	fun.function=Inthelperf_dpsint_pt1;
@@ -518,7 +550,7 @@ double Inthelperf_dpsint_y2(double y2, void* p)
 double Inthelperf_dpsint_pt1(double pt1, void* p)
 {
 	Inthelper_dpsint* par = (Inthelper_dpsint*) p;
-	
+	cout <<"# pt1 " << pt1 << endl;
 	par->pt1=pt1;
 	gsl_function fun;
 	fun.function=Inthelperf_dpsint_pt2;
@@ -543,7 +575,7 @@ double Inthelperf_dpsint_pt1(double pt1, void* p)
 double Inthelperf_dpsint_pt2(double pt2, void* p)
 {
 	Inthelper_dpsint* par = (Inthelper_dpsint*) p;
-	cout <<"# pt1 " << par->pt1 << " pt2 " << pt2 << endl;
+	//cout <<"# pt1 " << par->pt1 << " pt2 " << pt2 << endl;
 	
 	
 	double result = 0;
