@@ -115,7 +115,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrt
     helper.y=y;
 
     double result=0; double abserr=0;
-    const int MULTIPLICITYXINTPOINTS=1;
+    const int MULTIPLICITYXINTPOINTS=4;
 
     
     gsl_function fun;
@@ -133,7 +133,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrt
 
     if (status)
         cerr << "z integral failed at " << LINEINFO <<": result " << result
-        << " relerror " << std::abs(abserr/result) << endl;
+        << " relerror " << std::abs(abserr/result) << " y " << y << " pt " << pt << endl;
 
 
     result *= K / SQR(2.0*M_PI);
@@ -286,24 +286,32 @@ struct Inthelper_dps
     double xf1,xf2;
     double z1;
     PDF *pdf;
+    char dps_mode;
+    
+    double cache_sk1;	// cached N(x_A, pt1/z1)
 };
 
 
-const int DPS_ZINTPOINTS = 6;
+const int DPS_ZINTPOINTS = 5;
 
 double Inthelperf_dps_z1(double z1, void* p);
 double Inthelperf_dps_z2(double z2, void* p);
 
+/*
+ * Calculate dN/d^2 p_1 d^2 p_2 dy_1 dy_2 for DPS contribution a+c
+ */
+
 double AmplitudeLib::DPS(double y1, double y2, double pt1, double pt2, double sqrts,
-              FragmentationFunction* fragfun, PDF *pdf, bool deuteron, Hadron final)
+              FragmentationFunction* fragfun, PDF *pdf, bool deuteron, Hadron final, char dps_mode)
 {	const double ncoll = 15.1;	// central d+Au
-	const double C_p = 3;
+	const double C_p = 1;
 	Inthelper_dps par;
 	par.xf1 = pt1/sqrts*std::exp(y1);
 	par.xf2 = pt2/sqrts*std::exp(y2);
 	par.y1=y1; par.y2=y2; par.pt1=pt1; par.pt2=pt2; par.N=this;
 	par.pdf= pdf; par.sqrts=sqrts; par.deuteron=deuteron; par.final=final;
 	par.fragfun=fragfun;
+	par.dps_mode=dps_mode;
 	
 	gsl_function fun;
     fun.function=Inthelperf_dps_z1;
@@ -325,8 +333,15 @@ double AmplitudeLib::DPS(double y1, double y2, double pt1, double pt2, double sq
     
     gsl_integration_workspace_free(workspace);
 	
+	if (dps_mode=='a')
+		result *= C_p/ncoll;
+	else if (dps_mode=='c')
+		result *= C_p;
+	else
+		cerr << "WTF I just did? dpsmode " << dps_mode << endl;
 	
-	result *= (1.0 + 1.0/ncoll) * C_p / std::pow(2.0*M_PI, 4);
+	
+	result /= std::pow(2.0*M_PI, 4);
 	return result;
 	
 }
@@ -335,9 +350,20 @@ double Inthelperf_dps_z1(double z1, void* p)
 {
 	Inthelper_dps* par = (Inthelper_dps*)p;
 	par->z1=z1;
+	par->cache_sk1=-1;
 	gsl_function fun;
     fun.function=Inthelperf_dps_z2;
     fun.params=par;
+    
+    // In contribution (c) cache N(x_A1, pt1/z1) as it does not
+    // depend on z_2
+    if (par->dps_mode=='c')
+    {
+		double xa1 = par->pt1/z1*std::exp(-par->y1)/par->sqrts;
+		double ya1 = std::log(par->N->X0() / xa1);
+		par->N->InitializeInterpolation(ya1);
+		par->cache_sk1 = par->N->S_k(par->pt1/z1, ya1);
+	}
     
     int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
@@ -360,30 +386,47 @@ double Inthelperf_dps_z1(double z1, void* p)
 double Inthelperf_dps_z2(double z2, void* p)
 {
 	Inthelper_dps* par = (Inthelper_dps*)p;
+	par->N->SetOutOfRangeErrors(false);
+	
 	double xp1 = par->xf1 / par->z1;
 	double xp2 = par->xf2 / z2;
-	double xa1 = xp1 * std::exp(-2.0*par->y1);
-	double xa2 = xp2 * std::exp(-2.0*par->y2);
-	double ya1 = std::log( par->N->X0() / xa1);
-	double ya2 = std::log( par->N->X0() / xa2);
-	if (ya1<0 or ya2<0)
+	double scale = std::max(par->pt1, par->pt2);
+	
+	if (xp1 + xp2 >=1)
+		return 0;	// Kinematical constraint, two quarks from the same proton
+	
+	double nsqr = 0;	// N(x_1, p_1)*N(x_2, p_2)
+	
+	if (par->dps_mode=='a')
 	{
-		cerr <<"Too large x_A: xa1=" << xa1 <<", xa2=" << xa2 <<", xp1=" << xp1 <<", xp2=" 
-			<< xp2 <<", z1=" << par->z1 <<", z2=" << z2 << ", xf1=" << par->xf1
-			<<", xf2=" << par->xf2 << " " << LINEINFO <<endl;
+		// Scattering off one gluon
+		double xa = (par->pt1/par->z1*std::exp(-par->y1) + par->pt2/z2*std::exp(-par->y2))
+					/ par->sqrts;
+		double ya = std::log( par->N->X0() / xa);
+		if (ya<0)
+		{
+			cerr << "Too large x_A=" << xa << " at " << LINEINFO << endl;
+			exit(1);
+		}
+		par->N->InitializeInterpolation(ya);
+		nsqr = par->N->S_k(par->pt1/par->z1, ya) * par->N->S_k(par->pt2/z2, ya);
+	}
+	else if (par->dps_mode=='c')
+	{	
+		//double xa1 = xp1 * std::exp(-2.0*par->y1);
+		double xa2 = xp2 * std::exp(-2.0*par->y2);
+		//double ya1 = std::log( par->N->X0() / xa1);
+		double ya2 = std::log( par->N->X0() / xa2);
+		double nf1 = par->cache_sk1;
+		par->N->InitializeInterpolation(ya2);
+		double nf2 = par->N->S_k(par->pt2/z2, ya2);
+		nsqr = nf1*nf2;
+	}	
+	else
+	{	cerr << "Unkown dps mode " << par->dps_mode << endl;
 		exit(1);
 	}
-	
-	if (xp2 / (1.0-xp1) >= 1.0)
-		return 0;
-	
-	par->N->SetOutOfRangeErrors(false);
-	par->N->InitializeInterpolation(ya1);
-	double nf1 = par->N->S_k(par->pt1/par->z1, ya1);
-	par->N->InitializeInterpolation(ya2);
-	double nf2 = par->N->S_k(par->pt2/z2, ya2);
-	
-	double scale = std::max(par->pt1, par->pt2);
+
 	
 	Parton partons[2] = {U, D};
 	double xf_d=0;	// x1*x2*f(x1,x2)*D(z1)*D(z2)
@@ -391,20 +434,20 @@ double Inthelperf_dps_z2(double z2, void* p)
 	{
 		for (int p2ind=0; p2ind<=1; p2ind++)
 		{
-			// Average over proton and neutron
+			// Symmetrize DPDF with kinematical constraint
 			xf_d += 0.5 * (
 				par->pdf->xq(xp1, scale , partons[p1ind])/(xp1)
 				* par->pdf->xq( xp2/(1.0-xp1), scale, partons[p2ind] ) / ( xp2/(1.0-xp1) ) 
 			   + par->pdf->xq(xp2, scale , partons[p2ind])/(xp2)
 				* par->pdf->xq( xp1/(1.0-xp2), scale, partons[p1ind] ) / ( xp1/(1.0-xp2) )
 			) * xp1*xp2	
-			*  par->fragfun->Evaluate(partons[p1ind], par->final, par->z1, scale)
+			 * par->fragfun->Evaluate(partons[p1ind], par->final, par->z1, scale)
 			 * par->fragfun->Evaluate(partons[p2ind], par->final, z2, scale);	
 		}
 	}		
-	double result = nf1*nf2*xf_d;		
+	double result = nsqr*xf_d;		
 	
-	return result/SQR(z2);	
+	return result/SQR(z2);		
 }
 
 /*
@@ -419,7 +462,7 @@ struct Inthelper_dpsint
 	PDF* pdf;
 	bool deuteron;
 	Hadron final;
-	bool dps_b;
+	char dps_mode;
 };
 const int DPS_YINTPOINTS = 1;
 const int DPS_PTINTPOINTS = 1;
@@ -428,17 +471,19 @@ double Inthelperf_dpsint_y2(double y2, void* p);
 double Inthelperf_dpsint_pt1(double pt1, void* p);
 double Inthelperf_dpsint_pt2(double pt2, void* p);
 double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, double maxpt, double sqrts,
-			FragmentationFunction* fragfun, PDF* pdf, bool deuteron, Hadron final)
+			FragmentationFunction* fragfun, PDF* pdf, bool deuteron, Hadron final, char dps_mode)
 {
 	Inthelper_dpsint par;
-	par.dps_b = true;
+	par.dps_mode = dps_mode;
 	par.N=this;
 	par.pdf= pdf; par.sqrts=sqrts; par.deuteron=deuteron; par.final=final;
 	par.fragfun=fragfun; par.miny=miny; par.maxy=maxy; par.minpt=minpt;
 	par.maxpt=maxpt;
 	
-	cout <<"# DPS contribution integrating yrange " << miny << " - " << maxy 
-		<<", ptrange " << minpt << " " << maxpt << " contrib b: " << par.dps_b << endl;
+	cout <<"# DPS contribution "
+	/*integrating yrange " << miny << " - " << maxy 
+		<<", ptrange " << minpt << " " << maxpt */
+		<< " contrib: " << par.dps_mode << endl;
 	
 	gsl_function fun;
     fun.function=Inthelperf_dpsint_y1;
@@ -453,7 +498,7 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 	std::vector<double> yvals; 
     /*yvals.push_back(2.4); yvals.push_back(2.8); yvals.push_back(3.2);
     yvals.push_back(3.6); yvals.push_back(4);*/
-    yvals.push_back(2.4); yvals.push_back(3.2); yvals.push_back(4);
+    yvals.push_back(3); yvals.push_back(3.4); yvals.push_back(3.8);
     double result=0;
     for (int y1ind=0; y1ind<yvals.size(); y1ind++)
     {
@@ -470,7 +515,7 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 			else tmpres += res;
 						
 		}
-		tmpres *= (1.6/6.0);
+		tmpres *= ( (yvals[yvals.size()-1] - yvals[0])/6.0);
 		if (y1ind==1) result += 4.0*tmpres;
 		else result += tmpres;
 		/*
@@ -479,8 +524,7 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 		else if (y1ind==2) tmpres += 2.0*res;
 		else cerr << "WTF\n";*/
 	}
-	//result *= 0.4/3.0;
-	result *= 1.6/6.0;
+	result *= ( (yvals[yvals.size()-1] - yvals[0])/6.0);
     
     /*int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
@@ -534,7 +578,7 @@ double Inthelperf_dpsint_y2(double y2, void* p)
     int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
-    status=gsl_integration_qag(&fun, 2, 5,
+    status=gsl_integration_qag(&fun, 1.1, 1.6,
             0, 0.1, DPS_PTINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
 
@@ -559,7 +603,7 @@ double Inthelperf_dpsint_pt1(double pt1, void* p)
     int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
-    status=gsl_integration_qag(&fun, 1, pt1,
+    status=gsl_integration_qag(&fun, 0.5, 0.75,
             0, 0.1, DPS_PTINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
 
@@ -579,9 +623,9 @@ double Inthelperf_dpsint_pt2(double pt2, void* p)
 	
 	
 	double result = 0;
-	if (!par->dps_b)	// a + c
+	if (par->dps_mode=='a' or par->dps_mode=='c')
 		result = par->N->DPS(par->y1, par->y2, par->pt1, pt2, 
-			par->sqrts, par->fragfun, par->pdf, par->deuteron, par->final);
+			par->sqrts, par->fragfun, par->pdf, par->deuteron, par->final, par->dps_mode);
 	else // b
 		result = par->N->dHadronMultiplicity_dyd2pt(par->y1, par->pt1, par->sqrts, par->fragfun, par->pdf, false, par->final)
 			*  par->N->dHadronMultiplicity_dyd2pt(par->y2, pt2, par->sqrts, par->fragfun, par->pdf, false, par->final);

@@ -588,6 +588,13 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
  */
 void AmplitudeLib::InitializeInterpolation(double y, bool bspline)
 {
+	if (y<0)
+	{
+		cerr << "Asked to initialize interpolator with negative rapidity! "
+			<< "Dont know what to do, panicking..." << endl;
+		exit(1);
+	}
+	
     if (std::abs(interpolator_y - y) < 0.01) return;    // Already done it
     if (interpolator_y>=0)
     {

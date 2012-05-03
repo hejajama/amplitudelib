@@ -65,7 +65,9 @@ int main(int argc, char* argv[])
     bool bspline=false;
     bool deuteron=false;
     double miny=3; double maxy=4;
+    double minpt=1, maxpt=4;
     double sqrts=200;
+    char dps_mode='a';
     Hadron final_particle = PI0;    // final state particle in single particle
                                     // production
     Parton parton=U;
@@ -88,7 +90,8 @@ int main(int argc, char* argv[])
         cout << "-pt_spectrum_avg: same as above, but average over y region, must set miny and maxy" << endl;
         cout << "-hadronprod_int p/d pi0/ch/hn: integrated over pt and y range" << endl;
         cout << "-miny y, -maxy y" << endl;
-        cout << "-dps: doupe parton scattering, same arguments as -pt_spectrum" << endl;
+        cout << "-minpt, -maxpt" << endl;
+        cout << "-dps p/d pi0/ch/hn a/b/c: doupe parton scattering" << endl;
         cout << "-dsigmady: print d\\sigma/dy" << endl;
         cout << "-satscale Ns, print satscale r_s defined as N(r_s)=Ns" << endl;
         cout << "-F2 Qsqr" << endl;
@@ -111,6 +114,10 @@ int main(int argc, char* argv[])
             miny = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-maxy")
             maxy = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-minpt")
+            minpt = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-maxpt")
+            maxpt = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-data")
             datafile = argv[i+1];
         else if (string(argv[i])=="-kspace")
@@ -210,6 +217,7 @@ int main(int argc, char* argv[])
                 cerr << "Invalid final state particle " << argv[i+2] << endl;
                 exit(1);
             }
+            dps_mode = string(argv[i+3])[0];
         }
         else if (string(argv[i])=="-bspline")
             bspline=true;
@@ -415,8 +423,7 @@ int main(int argc, char* argv[])
         {
             double tmpk = mink*std::pow(kmultiplier, kind);
             double result = N.UGD(tmpk, y);
-            cout << tmpk << " " << result << " " << Alpha_s(SQR(tmpk)) <<endl;
-            
+                cout << tmpk << " " << result << " " << Alpha_s(SQR(tmpk)) <<endl;
         }
     }
 
@@ -433,7 +440,7 @@ int main(int argc, char* argv[])
         cout << "# Fragfun: " << fragfun->GetString() << endl;
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
         cout << "# p_T   d\\sigma" << endl;
-        for (double pt=1; pt<5; pt+=0.1)
+        for (double pt=minpt; pt<maxpt; pt+=0.1)
         {
             double result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, &pdf,
                 deuteron, final_particle);;
@@ -469,7 +476,6 @@ int main(int argc, char* argv[])
         }
         CTEQ pdf;
         pdf.Initialize();
-        double minpt=2; double maxpt=7;
         cout << "# Hadron production integrated over pt: " << minpt << " - " << maxpt << endl;
         cout << "# y: " << miny << " - " << maxy << endl;
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
@@ -488,14 +494,14 @@ int main(int argc, char* argv[])
         }
         CTEQ pdf; pdf.Initialize();
         double pt1=1, pt2=2, y1=4.2, y2=4.1;
-        cout << "# DPS " << endl;
+        cout << "# DPS " << dps_mode << endl;
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
         cout << "# Fragfun: " << fragfun->GetString() << endl;
         cout << "# sqrt(s)=" << sqrts << " GeV" << endl;
-        cout << "# pt1: " << pt1 << " pt2: " << pt2 << " y1: " << y1 << " y2: " << y2 << endl;
+        //cout << "# pt1: " << pt1 << " pt2: " << pt2 << " y1: " << y1 << " y2: " << y2 << endl;
         cout <<"# (a)+(c)  (b)   sum" << endl;
         //double dps = N.DPS(y1,y2,pt1,pt2,sqrts, fragfun, &pdf, deuteron, final_particle);
-        double dps = N.DPSMultiplicity(2.4,4,1,2,sqrts,fragfun, &pdf, deuteron, final_particle);
+        double dps = N.DPSMultiplicity(2.4,4,1,2,sqrts,fragfun, &pdf, deuteron, final_particle, dps_mode);
         //double single_sqr = N.dHadronMultiplicity_dyd2pt(y1, pt1, sqrts, fragfun, &pdf, deuteron, final_particle)
 		//		* N.dHadronMultiplicity_dyd2pt(y2, pt2, sqrts, fragfun, &pdf, deuteron, final_particle);
 		cout << dps << endl; //<< " " << single_sqr << " " << dps+single_sqr << endl;
