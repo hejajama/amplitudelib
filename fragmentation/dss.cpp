@@ -6,6 +6,7 @@
 #include "dss.hpp"
 #include "../tools/config.hpp"
 #include "fragmentation.hpp"
+#include <cstdlib>
 
 extern "C"
 {
@@ -33,7 +34,8 @@ double DSS::Evaluate(Parton p, Hadron h, double x, double qs)
     if (qs*qs<1 or qs*qs>1e5)
     {
         cerr << "Q=" << qs << " GeV out of Q^2 range [1,1e5] GeV^2. " << LINEINFO << endl;
-        return 0;
+        exit(1);
+        //return 0;
     }
 
     int ih, ic, io;

@@ -57,9 +57,9 @@ class AmplitudeLib
             FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0 );
         // Douple parton scattering at fixed pt, y
         double DPS(double y1, double y2, double pt1, double pt2, double sqrts,
-              FragmentationFunction* fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0, char dps_mode='a');
+              FragmentationFunction* fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0, char dps_mode='c');
         double DPSMultiplicity(double miny, double maxy, double minpt, double maxpt, double sqrts,
-			FragmentationFunction* fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0, char dps_mode='a');
+			FragmentationFunction* fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0, char dps_mode='c');
 
         // Unintegrated gluon density
         double UGD(double k, double y, Interpolator* interp=NULL);

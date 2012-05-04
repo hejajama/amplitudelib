@@ -35,6 +35,22 @@ void PDF::PlotPdf(double Q)
 
 }
 
+/*
+ * Double parton distribution function
+ * Following e.g. ref 1009.6123
+ * Returns  x_1x_2f(x_1,x_2)  with kinematical constraint x_1+x_2 < 1
+ */
+
+double PDF::Dpdf(double x1, double x2, double scale, Parton p1, Parton p2)
+{
+	return 0.5 * (
+				xq(x1, scale , p1)/x1
+				 * xq( x2/(1.0-x1), scale, p2 ) / ( x2/(1.0-x1) ) 
+			   + xq(x2, scale , p2)/x2
+				* xq( x1/(1.0-x2), scale, p1 ) / ( x1/(1.0-x2) )
+			) * x1*x2;
+}	
+
 double PDF::MaxX()
 {
     cerr << "PDF::MaxX() is not implemented! " << LINEINFO << endl;

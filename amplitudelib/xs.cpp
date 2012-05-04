@@ -288,7 +288,8 @@ struct Inthelper_dps
     PDF *pdf;
     char dps_mode;
     
-    double cache_sk1;	// cached N(x_A, pt1/z1)
+    double cache_sk1_fund;	// cached N(x_A, pt1/z1)
+    double cache_sk1_adj;	// cached N_A(x_A, pt1/z1) (adjoint rep)
 };
 
 
@@ -306,6 +307,11 @@ double AmplitudeLib::DPS(double y1, double y2, double pt1, double pt2, double sq
 {	const double ncoll = 15.1;	// central d+Au
 	const double C_p = 1;
 	Inthelper_dps par;
+	if (dps_mode != 'c')
+	{
+		cerr << "dps_mode " << dps_mode << " is not supported " << LINEINFO << endl;
+		exit(1);
+	}
 	par.xf1 = pt1/sqrts*std::exp(y1);
 	par.xf2 = pt2/sqrts*std::exp(y2);
 	par.y1=y1; par.y2=y2; par.pt1=pt1; par.pt2=pt2; par.N=this;
@@ -333,12 +339,7 @@ double AmplitudeLib::DPS(double y1, double y2, double pt1, double pt2, double sq
     
     gsl_integration_workspace_free(workspace);
 	
-	if (dps_mode=='a')
-		result *= C_p/ncoll;
-	else if (dps_mode=='c')
-		result *= C_p;
-	else
-		cerr << "WTF I just did? dpsmode " << dps_mode << endl;
+	result *= C_p;
 	
 	
 	result /= std::pow(2.0*M_PI, 4);
@@ -350,20 +351,18 @@ double Inthelperf_dps_z1(double z1, void* p)
 {
 	Inthelper_dps* par = (Inthelper_dps*)p;
 	par->z1=z1;
-	par->cache_sk1=-1;
 	gsl_function fun;
     fun.function=Inthelperf_dps_z2;
     fun.params=par;
     
-    // In contribution (c) cache N(x_A1, pt1/z1) as it does not
-    // depend on z_2
-    if (par->dps_mode=='c')
-    {
-		double xa1 = par->pt1/z1*std::exp(-par->y1)/par->sqrts;
-		double ya1 = std::log(par->N->X0() / xa1);
-		par->N->InitializeInterpolation(ya1);
-		par->cache_sk1 = par->N->S_k(par->pt1/z1, ya1);
-	}
+	// Calculate scattering amplitudes with momenta p_1/z_1 as from now on 
+	// z_1 and x_{A1} are constant
+	double xa1 = par->pt1/z1*std::exp(-par->y1)/par->sqrts;
+	double ya1 = std::log(par->N->X0() / xa1);
+	par->N->InitializeInterpolation(ya1);
+	par->cache_sk1_fund = par->N->S_k(par->pt1/z1, ya1, false);	// fundamental
+	par->cache_sk1_adj = par->N->S_k(par->pt1/z1, ya1, true); // adjoint
+	
     
     int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
@@ -397,55 +396,42 @@ double Inthelperf_dps_z2(double z2, void* p)
 	
 	double nsqr = 0;	// N(x_1, p_1)*N(x_2, p_2)
 	
-	if (par->dps_mode=='a')
-	{
-		// Scattering off one gluon
-		double xa = (par->pt1/par->z1*std::exp(-par->y1) + par->pt2/z2*std::exp(-par->y2))
-					/ par->sqrts;
-		double ya = std::log( par->N->X0() / xa);
-		if (ya<0)
-		{
-			cerr << "Too large x_A=" << xa << " at " << LINEINFO << endl;
-			exit(1);
-		}
-		par->N->InitializeInterpolation(ya);
-		nsqr = par->N->S_k(par->pt1/par->z1, ya) * par->N->S_k(par->pt2/z2, ya);
-	}
-	else if (par->dps_mode=='c')
-	{	
-		//double xa1 = xp1 * std::exp(-2.0*par->y1);
-		double xa2 = xp2 * std::exp(-2.0*par->y2);
-		//double ya1 = std::log( par->N->X0() / xa1);
-		double ya2 = std::log( par->N->X0() / xa2);
-		double nf1 = par->cache_sk1;
-		par->N->InitializeInterpolation(ya2);
-		double nf2 = par->N->S_k(par->pt2/z2, ya2);
-		nsqr = nf1*nf2;
-	}	
-	else
-	{	cerr << "Unkown dps mode " << par->dps_mode << endl;
-		exit(1);
-	}
 
+	//double xa1 = xp1 * std::exp(-2.0*par->y1);
+	double xa2 = xp2 * std::exp(-2.0*par->y2);
+	//double ya1 = std::log( par->N->X0() / xa1);
+	double ya2 = std::log( par->N->X0() / xa2);
+	par->N->InitializeInterpolation(ya2);
+	double nf2 = par->N->S_k(par->pt2/z2, ya2);
+	double na2 = par->N->S_k(par->pt2/z2, ya2, true);	// adjoint rep
 	
-	Parton partons[2] = {U, D};
-	double xf_d=0;	// x1*x2*f(x1,x2)*D(z1)*D(z2)
+	
+	Parton partons[3] = {U, D, G};
+	double result=0;
 	for (int p1ind=0; p1ind<=1; p1ind++)
 	{
 		for (int p2ind=0; p2ind<=1; p2ind++)
 		{
-			// Symmetrize DPDF with kinematical constraint
-			xf_d += 0.5 * (
-				par->pdf->xq(xp1, scale , partons[p1ind])/(xp1)
-				* par->pdf->xq( xp2/(1.0-xp1), scale, partons[p2ind] ) / ( xp2/(1.0-xp1) ) 
-			   + par->pdf->xq(xp2, scale , partons[p2ind])/(xp2)
-				* par->pdf->xq( xp1/(1.0-xp2), scale, partons[p1ind] ) / ( xp1/(1.0-xp2) )
-			) * xp1*xp2	
+			// Ddpf() is symmetrized DPDF with kinematical constraint
+			// Combinatorics: hadron 1/2 can be produced by both partons 1/2
+			double xf_d = par->pdf->Dpdf(xp1, xp2, scale, partons[p1ind], partons[p2ind])
 			 * par->fragfun->Evaluate(partons[p1ind], par->final, par->z1, scale)
-			 * par->fragfun->Evaluate(partons[p2ind], par->final, z2, scale);	
+			 * par->fragfun->Evaluate(partons[p2ind], par->final, z2, scale)
+			 + par->pdf->Dpdf(xp2, xp1, scale, partons[p1ind], partons[p2ind])
+			 * par->fragfun->Evaluate(partons[p2ind], par->final, par->z1, scale)
+			 * par->fragfun->Evaluate(partons[p1ind], par->final, z2, scale);	
+			 
+			 double sk1=0, sk2=0;
+			 // Gluon scattering: S() in adjoint rep
+			 if (partons[p1ind]!=G) sk1 = par->cache_sk1_fund;
+			 else sk1 = par->cache_sk1_adj;
+			 if (partons[p2ind]!=G) sk2 = nf2;
+			 else sk2=na2;
+			 
+			 result += xf_d * sk1*sk2;
 		}
 	}		
-	double result = nsqr*xf_d;		
+	
 	
 	return result/SQR(z2);		
 }
