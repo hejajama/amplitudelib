@@ -19,7 +19,7 @@ extern "C"
         double &b, double &g);
 
     extern struct{
-        int fini;
+        double fini;
     } fragini_;
 }
 
