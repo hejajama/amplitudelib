@@ -256,6 +256,8 @@ double AmplitudeLib::N_k_to_x(double x, double y)
 double S_k_helperf(double r, void* p);
 double AmplitudeLib::S_k(double kt, double y, bool adjoint)
 {
+	SetOutOfRangeErrors(false);
+	
 	if (!InterpolatorInitialized(y))
 		cerr << "Interpolator is not initialized and we are calculating S_k, are you sure? " 
 			<< LINEINFO << endl;

@@ -43,6 +43,7 @@ void PDF::PlotPdf(double Q)
 
 double PDF::Dpdf(double x1, double x2, double scale, Parton p1, Parton p2)
 {
+	if (x1 + x2 >= 1.0) return 0;
 	return 0.5 * (
 				xq(x1, scale , p1)/x1
 				 * xq( x2/(1.0-x1), scale, p2 ) / ( x2/(1.0-x1) ) 

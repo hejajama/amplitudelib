@@ -28,4 +28,4 @@ interpolator: tools/interpolator.o tools/interpolation.o
 clean:
 	rm -f $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.o
 	rm -f amplitude	
-	rm libamplitude.a
+	rm -f libamplitude.a

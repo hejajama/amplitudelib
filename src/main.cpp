@@ -493,15 +493,12 @@ int main(int argc, char* argv[])
             return -1;
         }
         CTEQ pdf; pdf.Initialize();
-        double pt1=1, pt2=2, y1=4.2, y2=4.1;
         cout << "# DPS " << dps_mode << endl;
-        cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
         cout << "# Fragfun: " << fragfun->GetString() << endl;
         cout << "# sqrt(s)=" << sqrts << " GeV" << endl;
         //cout << "# pt1: " << pt1 << " pt2: " << pt2 << " y1: " << y1 << " y2: " << y2 << endl;
-        cout <<"# (a)+(c)  (b)   sum" << endl;
-        //double dps = N.DPS(y1,y2,pt1,pt2,sqrts, fragfun, &pdf, deuteron, final_particle);
-        double dps = N.DPSMultiplicity(2.4,4,1,2,sqrts,fragfun, &pdf, deuteron, final_particle, dps_mode);
+        //double dps = N.DPS(miny,maxy,1.35,0.7,sqrts, fragfun, &pdf, deuteron, final_particle);
+        double dps = N.DPSMultiplicity(miny,maxy,1,2,sqrts,fragfun, &pdf, deuteron, final_particle, dps_mode);
         //double single_sqr = N.dHadronMultiplicity_dyd2pt(y1, pt1, sqrts, fragfun, &pdf, deuteron, final_particle)
 		//		* N.dHadronMultiplicity_dyd2pt(y2, pt2, sqrts, fragfun, &pdf, deuteron, final_particle);
 		cout << dps << endl; //<< " " << single_sqr << " " << dps+single_sqr << endl;

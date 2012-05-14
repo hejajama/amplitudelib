@@ -64,7 +64,8 @@ double Inthelperf_hadronprod(double z, void *p)
     double nf = par->N->S_k(par->pt/z, y_A);
     // PDF and fragmentation
     double xqf = par->pdf->xq(x1, par->pt, U)*par->frag->Evaluate(U, par->final, z, par->pt)
-        + par->pdf->xq(x1, par->pt, D)*par->frag->Evaluate(D, par->final, z, par->pt);
+        + par->pdf->xq(x1, par->pt, D)*par->frag->Evaluate(D, par->final, z, par->pt)
+        + par->pdf->xq(x1, par->pt, S)*par->frag->Evaluate(S, par->final, z, par->pt);
 
     if (deuteron)
     {
@@ -406,11 +407,11 @@ double Inthelperf_dps_z2(double z2, void* p)
 	double na2 = par->N->S_k(par->pt2/z2, ya2, true);	// adjoint rep
 	
 	
-	Parton partons[3] = {U, D, G};
+	Parton partons[4] = {U, D, S, G};
 	double result=0;
-	for (int p1ind=0; p1ind<=1; p1ind++)
+	for (int p1ind=0; p1ind<=3; p1ind++)
 	{
-		for (int p2ind=0; p2ind<=1; p2ind++)
+		for (int p2ind=0; p2ind<=p1ind; p2ind++)
 		{
 			// Ddpf() is symmetrized DPDF with kinematical constraint
 			// Combinatorics: hadron 1/2 can be produced by both partons 1/2
@@ -484,7 +485,7 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 	std::vector<double> yvals; 
     /*yvals.push_back(2.4); yvals.push_back(2.8); yvals.push_back(3.2);
     yvals.push_back(3.6); yvals.push_back(4);*/
-    yvals.push_back(3); yvals.push_back(3.4); yvals.push_back(3.8);
+    yvals.push_back(3); yvals.push_back(3.266); yvals.push_back(3.533); yvals.push_back(3.8);
     double result=0;
     for (int y1ind=0; y1ind<yvals.size(); y1ind++)
     {
@@ -497,20 +498,37 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 			/*if (y2ind==0 or y2ind==4) tmpres += res;
 			else if (y2ind==1 or y2ind==3) tmpres += 4.0*res;
 			else if (y2ind==2) tmpres += 2.0*res;*/
-			if (y2ind==1) tmpres += 4.0*res;
-			else tmpres += res;
+			if (yvals.size()==3)
+			{
+				if (y2ind==1) tmpres += 4.0*res;
+				else tmpres += res;
+			} 
+			else if (yvals.size()==4)
+			{
+				if (y2ind==0 or y2ind==3) tmpres += res;
+				else tmpres += 3.0*res;
+			}
 						
 		}
-		tmpres *= ( (yvals[yvals.size()-1] - yvals[0])/6.0);
-		if (y1ind==1) result += 4.0*tmpres;
-		else result += tmpres;
-		/*
-		if (y1ind==0 or y1ind==4) result += res;
-		else if (y1ind==1 or y1ind==3) tmpres += 4.0*res;
-		else if (y1ind==2) tmpres += 2.0*res;
-		else cerr << "WTF\n";*/
+		if (yvals.size()==3)
+		{
+			tmpres *= ( (yvals[yvals.size()-1] - yvals[0])/6.0);
+			if (y1ind==1) result += 4.0*tmpres;
+			else result += tmpres;
+		}
+		else if (yvals.size()==4)
+		{
+			tmpres *= ( (yvals[yvals.size()-1] - yvals[0])/8.0);
+			if (y1ind==0 or y1ind==3) result += tmpres;
+			else result += 3.0*tmpres;
+		}
+		else
+			cerr << "WTF! " << LINEINFO << endl;
 	}
-	result *= ( (yvals[yvals.size()-1] - yvals[0])/6.0);
+	if (yvals.size()==3)
+		result *= ( (yvals[yvals.size()-1] - yvals[0])/6.0);
+	else if (yvals.size()==4)
+		result *= ( (yvals[yvals.size()-1] - yvals[0])/8.0);
     
     /*int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
