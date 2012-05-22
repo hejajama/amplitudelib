@@ -28,6 +28,9 @@ void InitializeWSDistribution(int A);
 
 int FindIndex(REAL val, std::vector<REAL> &array);
 
+// Subtract the samallest element of the array from each element
+void SubtractMinimum(std::vector<double> &array);	
+
 std::string Alpha_s_str();
 
 #endif

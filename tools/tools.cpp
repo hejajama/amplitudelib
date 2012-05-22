@@ -208,3 +208,22 @@ void InitializeWSDistribution(int A)
 	
 	w_s_normalization = 1.0/res;
 }
+
+/*
+ * Subtract the smallest element of the vector from the array
+ * Forcest that vec[min]=0
+ */
+void SubtractMinimum(std::vector<double> &array)
+{
+	if (array.size()==0) return;
+	
+	double min = array[0];
+	for (uint i=1; i<array.size(); i++)
+	{
+		if (array[i]<min)
+			min=array[i];
+	}
+	
+	for (uint i=0; i<array.size(); i++)
+		array[i]=array[i]-min;
+}

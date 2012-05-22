@@ -294,7 +294,7 @@ struct Inthelper_dps
 };
 
 
-const int DPS_ZINTPOINTS = 5;
+const int DPS_ZINTPOINTS = 1;
 
 double Inthelperf_dps_z1(double z1, void* p);
 double Inthelperf_dps_z2(double z2, void* p);
@@ -364,11 +364,13 @@ double Inthelperf_dps_z1(double z1, void* p)
 	par->cache_sk1_fund = par->N->S_k(par->pt1/z1, ya1, false);	// fundamental
 	par->cache_sk1_adj = par->N->S_k(par->pt1/z1, ya1, true); // adjoint
 	
+	double minz2 = z1*par->xf2 / (z1-par->xf1);
+	if (minz2>1) return 0;
     
     int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_ZINTPOINTS);
-    status=gsl_integration_qag(&fun, par->xf2, 1.0,
+    status=gsl_integration_qag(&fun, minz2, 1.0,
             0, 0.1, DPS_ZINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
 
@@ -377,7 +379,6 @@ double Inthelperf_dps_z1(double z1, void* p)
         cerr << "z2int failed at " << LINEINFO <<", result " << result
             << " relerr " << std::abs(abserr/result) << endl;
     }
-
     gsl_integration_workspace_free(workspace);
     return result/SQR(z1);
     
@@ -394,8 +395,8 @@ double Inthelperf_dps_z2(double z2, void* p)
 	
 	if (xp1 + xp2 >=1)
 		return 0;	// Kinematical constraint, two quarks from the same proton
-	
-	double nsqr = 0;	// N(x_1, p_1)*N(x_2, p_2)
+		// probably never true, as lower limit of z2 integral is chosen s.t.
+		// the kinematical constraint is fulfilled
 	
 
 	//double xa1 = xp1 * std::exp(-2.0*par->y1);
@@ -406,10 +407,9 @@ double Inthelperf_dps_z2(double z2, void* p)
 	double nf2 = par->N->S_k(par->pt2/z2, ya2);
 	double na2 = par->N->S_k(par->pt2/z2, ya2, true);	// adjoint rep
 	
-	
-	Parton partons[4] = {U, D, S, G};
+	std::vector<Parton> partons; partons.push_back(U); partons.push_back(D); partons.push_back(G);
 	double result=0;
-	for (int p1ind=0; p1ind<=3; p1ind++)
+	for (int p1ind=0; p1ind<=partons.size(); p1ind++)
 	{
 		for (int p2ind=0; p2ind<=p1ind; p2ind++)
 		{
@@ -483,9 +483,9 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 		return SQR(2.0*M_PI)*Inthelperf_dpsint_y2(miny, &par); //(2\pi)^2 from angural integrals
 	}
 	std::vector<double> yvals; 
-    /*yvals.push_back(2.4); yvals.push_back(2.8); yvals.push_back(3.2);
-    yvals.push_back(3.6); yvals.push_back(4);*/
-    yvals.push_back(3); yvals.push_back(3.266); yvals.push_back(3.533); yvals.push_back(3.8);
+    yvals.push_back(2.4);  yvals.push_back(3.2); yvals.push_back(4);
+    //yvals.push_back(3); yvals.push_back(3.4); yvals.push_back(3.8);
+    //yvals.push_back(3); yvals.push_back(3.266); yvals.push_back(3.533); yvals.push_back(3.8);
     double result=0;
     for (int y1ind=0; y1ind<yvals.size(); y1ind++)
     {
@@ -512,7 +512,7 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 		}
 		if (yvals.size()==3)
 		{
-			tmpres *= ( (yvals[yvals.size()-1] - yvals[0])/6.0);
+			tmpres *=  (yvals[yvals.size()-1] - yvals[0])/6.0;
 			if (y1ind==1) result += 4.0*tmpres;
 			else result += tmpres;
 		}
@@ -526,7 +526,7 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 			cerr << "WTF! " << LINEINFO << endl;
 	}
 	if (yvals.size()==3)
-		result *= ( (yvals[yvals.size()-1] - yvals[0])/6.0);
+		result *= (yvals[yvals.size()-1] - yvals[0])/6.0;
 	else if (yvals.size()==4)
 		result *= ( (yvals[yvals.size()-1] - yvals[0])/8.0);
     
@@ -582,7 +582,7 @@ double Inthelperf_dpsint_y2(double y2, void* p)
     int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
-    status=gsl_integration_qag(&fun, 1.1, 1.6,
+    status=gsl_integration_qag(&fun, 2.0, 4.0,
             0, 0.1, DPS_PTINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
 
@@ -607,7 +607,7 @@ double Inthelperf_dpsint_pt1(double pt1, void* p)
     int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
-    status=gsl_integration_qag(&fun, 0.5, 0.75,
+    status=gsl_integration_qag(&fun,1.0, pt1,
             0, 0.1, DPS_PTINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
 
