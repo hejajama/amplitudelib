@@ -29,6 +29,7 @@ struct Inthelper_hadronprod
     bool deuteron;
     Hadron final;
     bool ptint;     // if false, don't integrate over pt
+    double scale;
 };
 
 double Inthelperf_hadronprod(double z, void *p)
@@ -42,6 +43,9 @@ double Inthelperf_hadronprod(double z, void *p)
 		cerr << "Entering kinematically fobidden region at y=" << par->y <<", pt=" << par->pt << " " << LINEINFO << endl;
 		return 0;
 	}
+	
+	double scale=par->scale;
+	if (scale<0) scale = par->pt;
     
     double y_A = std::log(par->N->X0()/x2);
 
@@ -63,22 +67,22 @@ double Inthelperf_hadronprod(double z, void *p)
     // UGD in fundamental representation
     double nf = par->N->S_k(par->pt/z, y_A);
     // PDF and fragmentation
-    double xqf = par->pdf->xq(x1, par->pt, U)*par->frag->Evaluate(U, par->final, z, par->pt)
-        + par->pdf->xq(x1, par->pt, D)*par->frag->Evaluate(D, par->final, z, par->pt)
-        + par->pdf->xq(x1, par->pt, S)*par->frag->Evaluate(S, par->final, z, par->pt);
+    double xqf = par->pdf->xq(x1, scale, U)*par->frag->Evaluate(U, par->final, z, scale)
+        + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(D, par->final, z, scale)
+        + par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
 
     if (deuteron)
     {
         // isospin symmetry, u in p -> d in n
-        xqf += par->pdf->xq(x1, par->pt, U)*par->frag->Evaluate(D, par->final, z, par->pt)
-        + par->pdf->xq(x1, par->pt, D)*par->frag->Evaluate(U, par->final, z, par->pt);
+        xqf += par->pdf->xq(x1, scale, U)*par->frag->Evaluate(D, par->final, z, scale)
+        + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(U, par->final, z, scale);
     }
         
     result = nf*xqf;
 
     // Adjoint representation, gluon scatters
     double na = par->N->S_k(par->pt/z, y_A, true);
-    xqf = par->pdf->xq(x1, par->pt, G)*par->frag->Evaluate(G, par->final, z, par->pt);
+    xqf = par->pdf->xq(x1, scale, G)*par->frag->Evaluate(G, par->final, z, scale);
     if (deuteron) xqf *= 2.0;   // gluon pdf gets multiplied by 2
     result += na*xqf;
 
@@ -90,9 +94,11 @@ double Inthelperf_hadronprod(double z, void *p)
  * if deuteron is true (default: false), the probe is deuteron, not proton
  * => use isospin symmetry
  * Default final state particle is PI0
+ * If optional parameter scale is given (default: -1), use it when evaluating PDF/FF
+ * (used e.g. when calculating DPS contribution (b))
  */
 double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrts,
-    FragmentationFunction* fragfun, PDF* pdf, bool deuteron, Hadron final )
+    FragmentationFunction* fragfun, PDF* pdf, bool deuteron, Hadron final, double scale )
 {
     const double K = 1.0; // normalization factor
     // We assume light hadrons
@@ -113,7 +119,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrt
     helper.final=final;
     helper.sqrts=sqrts;
     helper.pdf=pdf; helper.frag=fragfun;
-    helper.y=y;
+    helper.y=y; helper.scale=scale;
 
     double result=0; double abserr=0;
     const int MULTIPLICITYXINTPOINTS=4;
@@ -631,7 +637,10 @@ double Inthelperf_dpsint_pt2(double pt2, void* p)
 		result = par->N->DPS(par->y1, par->y2, par->pt1, pt2, 
 			par->sqrts, par->fragfun, par->pdf, par->deuteron, par->final, par->dps_mode);
 	else // b
-		result = par->N->dHadronMultiplicity_dyd2pt(par->y1, par->pt1, par->sqrts, par->fragfun, par->pdf, false, par->final)
-			*  par->N->dHadronMultiplicity_dyd2pt(par->y2, pt2, par->sqrts, par->fragfun, par->pdf, false, par->final);
+	{
+		double scale = std::max(pt2, par->pt1);
+		result = par->N->dHadronMultiplicity_dyd2pt(par->y1, par->pt1, par->sqrts, par->fragfun, par->pdf, false, par->final, scale)
+			*  par->N->dHadronMultiplicity_dyd2pt(par->y2, pt2, par->sqrts, par->fragfun, par->pdf, false, par->final, scale);
+	}
 	return pt2 * par->pt1 * result;
 }

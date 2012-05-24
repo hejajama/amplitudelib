@@ -48,7 +48,7 @@ class AmplitudeLib
         // Differential forward hadron production multiplicity
         // dN_h / (dy_h d^2 p_T)
         double dHadronMultiplicity_dyd2pt(double y, double pt, double sqrts,
-            FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0 );
+            FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0, double scale=-1 );
         // Integrated over rapidity and pt range
         double HadronMultiplicity(double miny, double maxy, double minpt, double maxpt, double sqrts,
             FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0 );
