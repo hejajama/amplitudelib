@@ -110,6 +110,7 @@ std::string PKHFF::GetString()
 PKHFF::PKHFF()
 {
     ifini=0;
+    cerr << "PHKFF is not well tested/may not support NLO/LO" << endl;
 
 }
  

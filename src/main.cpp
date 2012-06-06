@@ -66,6 +66,7 @@ int main(int argc, char* argv[])
     bool deuteron=false;
     double miny=3; double maxy=4;
     double minpt=1, maxpt=4;
+    Order order=NLO;
     double sqrts=200;
     char dps_mode='a';
     Hadron final_particle = PI0;    // final state particle in single particle
@@ -101,6 +102,7 @@ int main(int argc, char* argv[])
         cout << "-sqrts sqrts (in GeV)" << endl;
         cout << "-print_ff [u,d,s,g] [pi0,pim,pip,hm,hp] qsqr" << endl;
         cout << "-print_pdf [u,d,g] qsqr" << endl;
+        cout << "-lo: user LO PDF/FF instead of NLO" << endl;
         return 0;
     }
 
@@ -288,6 +290,10 @@ int main(int argc, char* argv[])
 			mode = PRINT_PDF;
             Qsqr = StrToReal(argv[i+1]);
         }
+        else if (string(argv[i])=="-lo")
+        {
+			order=LO;
+		}
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -297,6 +303,13 @@ int main(int argc, char* argv[])
     }
 
     cout << "# Reading data from file " << datafile << endl;
+    cout <<"# Order: "; if (order==LO) cout << "LO"; else cout << "NLO"; cout << endl;
+    CTEQ pdf;
+    if (fragfun==NULL)
+		fragfun = new DSS(); 
+    fragfun->SetOrder(order);
+    pdf.SetOrder(order);
+    cout << "# PDF: " << pdf.GetString() <<", FF: " << fragfun->GetString() << endl;
     AmplitudeLib N(datafile, kspace);
     N.InitializeInterpolation(y,bspline);
     if (xbj>=0) y = std::log(N.X0()/xbj);
@@ -310,12 +323,13 @@ int main(int argc, char* argv[])
         double mink = 1e-5; double maxk = 1.0/N.MinR()*100;
         int kpoints=100;
         double kmultiplier = std::pow(maxk/mink, 1.0/(kpoints-1.0));
-        cout << "# k [GeV]     Amplitude   k/Q_s" << endl;
+        cout << "# k [GeV]     Amplitude N(k)    FT of S   k/Q_s" << endl;
         for (int kind=0; kind<kpoints; kind++)
         {
             double tmpk = mink*std::pow(kmultiplier, kind);
             double res = N.N_k(tmpk, y);
-            cout <<tmpk << " " << res << " " << tmpk/qs << endl;
+            double ft_s=N.S_k(tmpk, y);
+            cout <<tmpk << " " << res << " " << ft_s << " " << tmpk/qs << endl;
         }
     }
     else if (mode==S_X_TO_K)
@@ -429,7 +443,6 @@ int main(int argc, char* argv[])
 
     else if (mode==PTSPECTRUM)
     {
-        CTEQ pdf;
         pdf.Initialize();
         if (fragfun==NULL)
         {
@@ -449,7 +462,6 @@ int main(int argc, char* argv[])
     }
     else if (mode==PTSPECTRUM_AVG)
     {
-        CTEQ pdf;
         pdf.Initialize();
         if (fragfun==NULL)
         {
@@ -474,7 +486,6 @@ int main(int argc, char* argv[])
             cerr << "Fragfun not spesified!" << endl;
             return -1;
         }
-        CTEQ pdf;
         pdf.Initialize();
         cout << "# Hadron production integrated over pt: " << minpt << " - " << maxpt << endl;
         cout << "# y: " << miny << " - " << maxy << endl;
@@ -492,7 +503,6 @@ int main(int argc, char* argv[])
             cerr << "Fragfun not spesified!" << endl;
             return -1;
         }
-        CTEQ pdf; pdf.Initialize();
         cout << "# DPS " << dps_mode << endl;
         cout << "# Fragfun: " << fragfun->GetString() << endl;
         cout << "# sqrt(s)=" << sqrts << " GeV" << endl;
@@ -568,8 +578,6 @@ int main(int argc, char* argv[])
     
     else if (mode == PRINT_PDF)
     {
-		CTEQ pdf;
-		pdf.Initialize();
 		double q = std::sqrt(Qsqr);
 		cout <<"# PDF: " << pdf.GetString() << ", Q^2 = " << Qsqr << " GeV^2 " << endl;
 		cout << "# x    x*f_u  x*f_d  x*f_s  x_f_g " << endl;

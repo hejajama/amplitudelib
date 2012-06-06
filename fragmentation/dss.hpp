@@ -17,6 +17,7 @@ class DSS : public FragmentationFunction
         double Evaluate(Parton p, Hadron h, double x, double qs);
         DSS();
         std::string GetString();
+        void SetOrder(Order order_);
     private:
         bool initialized;
 

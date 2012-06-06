@@ -132,6 +132,6 @@ std::string HKNS::GetString()
 
 HKNS::HKNS()
 {
-
+	cerr << "HKNS is not well tested and may not support LO/NLO!" << endl;
 }
  

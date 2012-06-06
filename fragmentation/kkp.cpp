@@ -38,7 +38,9 @@ REAL KKP::Evaluate(Parton p, Hadron h, REAL x, REAL qs)
         cerr <<"Hadron type " << h << " is not supported by KKP fragmentation! "
             << LINEINFO << endl;
 
-    int set=1;  // NLO
+	int set=0;
+	if (order == NLO)
+		set=1; 
     kkp_(hadron, set, x, qs, partons);
     REAL result=0;
     if (p==G) result = partons[0];

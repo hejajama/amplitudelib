@@ -56,5 +56,10 @@ enum Parton
             UBAR,DBAR,SBAR
 };
 
+enum Order
+{
+    LO,
+    NLO
+};
 
 #endif

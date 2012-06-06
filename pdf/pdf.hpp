@@ -23,10 +23,12 @@ class PDF
         virtual double MinQ();   // GeV
         virtual double MaxX();
         virtual double MaxQ();
+        virtual void SetOrder(Order o);
 
         void PlotPdf(double Q);
 	protected:
 		bool initialized;
+		Order order;
 };
 
 #endif

@@ -73,3 +73,8 @@ double PDF::MinQ()
     cerr << "PDF::MinQ() is not implemented! " << LINEINFO << endl;
     return 0;
 }
+
+void PDF::SetOrder(Order o)
+{
+	cerr << "PDF::SetOrder is not implemented! " << LINEINFO << endl;
+}

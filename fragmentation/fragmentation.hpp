@@ -28,11 +28,7 @@ enum Hadron
     HM      // h^-
 };
 
-enum Order
-{
-    LO,
-    NLO
-};
+
 
 class FragmentationFunction
 {
@@ -42,7 +38,7 @@ class FragmentationFunction
         FragmentationFunction();
         virtual std::string GetString();
         Order GetOrder();
-        void SetOrder(Order order_);
+        virtual void SetOrder(Order order_);
     protected:
         Order order;  // 0: LO, 1: NLO
 

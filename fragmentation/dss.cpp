@@ -119,7 +119,8 @@ double DSS::Evaluate(Parton p, Hadron h, double x, double qs)
 
 std::string DSS::GetString()
 {
-    return "DSS";
+    if (order==LO) return "DSS LO";
+    return "DSS NLO";
 }
 
 DSS::DSS()
@@ -128,3 +129,9 @@ DSS::DSS()
     fragini_.fini=0;
 }
  
+void DSS::SetOrder(Order o)
+{
+	order=o;
+	initialized=false;
+	fragini_.fini=0;
+}

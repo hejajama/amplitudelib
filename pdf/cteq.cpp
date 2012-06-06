@@ -22,7 +22,9 @@ double CTEQ::xq(double x, double q, Parton p)
         cerr << "x=" << x <<" out of range at " << LINEINFO << endl;
         return 0;
     }
-    if (q< 0.3 )
+    double minq=0.3;
+    if (order==LO) minq=1.3;
+    if (q< minq )
     {
         cerr << "q=" << q << " out of range at " << LINEINFO << endl;
         return 0;
@@ -32,37 +34,43 @@ double CTEQ::xq(double x, double q, Parton p)
     int ubar=-1; int dbar=-2; 
     double result=0;
     // Antiquarks with minus sign 
+    
+    // LO or NLO
+    double (*f)(int& iparton, double& x, double& q);
+    if (order==LO) f = ctq6pdf_;
+    else if (order==NLO) f = ct10pdf_;
+    
     switch(p)
     {
         case U:
-            result = ct10pdf_(u, x, q);
+            result = f(u, x, q);
             break;
         case D:
-            result = ct10pdf_(d,x,q);
+            result = f(d,x,q);
             break;
         case UVAL:
-            result = ct10pdf_(u,x,q) - ct10pdf_(ubar,x,q);
+            result = f(u,x,q) - f(ubar,x,q);
             break;
         case DVAL:
-            result = ct10pdf_(d,x,q) - ct10pdf_(dbar,x,q);
+            result = f(d,x,q) - f(dbar,x,q);
             break;
         case USEA:
-            result = ct10pdf_(ubar,x,q);
+            result = f(ubar,x,q);
             break;
         case DSEA:
-            result = ct10pdf_(dbar,x,q);
+            result = f(dbar,x,q);
             break;
         case S:
-            result = ct10pdf_(s,x,q);
+            result = f(s,x,q);
             break;
         case C:
-            result = ct10pdf_(c,x,q);
+            result = f(c,x,q);
             break;
         case B:
-            result = ct10pdf_(b,x,q);
+            result = f(b,x,q);
             break;
         case G:
-            result = ct10pdf_(g,x,q);
+            result = f(g,x,q);
             break;
         default:
             cerr << "Parton " << p << " is not implemented " << LINEINFO << endl;            
@@ -75,16 +83,33 @@ double CTEQ::xq(double x, double q, Parton p)
 // Default value of param is -1
 void CTEQ::Initialize(int param)
 {
-    int set = param;
-    if (param==-1)
-        set=100;
-    setct10_(set);
-    initialized=true;
+	// Useless...
 }
+
+void CTEQ::SetOrder(Order o)
+{
+	order=o;
+	
+	if (order==NLO)
+	{
+		int set=100;
+		setct10_(set);
+	}
+	else if (order==LO)
+	{
+		int set = 3;
+		setctq6_(set);
+	}
+	initialized=true;
+
+}	
 
 std::string CTEQ::GetString()
 {
-    return "CTEQ-TEA  CT10";
+	if (order==LO)
+		return "CTEQ6 LO";
+	
+    return "CTEQ-TEA NLO  CT10";
 }
 
 double CTEQ::MinQ()
@@ -95,4 +120,9 @@ double CTEQ::MinQ()
 double CTEQ::MaxQ()
 {
     return 100000;
+}
+
+CTEQ::CTEQ()
+{
+	SetOrder(NLO);		// Default
 }

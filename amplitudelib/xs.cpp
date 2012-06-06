@@ -62,29 +62,30 @@ double Inthelperf_hadronprod(double z, void *p)
     par->N->InitializeInterpolation(y_A);
 
     double result = 0;
-
+    
     // Quark from proton:
     // UGD in fundamental representation
     double nf = par->N->S_k(par->pt/z, y_A);
     // PDF and fragmentation
     double xqf = par->pdf->xq(x1, scale, U)*par->frag->Evaluate(U, par->final, z, scale)
-        + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(D, par->final, z, scale)
-        + par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
+        + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(D, par->final, z, scale);
+        //+ par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
 
     if (deuteron)
     {
         // isospin symmetry, u in p -> d in n
         xqf += par->pdf->xq(x1, scale, U)*par->frag->Evaluate(D, par->final, z, scale)
-        + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(U, par->final, z, scale);
+        + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(U, par->final, z, scale)
+        ;//+ par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
     }
         
     result = nf*xqf;
-
+	
     // Adjoint representation, gluon scatters
     double na = par->N->S_k(par->pt/z, y_A, true);
-    xqf = par->pdf->xq(x1, scale, G)*par->frag->Evaluate(G, par->final, z, scale);
-    if (deuteron) xqf *= 2.0;   // gluon pdf gets multiplied by 2
-    result += na*xqf;
+    double xgf = par->pdf->xq(x1, scale, G)*par->frag->Evaluate(G, par->final, z, scale);
+    if (deuteron) xgf *= 2.0;   // gluon pdf gets multiplied by 2
+    result += na*xgf;
 
     return result/SQR(z);
 }
@@ -415,7 +416,7 @@ double Inthelperf_dps_z2(double z2, void* p)
 	
 	std::vector<Parton> partons; partons.push_back(U); partons.push_back(D); partons.push_back(G);
 	double result=0;
-	for (int p1ind=0; p1ind<=partons.size(); p1ind++)
+	for (int p1ind=0; p1ind<partons.size(); p1ind++)
 	{
 		for (int p2ind=0; p2ind<=p1ind; p2ind++)
 		{
