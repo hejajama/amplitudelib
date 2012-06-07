@@ -40,7 +40,8 @@ enum Mode
     LOGLOGDER,
     DPS,
     PRINT_FF,
-    PRINT_PDF
+    PRINT_PDF,
+    TEST
 };
 
 int main(int argc, char* argv[])
@@ -103,6 +104,7 @@ int main(int argc, char* argv[])
         cout << "-print_ff [u,d,s,g] [pi0,pim,pip,hm,hp] qsqr" << endl;
         cout << "-print_pdf [u,d,g] qsqr" << endl;
         cout << "-lo: user LO PDF/FF instead of NLO" << endl;
+        cout << "-test: run tests" << endl;
         return 0;
     }
 
@@ -294,6 +296,8 @@ int main(int argc, char* argv[])
         {
 			order=LO;
 		}
+		else if (string(argv[i])=="-test")
+			mode=TEST;
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -586,6 +590,14 @@ int main(int argc, char* argv[])
 			cout << x << " " << pdf.xq(x, q, U) << " " << pdf.xq(x,q,D)
 				<< " " << pdf.xq(x,q,S) << " " << pdf.xq(x,q,G) << endl;
 		}
+	}
+	else if (mode==TEST)
+	{
+		cout << "##### Running tests......" << endl;
+		cout <<"### PDF: " << endl;
+		pdf.Test();
+		cout << endl << "### Fragfun: " << endl;
+		fragfun->Test();
 	}
     else
     {

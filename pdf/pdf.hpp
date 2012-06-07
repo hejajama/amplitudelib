@@ -24,6 +24,8 @@ class PDF
         virtual double MaxX();
         virtual double MaxQ();
         virtual void SetOrder(Order o);
+        
+        virtual void Test();
 
         void PlotPdf(double Q);
 	protected:

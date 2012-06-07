@@ -81,3 +81,8 @@ Order FragmentationFunction::GetOrder()
 {
     return order;
 }
+
+void FragmentationFunction::Test()
+{
+	cerr << "FragmentationFunction::Test() is not implemented" << endl;
+}

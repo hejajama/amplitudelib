@@ -22,9 +22,7 @@ double CTEQ::xq(double x, double q, Parton p)
         cerr << "x=" << x <<" out of range at " << LINEINFO << endl;
         return 0;
     }
-    double minq=0.3;
-    if (order==LO) minq=1.3;
-    if (q< minq )
+    if (q< MinQ() )
     {
         cerr << "q=" << q << " out of range at " << LINEINFO << endl;
         return 0;
@@ -114,7 +112,9 @@ std::string CTEQ::GetString()
 
 double CTEQ::MinQ()
 {
-    return 0.3;
+	if (order==NLO)
+		return 0.3;
+	return 1.3;	//LO
 }
 
 double CTEQ::MaxQ()
@@ -125,4 +125,60 @@ double CTEQ::MaxQ()
 CTEQ::CTEQ()
 {
 	SetOrder(NLO);		// Default
+}
+
+/*
+ * Run tests,
+ * Check that we obtain correct numbers in some special cases
+ * "Correct" results are obtained using http://hepdata.cedar.ac.uk/pdf/pdf3.html
+ */
+void CTEQ::Test()
+{
+	cout <<"#----- Testing CTEQ PDF" << endl;
+	cout << "#NLO:" << endl;
+	SetOrder(NLO);
+	double result, cor;
+	result=xq(0.01, std::sqrt(10), U); cor=0.4906;
+	cout <<"f_u(Q^2=10GeV^2, x=0.01) = " << result << " (correct " << cor << ")" <<  endl;
+	if (std::abs(result-cor)/cor>0.01)
+		cout << "TEST FAILED!!!" << endl;
+		
+	result=xq(0.1, std::sqrt(5), D); cor=0.4231;
+	cout <<"f_d(Q^2=5GeV^2, x=0.1) = " << result <<" (correct " << cor << ")" <<  endl;
+	if (std::abs(result-cor)/cor>0.01)
+		cout << "TEST FAILED!!!" << endl;
+	
+	result=xq(0.05, std::sqrt(100), S); cor=0.1443;
+	cout <<"f_s(Q^2=100GeV^2, x=0.05) = " << result <<" (correct " << cor << ")" <<  endl;
+	if (std::abs(result-cor)/cor>0.01)
+		cout << "TEST FAILED!!!" << endl;
+	
+	result=xq(0.05, std::sqrt(1000), G); cor=2.193;
+	cout <<"f_g(Q^2=1000GeV^2, x=0.05) = " << result << " (correct " << cor << ")" <<  endl;
+	if (std::abs(result-cor)/cor>0.01)
+		cout << "TEST FAILED!!!" << endl;
+	////////////////////////////////////////////
+	cout << "#LO" << endl;
+	SetOrder(LO);
+		result=xq(0.01, std::sqrt(10), U); cor=0.4602;
+	cout <<"f_u(Q^2=10GeV^2, x=0.01) = " << result << " (correct " << cor << ")" <<  endl;
+	if (std::abs(result-cor)/cor>0.01)
+		cout << "TEST FAILED!!!" << endl;
+		
+	result=xq(0.1, std::sqrt(5), D); cor=0.3824;
+	cout <<"f_d(Q^2=5GeV^2, x=0.1) = " << result <<" (correct " << cor << ")" <<  endl;
+	if (std::abs(result-cor)/cor>0.01)
+		cout << "TEST FAILED!!!" << endl;
+	
+	result=xq(0.05, std::sqrt(100), S); cor=0.1063;
+	cout <<"f_s(Q^2=100GeV^2, x=0.05) = " << result <<" (correct " << cor << ")" <<  endl;
+	if (std::abs(result-cor)/cor>0.01)
+		cout << "TEST FAILED!!!" << endl;
+	
+	result=xq(0.05, std::sqrt(1000), G); cor=2.177;
+	cout <<"f_g(Q^2=1000GeV^2, x=0.05) = " << result << " (correct " << cor << ")" <<  endl;
+	if (std::abs(result-cor)/cor>0.01)
+		cout << "TEST FAILED!!!" << endl;
+	
+	cout << "All tests done, if no errors were shown, all tests passed!" << endl;
 }

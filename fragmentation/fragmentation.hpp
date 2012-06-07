@@ -39,6 +39,8 @@ class FragmentationFunction
         virtual std::string GetString();
         Order GetOrder();
         virtual void SetOrder(Order order_);
+        
+        virtual void Test();
     protected:
         Order order;  // 0: LO, 1: NLO
 

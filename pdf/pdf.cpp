@@ -78,3 +78,9 @@ void PDF::SetOrder(Order o)
 {
 	cerr << "PDF::SetOrder is not implemented! " << LINEINFO << endl;
 }
+
+void PDF::Test()
+{
+	cerr << "PDF::Test is not implemented! " << LINEINFO << endl;
+}
+

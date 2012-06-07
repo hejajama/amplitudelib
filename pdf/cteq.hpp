@@ -26,6 +26,8 @@ class CTEQ : public PDF
         double MaxQ();
         
         CTEQ();
+        
+        void Test();
 
 
 };

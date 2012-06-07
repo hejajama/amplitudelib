@@ -46,7 +46,7 @@ double Inthelperf_hadronprod(double z, void *p)
 	
 	double scale=par->scale;
 	if (scale<0) scale = par->pt;
-    
+
     double y_A = std::log(par->N->X0()/x2);
 
     if (y_A<0)
@@ -113,7 +113,6 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrt
             << sqrts << ", y=" << y << " pt=" << pt << " " << LINEINFO << endl;
         return 0;
     }
-
     Inthelper_hadronprod helper;
     helper.N=this; helper.y=y; helper.pt=pt; helper.xf=xf;
     helper.deuteron=deuteron;

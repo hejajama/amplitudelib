@@ -18,6 +18,8 @@ class DSS : public FragmentationFunction
         DSS();
         std::string GetString();
         void SetOrder(Order order_);
+        
+        void Test();
     private:
         bool initialized;
 
