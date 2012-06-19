@@ -321,6 +321,10 @@ double AmplitudeLib::DPS(double y1, double y2, double pt1, double pt2, double sq
 	}
 	par.xf1 = pt1/sqrts*std::exp(y1);
 	par.xf2 = pt2/sqrts*std::exp(y2);
+	
+	if (par.xf1>1 or par.xf2>1)
+		return 0;	// kinematically forbidden
+	
 	par.y1=y1; par.y2=y2; par.pt1=pt1; par.pt2=pt2; par.N=this;
 	par.pdf= pdf; par.sqrts=sqrts; par.deuteron=deuteron; par.final=final;
 	par.fragfun=fragfun;
@@ -421,21 +425,28 @@ double Inthelperf_dps_z2(double z2, void* p)
 		{
 			// Ddpf() is symmetrized DPDF with kinematical constraint
 			// Combinatorics: hadron 1/2 can be produced by both partons 1/2
-			double xf_d = par->pdf->Dpdf(xp1, xp2, scale, partons[p1ind], partons[p2ind])
+			double cont_1 = par->pdf->Dpdf(xp1, xp2, scale, partons[p1ind], partons[p2ind])
 			 * par->fragfun->Evaluate(partons[p1ind], par->final, par->z1, scale)
-			 * par->fragfun->Evaluate(partons[p2ind], par->final, z2, scale)
-			 + par->pdf->Dpdf(xp2, xp1, scale, partons[p1ind], partons[p2ind])
+			 * par->fragfun->Evaluate(partons[p2ind], par->final, z2, scale);
+			
+			// Gluon scattering: S() in adjoint rep
+			if (partons[p1ind]!=G) cont_1*= par->cache_sk1_fund;
+			else cont_1 *= par->cache_sk1_adj;
+			if (partons[p2ind]!=G) cont_1*= nf2;
+			else cont_1 *= na2;
+			 
+			double cont_2 = par->pdf->Dpdf(xp2, xp1, scale, partons[p1ind], partons[p2ind])
 			 * par->fragfun->Evaluate(partons[p2ind], par->final, par->z1, scale)
 			 * par->fragfun->Evaluate(partons[p1ind], par->final, z2, scale);	
 			 
 			 double sk1=0, sk2=0;
 			 // Gluon scattering: S() in adjoint rep
-			 if (partons[p1ind]!=G) sk1 = par->cache_sk1_fund;
-			 else sk1 = par->cache_sk1_adj;
-			 if (partons[p2ind]!=G) sk2 = nf2;
-			 else sk2=na2;
+			 if (partons[p1ind]!=G) cont_2 *= nf2;
+			 else cont_2 *= na2;
+			 if (partons[p2ind]!=G) cont_2 *= par->cache_sk1_fund;
+			 else cont_2 *= par->cache_sk1_adj;
 			 
-			 result += xf_d * sk1*sk2;
+			 result += cont_1 + cont_2;
 		}
 	}		
 	
@@ -444,7 +455,68 @@ double Inthelperf_dps_z2(double z2, void* p)
 }
 
 /*
+ * DPS in parton level
+ * Includes sum over quark flavors&gluons, no fragmentation
+ * 
+ * Code is very similar than the code above, but as we are not here
+ * integrating over z1 and z2, we keep this separate as above we
+ * use some caching techiques to optimize code
+ */
+double AmplitudeLib::DPS_partonlevel(double y1, double y2, double pt1, double pt2, double sqrts,
+              PDF* pdf, bool deuteron, char dps_mode, double scale)
+{
+	if (scale<0) scale=std::max(pt1, pt2);
+	
+	SetOutOfRangeErrors(false);
+	
+	double xp1 = pt1*std::exp(y1) / sqrts; double xp2 = pt2*std::exp(y2) / sqrts;
+	double xa1 = pt1*std::exp(-y1) / sqrts; double xa2 = pt2*std::exp(-y2) / sqrts;
+	
+	double ya1 = std::log(X0() / xa1); double ya2 = std::log(X0()/xa2);
+	InitializeInterpolation(ya1);
+	double nf1 = S_k(pt1, ya1); double na1 = S_k(pt1, ya1, true);
+	InitializeInterpolation(ya2);
+	double nf2= S_k(pt2, ya2); double na2 = S_k(pt2, ya2, true);
+	
+	
+	std::vector<Parton> partons; partons.push_back(U); partons.push_back(D); partons.push_back(G);
+	double result=0;
+	for (int p1ind=0; p1ind<partons.size(); p1ind++)
+	{
+		for (int p2ind=0; p2ind<partons.size(); p2ind++)
+		{
+			// Combinations uu, ud, ug, du, dd, dg, gu, gd, gg
+			double xf=0;
+			if (dps_mode=='c')
+			{
+				double tmp = pdf->Dpdf(xp1, xp2, scale, partons[p1ind], partons[p2ind]);
+				if (partons[p1ind]==G) tmp *= na1; else tmp*=nf1;
+				if (partons[p2ind]==G) tmp*=na2; else tmp*= nf2;
+				if (deuteron) tmp*=2;	// neglect isospin
+				result += tmp;
+			}
+			else
+			{
+				double tmp = 2.0*pdf->xq(xp1, scale, partons[p1ind])*pdf->xq(xp2, scale, partons[p2ind]);
+				if (partons[p1ind]==G) tmp *= na1; else tmp*=nf1;
+				if (partons[p2ind]==G) tmp*=na2; else tmp*= nf2;
+				result += tmp;
+			}
+		}
+	}
+	
+	result /= std::pow(2.0*M_PI, 4.0);
+	return result;
+}	
+
+/*
  * DPS integrated over pt and y range
+ * Integrates over d^2 p_1 d^2 p_2 dy1 dy2
+ * Notice that for CP() one must calculate dN/d\phi
+ * That is, this must be divided by 2\pi when calculating
+ * DPS
+ * 
+ * Also Deuteron is not supported
  */
 struct Inthelper_dpsint
 {
@@ -473,11 +545,20 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 	par.fragfun=fragfun; par.miny=miny; par.maxy=maxy; par.minpt=minpt;
 	par.maxpt=maxpt;
 	
+	if (deuteron)
+		cerr << "Deuteron DPS is not supported, falling back to proton" << endl;
+	
 	cout <<"# DPS contribution "
 	/*integrating yrange " << miny << " - " << maxy 
 		<<", ptrange " << minpt << " " << maxpt */
 		<< " contrib: " << par.dps_mode << endl;
 	
+	if (dps_mode != 'b' and dps_mode != 'c')
+	{
+		cerr << "DPSmode " << dps_mode << " is invalid!" << endl;
+		return 0;
+	}
+
 	gsl_function fun;
     fun.function=Inthelperf_dpsint_y1;
     fun.params=&par;
@@ -489,8 +570,8 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 		return SQR(2.0*M_PI)*Inthelperf_dpsint_y2(miny, &par); //(2\pi)^2 from angural integrals
 	}
 	std::vector<double> yvals; 
-    yvals.push_back(2.4);  yvals.push_back(3.2); yvals.push_back(4);
-    //yvals.push_back(3); yvals.push_back(3.4); yvals.push_back(3.8);
+    //yvals.push_back(2.4);  yvals.push_back(3.2); yvals.push_back(4);
+    yvals.push_back(3); yvals.push_back(3.4); yvals.push_back(3.8);
     //yvals.push_back(3); yvals.push_back(3.266); yvals.push_back(3.533); yvals.push_back(3.8);
     double result=0;
     for (int y1ind=0; y1ind<yvals.size(); y1ind++)
@@ -588,7 +669,7 @@ double Inthelperf_dpsint_y2(double y2, void* p)
     int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
-    status=gsl_integration_qag(&fun, 2.0, 4.0,
+    status=gsl_integration_qag(&fun, 1.1, 1.6,
             0, 0.1, DPS_PTINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
 
@@ -613,7 +694,7 @@ double Inthelperf_dpsint_pt1(double pt1, void* p)
     int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
-    status=gsl_integration_qag(&fun,1.0, pt1,
+    status=gsl_integration_qag(&fun,0.5, 0.75,
             0, 0.1, DPS_PTINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
 

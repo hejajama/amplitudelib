@@ -9,6 +9,8 @@
 #include "cteq.hpp"
 #include <string>
 
+#define NLO_CTEQ10
+
 double CTEQ::xq(double x, double q, Parton p)
 {
 	if (!initialized)
@@ -36,7 +38,11 @@ double CTEQ::xq(double x, double q, Parton p)
     // LO or NLO
     double (*f)(int& iparton, double& x, double& q);
     if (order==LO) f = ctq6pdf_;
+    #ifdef NLO_CTEQ10
     else if (order==NLO) f = ct10pdf_;
+    #else
+    else if (order==NLO) f = ctq6pdf_;
+    #endif
     
     switch(p)
     {
@@ -90,8 +96,13 @@ void CTEQ::SetOrder(Order o)
 	
 	if (order==NLO)
 	{
+		#ifdef NLO_CTEQ10
 		int set=100;
 		setct10_(set);
+		#else
+		int set=1;
+		setctq6_(set);
+		#endif
 	}
 	else if (order==LO)
 	{
@@ -106,8 +117,11 @@ std::string CTEQ::GetString()
 {
 	if (order==LO)
 		return "CTEQ6 LO";
-	
+	#ifdef NLO_CTEQ10
     return "CTEQ-TEA NLO  CT10";
+    #else
+    return "CTEQ6 NLO";
+    #endif
 }
 
 double CTEQ::MinQ()
@@ -136,6 +150,9 @@ void CTEQ::Test()
 {
 	cout <<"#----- Testing CTEQ PDF" << endl;
 	cout << "#NLO:" << endl;
+	#ifndef NLO_CTEQ10
+	cerr << "NLO TEST IS WRITTEN FOR CTEQ10, NOT CTEQ6!" << endl;
+	#endif
 	SetOrder(NLO);
 	double result, cor;
 	result=xq(0.01, std::sqrt(10), U); cor=0.4906;

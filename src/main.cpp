@@ -340,16 +340,18 @@ int main(int argc, char* argv[])
     {
 		double qs = 1.0/N.SaturationScale(y, 0.22);
 		cout << "#FT of S(r), Q_s = " << qs << endl;
-        double mink = 1e-5; double maxk = 1.0/N.MinR()*100;
+        double mink = 1e-5; double maxk = 10;// 1.0/N.MinR()*100;
         int kpoints=100;
         double kmultiplier = std::pow(maxk/mink, 1.0/(kpoints-1.0));
-        cout << "# k [GeV]     Amplitude   k/Q_s" << endl;
+        cout << "# k [GeV]     Amplitude    Adj. amplitude    k/Q_s  " << endl;
         for (int kind=0; kind<kpoints; kind++)
         {
             double tmpk = mink*std::pow(kmultiplier, kind);
             double res = N.S_k(tmpk, y);
-            cout <<tmpk << " " << res << " " << tmpk/qs << endl;
+            double adjres = N.S_k(tmpk, y, true);
+            cout <<tmpk << " " << res << " " <<  adjres << " " << tmpk/qs << endl;
         }
+        cout << 0.5 << " " << N.S_k(0.5, y) << " " << N.S_k(1.1, y, true) << endl;
     }
     else if (mode==K_TO_X)
     {
@@ -510,9 +512,15 @@ int main(int argc, char* argv[])
         cout << "# DPS " << dps_mode << endl;
         cout << "# Fragfun: " << fragfun->GetString() << endl;
         cout << "# sqrt(s)=" << sqrts << " GeV" << endl;
+        
+        double y1=3.4, y2=3.4, pt1=1, pt2=2;
+        cout << "# Partonlevel DPS, y1=" << y1 << ", y2=" << y2 << ", pt1=" << pt1 <<", pt2=" << pt2 << endl;
+        double xp = (pt1*std::exp(y1) + pt2*std::exp(y2))/sqrts;
+        cout <<"# xf(x_p, u) + xf(x_p, d) = " << pdf.xq(xp, std::max(pt1, pt2), U) + pdf.xq(xp, std::max(pt1, pt2), D) << endl;
+        double dps = N.DPS_partonlevel(y1, y2, pt1, pt2, sqrts, &pdf, deuteron, dps_mode);
         //cout << "# pt1: " << pt1 << " pt2: " << pt2 << " y1: " << y1 << " y2: " << y2 << endl;
         //double dps = N.DPS(miny,maxy,1.35,0.7,sqrts, fragfun, &pdf, deuteron, final_particle);
-        double dps = N.DPSMultiplicity(miny,maxy,1,2,sqrts,fragfun, &pdf, deuteron, final_particle, dps_mode);
+        //double dps = N.DPSMultiplicity(miny,maxy,1,2,sqrts,fragfun, &pdf, deuteron, final_particle, dps_mode);
         //double single_sqr = N.dHadronMultiplicity_dyd2pt(y1, pt1, sqrts, fragfun, &pdf, deuteron, final_particle)
 		//		* N.dHadronMultiplicity_dyd2pt(y2, pt2, sqrts, fragfun, &pdf, deuteron, final_particle);
 		cout << dps << endl; //<< " " << single_sqr << " " << dps+single_sqr << endl;

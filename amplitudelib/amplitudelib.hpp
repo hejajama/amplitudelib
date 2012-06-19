@@ -58,6 +58,9 @@ class AmplitudeLib
         // Douple parton scattering at fixed pt, y
         double DPS(double y1, double y2, double pt1, double pt2, double sqrts,
               FragmentationFunction* fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0, char dps_mode='c');
+        // Parton level DPS, includes PDF and sum over quarks/gluons, doesn't include fragmentation
+        double DPS_partonlevel(double y1, double y2, double pt1, double pt2, double sqrts,
+              PDF* pdf, bool deuteron=false, char dps_mode='c', double scale=-1);
         double DPSMultiplicity(double miny, double maxy, double minpt, double maxpt, double sqrts,
 			FragmentationFunction* fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0, char dps_mode='c');
 

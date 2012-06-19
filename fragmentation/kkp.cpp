@@ -25,9 +25,10 @@ REAL KKP::Evaluate(Parton p, Hadron h, REAL x, REAL qs)
         return 0;
     }
     int hadron=0; 
+    double coeff=1.0;
     REAL partons[11];
     partons[0]=0; partons[1]=1; partons[2]=2; partons[3]=3; partons[10]=10;
-    if (h==PI) hadron=1;
+    if (h==PI) { coeff=2.0; hadron=1; }
     else if (h==K) hadron=2;
     else if (h==K0) hadron=3;
     else if (h==P) hadron=4;
@@ -53,7 +54,7 @@ REAL KKP::Evaluate(Parton p, Hadron h, REAL x, REAL qs)
     else
         cerr << "Parton " << p << " is not supported! " << LINEINFO << endl;
     
-    return result;
+    return result*coeff;
 
 }
 
@@ -67,5 +68,36 @@ std::string KKP::GetString()
 KKP::KKP()
 {
 
+}
+
+/*
+ * Test
+ */
+void KKP::Test()
+{
+	cout <<"#------- Testing KKP FF" << endl;
+	cout << "# NLO: " << endl;
+	Order orig_order = order;
+	
+	SetOrder(NLO);
+	double result, cor;
+	result=0.1*Evaluate(U, PI0, 0.1, std::sqrt(20)); cor=0.82866;
+	cout <<"z*D_{u->pi0}(Q^2=20GeV^2, x=0.1) = " << result << " (correct " << cor << ")" <<  endl;
+	if (std::abs(result-cor)/cor>0.01)
+		cout << "TEST FAILED!!!" << endl;
+		
+	result=0.2*Evaluate(D, PI, 0.2, std::sqrt(10)); cor=0.85339;
+	cout <<"z*D_{d->pi^+ + pi^-}(Q^2=10GeV^2, x=0.2) = " << result << " (correct " << cor << ")" <<  endl;
+	if (std::abs(result-cor)/cor>0.01)
+		cout << "TEST FAILED!!!" << endl;
+		
+	result=0.5*Evaluate(G, PI0, 0.5, std::sqrt(100)); cor=0.082828;
+	cout <<"z*D_{g->pi0}(Q^2=100GeV^2, x=0.5) = " << result << " (correct " << cor << ")" <<  endl;
+	if (std::abs(result-cor)/cor>0.01)
+		cout << "TEST FAILED!!!" << endl;
+	
+	
+	SetOrder(orig_order);
+	
 }
  

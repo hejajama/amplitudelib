@@ -18,6 +18,8 @@ class KKP : public FragmentationFunction
         REAL Evaluate(Parton p, Hadron h, REAL x, REAL qs);
         KKP();
         std::string GetString();
+        
+        void Test();
     private:
 
 
