@@ -10,13 +10,20 @@
 
 extern "C"
 {
-    // ih: input hadron, 1=pion, 2=kaon
+    // ih: input hadron, 1=pion, 2=kaon, 3=proton, 4=charged hadrons
     // ic: charge, 0=0, 1=+, -1=-
+    // parton: 
+		//0    1    2    3    4    5    6    7    8     9    10
+		//g    u   ubar  d   dbar  s   sbar  c   cbar   b   bbar
     // io: order, 0=LO, 1=NLO
+    // NOTE: cbar and bbar not in DSS, returns c or b instead
+	// result is the fragmentation function (X factor divided out)
     
-    void fdss_ (int &ih, int &ic, int &io, double &x, double& q2, double& u,
+    /*void fdss_ (int &ih, int &ic, int &io, double &x, double& q2, double& u,
         double &ub, double &d, double &db, double &s, double &sb, double &c,
-        double &b, double &g);
+        double &b, double &g);*/
+    void fdss_(int& hadron, int& charge, int& order, double& z,
+              double& scalesqr, int& parton, double& result);
 
     extern struct{
         double fini;
@@ -64,12 +71,10 @@ double DSS::Evaluate(Parton p, Hadron h, double x, double qs)
     }
     else if (h==HM)
     {
-		cerr << "WARNING! DSS HM does not give same result as ffgen???" << endl;
-        return Evaluate(p, PIM, x, qs) + Evaluate(p, KM, x, qs);
+		ih=4; ic=-1;
     } else if (h==HP)
     {
-		cerr << "WARNING! DSS HP does not give same result as ffgen???" << endl;
-        return Evaluate(p, PIP, x, qs) + Evaluate(p, KP, x, qs);
+		ih=4; ic=1;
     } 
     else if (h==PI)	// pi^+ + pi^-
     {    
@@ -86,39 +91,48 @@ double DSS::Evaluate(Parton p, Hadron h, double x, double qs)
     initialized=true;
 
     double qsqr = qs*qs;
-    double u, ubar, d, dbar, s, sbar, c, b, g;
-    fdss_(ih, ic, io, x, qsqr, u, ubar, d, dbar, s, sbar, c, b, g);
+    //double u, ubar, d, dbar, s, sbar, c, b, g;
+    //fdss_(ih, ic, io, x, qsqr, u, ubar, d, dbar, s, sbar, c, b, g);
     double result;
+    int parton=0;
     switch(p)
     {
         case U:
-            result = u/x;
+            //result = u/x;
+            parton=1;
             break;
         case D:
-            result = d/x;
+			parton=3;
+            //result = d/x;
             break;
         case UBAR:
-            result = ubar/x;
+			parton=2;
+            //result = ubar/x;
             break;
         case DBAR:
-            result = dbar/x;
+			parton=4;
+            //result = dbar/x;
             break;
         case S:
-            result = s/x;
+			parton=5;
+            //result = s/x;
             break;
         case SBAR:
-            result = sbar/x;
+            parton=6;
+            //result = sbar/x;
             break;
         case G:
-            result = g/x;
+			parton=0;
+            //result = g/x;
             break;
         default:
             cerr << "Parton " << p << " is not supported! " << LINEINFO << endl;
             return 0;
     }
 
+	fdss_(ih, ic, io, x, qsqr, parton, result);
     
-    return result;  // Shoudn't end up here
+    return result; 
 }
 
 

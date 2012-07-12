@@ -173,46 +173,46 @@ C
       ZT(1) = DLOG(Z)
       ZT(2) = DLOG(Q2)
       if ( icharge .eq. 1 ) then
-      uff(1) = FINT(NARG,ZT,NA,ARRF,ZU ) * (1.D0-Z)**4 * Z**0.5 / Z
-      uff(2) = FINT(NARG,ZT,NA,ARRF,ZUB) * (1.D0-Z)**4 * Z**0.5 / Z
-      dff(1) = FINT(NARG,ZT,NA,ARRF,ZD ) * (1.D0-Z)**4 * Z**0.5 / Z
-      dff(2) = FINT(NARG,ZT,NA,ARRF,ZDB) * (1.D0-Z)**4 * Z**0.5 / Z
-      sff(1) = FINT(NARG,ZT,NA,ARRF,ZS ) * (1.D0-Z)**4 * Z**0.5 / Z
-      sff(2) = FINT(NARG,ZT,NA,ARRF,ZSB) * (1.D0-Z)**4 * Z**0.5 / Z
-      cff(1) = FINT(NARG,ZT,NA,ARRF,ZC)  * (1.D0-Z)**7 * Z**0.3 / Z
+      uff(1) = FINT2(NARG,ZT,NA,ARRF,ZU ) * (1.D0-Z)**4 * Z**0.5 / Z
+      uff(2) = FINT2(NARG,ZT,NA,ARRF,ZUB) * (1.D0-Z)**4 * Z**0.5 / Z
+      dff(1) = FINT2(NARG,ZT,NA,ARRF,ZD ) * (1.D0-Z)**4 * Z**0.5 / Z
+      dff(2) = FINT2(NARG,ZT,NA,ARRF,ZDB) * (1.D0-Z)**4 * Z**0.5 / Z
+      sff(1) = FINT2(NARG,ZT,NA,ARRF,ZS ) * (1.D0-Z)**4 * Z**0.5 / Z
+      sff(2) = FINT2(NARG,ZT,NA,ARRF,ZSB) * (1.D0-Z)**4 * Z**0.5 / Z
+      cff(1) = FINT2(NARG,ZT,NA,ARRF,ZC)  * (1.D0-Z)**7 * Z**0.3 / Z
       cff(2) = cff(1)
-      bff(1) = FINT(NARG,ZT,NA,ARRF,ZB)  * (1.D0-Z)**7 * Z**0.3 / Z
+      bff(1) = FINT2(NARG,ZT,NA,ARRF,ZB)  * (1.D0-Z)**7 * Z**0.3 / Z
       bff(2) = bff(1)
-      gff    = FINT(NARG,ZT,NA,ARRF,ZG)  * (1.D0-Z)**8 * Z**0.3 / Z
+      gff    = FINT2(NARG,ZT,NA,ARRF,ZG)  * (1.D0-Z)**8 * Z**0.3 / Z
       elseif ( icharge .eq. 2 ) then
-      uff(2) = FINT(NARG,ZT,NA,ARRF,ZU ) * (1.D0-Z)**4 * Z**0.5 / Z
-      uff(1) = FINT(NARG,ZT,NA,ARRF,ZUB) * (1.D0-Z)**4 * Z**0.5 / Z
-      dff(2) = FINT(NARG,ZT,NA,ARRF,ZD ) * (1.D0-Z)**4 * Z**0.5 / Z
-      dff(1) = FINT(NARG,ZT,NA,ARRF,ZDB) * (1.D0-Z)**4 * Z**0.5 / Z
-      sff(2) = FINT(NARG,ZT,NA,ARRF,ZS ) * (1.D0-Z)**4 * Z**0.5 / Z
-      sff(1) = FINT(NARG,ZT,NA,ARRF,ZSB) * (1.D0-Z)**4 * Z**0.5 / Z
-      cff(2) = FINT(NARG,ZT,NA,ARRF,ZC)  * (1.D0-Z)**7 * Z**0.3 / Z
+      uff(2) = FINT2(NARG,ZT,NA,ARRF,ZU ) * (1.D0-Z)**4 * Z**0.5 / Z
+      uff(1) = FINT2(NARG,ZT,NA,ARRF,ZUB) * (1.D0-Z)**4 * Z**0.5 / Z
+      dff(2) = FINT2(NARG,ZT,NA,ARRF,ZD ) * (1.D0-Z)**4 * Z**0.5 / Z
+      dff(1) = FINT2(NARG,ZT,NA,ARRF,ZDB) * (1.D0-Z)**4 * Z**0.5 / Z
+      sff(2) = FINT2(NARG,ZT,NA,ARRF,ZS ) * (1.D0-Z)**4 * Z**0.5 / Z
+      sff(1) = FINT2(NARG,ZT,NA,ARRF,ZSB) * (1.D0-Z)**4 * Z**0.5 / Z
+      cff(2) = FINT2(NARG,ZT,NA,ARRF,ZC)  * (1.D0-Z)**7 * Z**0.3 / Z
       cff(1) = cff(2)
-      bff(2) = FINT(NARG,ZT,NA,ARRF,ZB)  * (1.D0-Z)**7 * Z**0.3 / Z
+      bff(2) = FINT2(NARG,ZT,NA,ARRF,ZB)  * (1.D0-Z)**7 * Z**0.3 / Z
       bff(1) = bff(2)
-      gff    = FINT(NARG,ZT,NA,ARRF,ZG)  * (1.D0-Z)**8 * Z**0.3 / Z
+      gff    = FINT2(NARG,ZT,NA,ARRF,ZG)  * (1.D0-Z)**8 * Z**0.3 / Z
       elseif ( icharge .eq. 3 ) then
-      uff(1) = FINT(NARG,ZT,NA,ARRF,ZU ) * (1.D0-Z)**4 * Z**0.5 / Z
-     >       + FINT(NARG,ZT,NA,ARRF,ZUB) * (1.D0-Z)**4 * Z**0.5 / Z
+      uff(1) = FINT2(NARG,ZT,NA,ARRF,ZU ) * (1.D0-Z)**4 * Z**0.5 / Z
+     >       + FINT2(NARG,ZT,NA,ARRF,ZUB) * (1.D0-Z)**4 * Z**0.5 / Z
       uff(2) = uff(1)
-      dff(1) = FINT(NARG,ZT,NA,ARRF,ZD ) * (1.D0-Z)**4 * Z**0.5 / Z
-     >       + FINT(NARG,ZT,NA,ARRF,ZDB) * (1.D0-Z)**4 * Z**0.5 / Z
+      dff(1) = FINT2(NARG,ZT,NA,ARRF,ZD ) * (1.D0-Z)**4 * Z**0.5 / Z
+     >       + FINT2(NARG,ZT,NA,ARRF,ZDB) * (1.D0-Z)**4 * Z**0.5 / Z
       dff(2) = dff(1)
-      sff(1) = FINT(NARG,ZT,NA,ARRF,ZS ) * (1.D0-Z)**4 * Z**0.5 / Z
-     >       + FINT(NARG,ZT,NA,ARRF,ZSB) * (1.D0-Z)**4 * Z**0.5 / Z
+      sff(1) = FINT2(NARG,ZT,NA,ARRF,ZS ) * (1.D0-Z)**4 * Z**0.5 / Z
+     >       + FINT2(NARG,ZT,NA,ARRF,ZSB) * (1.D0-Z)**4 * Z**0.5 / Z
       sff(2) = sff(1)
-      cff(1) = FINT(NARG,ZT,NA,ARRF,ZC)  * (1.D0-Z)**7 * Z**0.3 / Z 
+      cff(1) = FINT2(NARG,ZT,NA,ARRF,ZC)  * (1.D0-Z)**7 * Z**0.3 / Z 
      >       * 2.d0
       cff(2) = cff(1)
-      bff(1) = FINT(NARG,ZT,NA,ARRF,ZB)  * (1.D0-Z)**7 * Z**0.3 / Z
+      bff(1) = FINT2(NARG,ZT,NA,ARRF,ZB)  * (1.D0-Z)**7 * Z**0.3 / Z
      >       * 2.d0
       bff(2) = bff(1)
-      gff    = FINT(NARG,ZT,NA,ARRF,ZG)  * (1.D0-Z)**8 * Z**0.3 / Z
+      gff    = FINT2(NARG,ZT,NA,ARRF,ZG)  * (1.D0-Z)**8 * Z**0.3 / Z
      >       * 2.d0
       else
       WRITE(6,94) 
@@ -227,7 +227,7 @@ C
 *
 *
 *
-      FUNCTION FINT(NARG,ARG,NENT,ENT,TABLE)
+      FUNCTION FINT2(NARG,ARG,NENT,ENT,TABLE)
 *********************************************************************
 *                                                                   *
 *   THE INTERPOLATION ROUTINE (CERN LIBRARY ROUTINE E104)           *
@@ -254,7 +254,7 @@ C
       KD=KD+IENT(I)*M
       M=M*NENT(I)
     5 JA=JB+1
-      FINT=0.
+      FINT2=0.
    10 FAC=1.
       IADR=KD
       IFADR=1
@@ -265,7 +265,7 @@ C
    12 FAC=FAC*D(I)
       IADR=IADR-IFADR
    15 IFADR=IFADR*NENT(I)
-      FINT=FINT+FAC*TABLE(IADR)
+      FINT2=FINT2+FAC*TABLE(IADR)
       IL=NARG
    40 IF (NCOMB(IL).EQ.0) GO TO 80
       NCOMB(IL)=0
