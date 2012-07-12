@@ -307,6 +307,8 @@ double Inthelperf_dps_z2(double z2, void* p);
 
 /*
  * Calculate dN/d^2 p_1 d^2 p_2 dy_1 dy_2 for DPS contribution a+c
+ * Note: deuteron is not supported, so one should multiply the
+ * final result by 2 or implement isospin-symmetrized deuteron
  */
 
 double AmplitudeLib::DPS(double y1, double y2, double pt1, double pt2, double sqrts,
@@ -478,9 +480,12 @@ double AmplitudeLib::DPS_partonlevel(double y1, double y2, double pt1, double pt
 	InitializeInterpolation(ya2);
 	double nf2= S_k(pt2, ya2); double na2 = S_k(pt2, ya2, true);
 	
+	cout << "nf1 " << nf1 << " na1 " << na1 << " nf2 " << nf2 << " na2 " << na2 << endl;
+	
 	
 	std::vector<Parton> partons; partons.push_back(U); partons.push_back(D); partons.push_back(G);
 	double result=0;
+
 	for (int p1ind=0; p1ind<partons.size(); p1ind++)
 	{
 		for (int p2ind=0; p2ind<partons.size(); p2ind++)
@@ -497,7 +502,7 @@ double AmplitudeLib::DPS_partonlevel(double y1, double y2, double pt1, double pt
 			}
 			else
 			{
-				double tmp = 2.0*pdf->xq(xp1, scale, partons[p1ind])*pdf->xq(xp2, scale, partons[p2ind]);
+				double tmp = 2.0*pdf->xq(xp1, scale, partons[p1ind])*pdf->xq(xp2, scale, partons[p2ind]);	// 2.0: neglect isospin symmetry, hadron 1/2 can come from p/n
 				if (partons[p1ind]==G) tmp *= na1; else tmp*=nf1;
 				if (partons[p2ind]==G) tmp*=na2; else tmp*= nf2;
 				result += tmp;
@@ -516,7 +521,8 @@ double AmplitudeLib::DPS_partonlevel(double y1, double y2, double pt1, double pt
  * That is, this must be divided by 2\pi when calculating
  * DPS
  * 
- * Also Deuteron is not supported
+ * Also Deuteron is not supported: if isospin is neglected the final
+ * result is obtained by multiplying this by 2
  */
 struct Inthelper_dpsint
 {
@@ -570,8 +576,8 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 		return SQR(2.0*M_PI)*Inthelperf_dpsint_y2(miny, &par); //(2\pi)^2 from angural integrals
 	}
 	std::vector<double> yvals; 
-    //yvals.push_back(2.4);  yvals.push_back(3.2); yvals.push_back(4);
-    yvals.push_back(3); yvals.push_back(3.4); yvals.push_back(3.8);
+    yvals.push_back(2.4);  yvals.push_back(3.2); yvals.push_back(4);
+    //yvals.push_back(3); yvals.push_back(3.4); yvals.push_back(3.8);
     //yvals.push_back(3); yvals.push_back(3.266); yvals.push_back(3.533); yvals.push_back(3.8);
     double result=0;
     for (int y1ind=0; y1ind<yvals.size(); y1ind++)
@@ -669,7 +675,7 @@ double Inthelperf_dpsint_y2(double y2, void* p)
     int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
-    status=gsl_integration_qag(&fun, 1.1, 1.6,
+    status=gsl_integration_qag(&fun, 2, 4,
             0, 0.1, DPS_PTINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
 
@@ -685,7 +691,7 @@ double Inthelperf_dpsint_y2(double y2, void* p)
 double Inthelperf_dpsint_pt1(double pt1, void* p)
 {
 	Inthelper_dpsint* par = (Inthelper_dpsint*) p;
-	cout <<"# pt1 " << pt1 << endl;
+	//cout <<"# pt1 " << pt1 << endl;
 	par->pt1=pt1;
 	gsl_function fun;
 	fun.function=Inthelperf_dpsint_pt2;
@@ -694,7 +700,7 @@ double Inthelperf_dpsint_pt1(double pt1, void* p)
     int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
-    status=gsl_integration_qag(&fun,0.5, 0.75,
+    status=gsl_integration_qag(&fun,1, pt1,
             0, 0.1, DPS_PTINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
 
@@ -717,8 +723,12 @@ double Inthelperf_dpsint_pt2(double pt2, void* p)
 	if (par->dps_mode=='a' or par->dps_mode=='c')
 		result = par->N->DPS(par->y1, par->y2, par->pt1, pt2, 
 			par->sqrts, par->fragfun, par->pdf, par->deuteron, par->final, par->dps_mode);
-	else // b
+	// b: isospin symmetry is neglected, here we take one quark/gluon from p and an another one from d
+	// but there is also similar contribution where p and n are exchanged, thus this must be multiplied
+	// by 2 when calculating pedestal (this code does not multiply the result by 2)
+	else 
 	{
+		
 		double scale = std::max(pt2, par->pt1);
 		result = par->N->dHadronMultiplicity_dyd2pt(par->y1, par->pt1, par->sqrts, par->fragfun, par->pdf, false, par->final, scale)
 			*  par->N->dHadronMultiplicity_dyd2pt(par->y2, pt2, par->sqrts, par->fragfun, par->pdf, false, par->final, scale);

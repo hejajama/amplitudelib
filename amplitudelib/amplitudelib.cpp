@@ -272,7 +272,9 @@ double AmplitudeLib::S_k(double kt, double y, bool adjoint)
     double result=0;
 
     if (kt < 1e-3)  // k_T \approx 0 -> integrate just \int d^2 r S(r)
+    //if (kt < 0.5)///DEBUG
     {
+		//return S_k(0.5*1.001, y, adjoint);	///DEGUG!
         gsl_function fun; fun.function=S_k_helperf;
         fun.params=&par;
     
@@ -593,7 +595,7 @@ void AmplitudeLib::InitializeInterpolation(double y, bool bspline)
 	if (y<0)
 	{
 		cerr << "Asked to initialize interpolator with negative rapidity! "
-			<< "Dont know what to do, panicking..." << endl;
+			<< "Dont know what to do, panicking... " << LINEINFO << endl;
 		exit(1);
 	}
 	
