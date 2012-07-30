@@ -7,11 +7,18 @@
  * be redistributed under the same license.
  *
  * Original author&copyright holder: Francois Gelis
- * Changes by H.M: J0zero and J1zero are now defined in separeted .h
+ * Changes by H.M (last updated 07/2012): 
+ * - J0zero and J1zero are now defined in separeted .h
  * files and the number of zeroes is increased
  * gsl_sum_levin_u_workspace *workspace is now intialized and destroyed
  * every time fourier_j_i is called in order to make this thread-safe
  * (but adds a bit overhead, sorry).
+ * - Code can handle situation where integrals between J0/J1 zeroes
+ * are identically zero (or zero within numerical accuracy), gsl series
+ * accelerator does not work in this case, but if that happens then
+ * we just sum directly the nonzero terms in the series as there are
+ * only finite number of those
+ * 
  */
 
 // Last modified on June 06th, 2006 -- F. Gelis

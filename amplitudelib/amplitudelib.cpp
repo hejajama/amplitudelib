@@ -259,7 +259,8 @@ double AmplitudeLib::S_k(double kt, double y, bool adjoint)
 	SetOutOfRangeErrors(false);
 	
 	if (!InterpolatorInitialized(y))
-		cerr << "Interpolator is not initialized and we are calculating S_k, are you sure? " 
+		cerr << "Interpolator is not initialized and we are calculating S_k, are you sure? "
+			<< "(interpolator y: " << interpolator_y << ", asked y=" << y <<") "
 			<< LINEINFO << endl;
 	
     // Some initialisation stuff -
@@ -271,21 +272,23 @@ double AmplitudeLib::S_k(double kt, double y, bool adjoint)
 
     double result=0;
 
-    if (kt < 1e-3)  // k_T \approx 0 -> integrate just \int d^2 r S(r)
-    //if (kt < 0.5)///DEBUG
+    if (kt < 1e-3 or true)  // k_T \approx 0 -> integrate just \int d^2 r S(r)
     {
-		//return S_k(0.5*1.001, y, adjoint);	///DEGUG!
         gsl_function fun; fun.function=S_k_helperf;
         fun.params=&par;
     
 
         double abserr; size_t eval;
-        int status = gsl_integration_qng(&fun, MinR(), MaxR(),
-            0, 0.01,  &result, &abserr, &eval);
+        gsl_integration_workspace* ws = gsl_integration_workspace_alloc(1000);
+		int status = gsl_integration_qag(&fun, MinR(), MaxR(), 0, 0.001,
+			1000, GSL_INTEG_GAUSS51, ws, &result, &abserr);
+		gsl_integration_workspace_free(ws);
+        //int status = gsl_integration_qng(&fun, MinR(), MaxR(),
+        //    0, 0.01,  &result, &abserr, &eval);
         if (status)
         {
             cerr << "S_k integral failed at " << LINEINFO <<", y=" << y
-            << " k_T=" << kt << ", adjoint: " << adjoint << endl;
+            << " k_T=" << kt << ", adjoint: " << adjoint << " relerr " << std::abs(abserr/result) << endl;
         }
     }
     else
@@ -306,6 +309,7 @@ double S_k_helperf(double r, void* p)
     {
         result = r*(1.0-par->N->N_A(r, par->y));
     }
+    result *= gsl_sf_bessel_J0(par->kt*r);
 
     return result;
 }

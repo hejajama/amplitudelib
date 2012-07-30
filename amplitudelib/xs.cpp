@@ -13,6 +13,8 @@
 #include "../pdf/cteq.hpp"
 #include <gsl/gsl_integration.h>
 
+const double STAR=false;	// true: star kinematics
+
 /* Differential forward hadron production multiplicity
  * dN_h / (dy_h d^2 p_T)
  * Ref 1001.1378 eq (1), normalization is arbitrary
@@ -146,6 +148,29 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrt
     result *= K / SQR(2.0*M_PI);
 
     return result;
+}
+
+
+/*
+ * Calculate dN / dyd^2 pt in parton level
+ * if deuteron is true (default: false), the probe is deuteron, not proton
+ * => use isospin symmetry
+ */
+double AmplitudeLib::dHadronMultiplicity_dyd2pt_parton(double y, double pt, double sqrts,
+    PDF* pdf, bool deuteron, double scale )
+{
+	
+	if (scale<0) scale=pt;
+	double result=0;
+	double xp = pt*std::exp(y)/sqrts;
+	double xa = pt*std::exp(-y)/sqrts;
+	double ya = std::log(X0()/xa);
+	InitializeInterpolation(ya); 
+	result = (pdf->xq(xp, scale, U) + pdf->xq(xp, scale, D))*S_k(pt, ya);
+	result += pdf->xq(xp, scale, G)*S_k(pt, ya, true);
+	
+	if (deuteron) result *= 2;
+	return result/SQR(2.0*M_PI);	
 }
 
 /*
@@ -346,8 +371,8 @@ double AmplitudeLib::DPS(double y1, double y2, double pt1, double pt2, double sq
 
     if (status)
     {
-        cerr << "z1int failed at " << LINEINFO <<", result " << result
-            << " relerr " << std::abs(abserr/result) << endl;
+        //cerr << "z1int failed at " << LINEINFO <<", result " << result
+        //    << " relerr " << std::abs(abserr/result) << endl;
     }
     
     gsl_integration_workspace_free(workspace);
@@ -388,8 +413,8 @@ double Inthelperf_dps_z1(double z1, void* p)
 
     if (status)
     {
-        cerr << "z2int failed at " << LINEINFO <<", result " << result
-            << " relerr " << std::abs(abserr/result) << endl;
+        //cerr << "z2int failed at " << LINEINFO <<", result " << result
+        //    << " relerr " << std::abs(abserr/result) << endl;
     }
     gsl_integration_workspace_free(workspace);
     return result/SQR(z1);
@@ -480,36 +505,55 @@ double AmplitudeLib::DPS_partonlevel(double y1, double y2, double pt1, double pt
 	InitializeInterpolation(ya2);
 	double nf2= S_k(pt2, ya2); double na2 = S_k(pt2, ya2, true);
 	
-	cout << "nf1 " << nf1 << " na1 " << na1 << " nf2 " << nf2 << " na2 " << na2 << endl;
+	//cout << "nf1 " << nf1 << " na1 " << na1 << " nf2 " << nf2 << " na2 " << na2 << endl;
 	
 	
 	std::vector<Parton> partons; partons.push_back(U); partons.push_back(D); partons.push_back(G);
 	double result=0;
-
-	for (int p1ind=0; p1ind<partons.size(); p1ind++)
+	
+	if (dps_mode == 'b')
 	{
-		for (int p2ind=0; p2ind<partons.size(); p2ind++)
+		if (!deuteron)
+			cerr <<"# DPS (b) is only defined for deuteron probe... assuming that probe is d" << endl;
+		
+		double single_1=0; double single_2=0;
+		for (int pind=0; pind<partons.size(); pind++)
 		{
-			// Combinations uu, ud, ug, du, dd, dg, gu, gd, gg
-			double xf=0;
-			if (dps_mode=='c')
+			if (partons[pind]!=G)
 			{
-				double tmp = pdf->Dpdf(xp1, xp2, scale, partons[p1ind], partons[p2ind]);
-				if (partons[p1ind]==G) tmp *= na1; else tmp*=nf1;
-				if (partons[p2ind]==G) tmp*=na2; else tmp*= nf2;
-				if (deuteron) tmp*=2;	// neglect isospin
-				result += tmp;
-			}
-			else
+				single_1 += pdf->xq(xp1, scale, partons[pind]) * nf1;
+				single_2 += pdf->xq(xp2, scale, partons[pind]) * nf2;
+			} else
 			{
-				double tmp = 2.0*pdf->xq(xp1, scale, partons[p1ind])*pdf->xq(xp2, scale, partons[p2ind]);	// 2.0: neglect isospin symmetry, hadron 1/2 can come from p/n
-				if (partons[p1ind]==G) tmp *= na1; else tmp*=nf1;
-				if (partons[p2ind]==G) tmp*=na2; else tmp*= nf2;
-				result += tmp;
+				single_1 += pdf->xq(xp1, scale, partons[pind]) * na1;
+				single_2 += pdf->xq(xp2, scale, partons[pind]) * na2;
 			}
 		}
+		result = single_1 * single_2 * 2.0;	// 2.0: neglect isospin symmetry, combinatorics p<->n
+			
 	}
-	
+	else
+	{
+		for (int p1ind=0; p1ind<partons.size(); p1ind++)
+		{
+			for (int p2ind=0; p2ind<=p1ind; p2ind++)
+			{
+				// Combinations uu, ud, ug, du, dd, dg, gu, gd, gg				
+				
+				double tmp = pdf->Dpdf(xp1, xp2, scale, partons[p1ind], partons[p2ind]);
+				if (partons[p1ind]==G) tmp *= na1; else tmp*=nf1;
+				if (partons[p2ind]==G) tmp *= na2; else tmp*= nf2;
+				
+				// swap
+				double tmp2 = pdf->Dpdf(xp2, xp1, scale, partons[p1ind], partons[p2ind]);
+				if (partons[p1ind]==G) tmp2 *= na2; else tmp2 *= nf2;
+				if (partons[p2ind]==G) tmp2 *= na1; else tmp2 *= nf1;
+				
+				result += tmp + tmp2;
+			}
+		}
+		if (deuteron) result *= 2.0;	// neglect isospin
+	}
 	result /= std::pow(2.0*M_PI, 4.0);
 	return result;
 }	
@@ -557,7 +601,8 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 	cout <<"# DPS contribution "
 	/*integrating yrange " << miny << " - " << maxy 
 		<<", ptrange " << minpt << " " << maxpt */
-		<< " contrib: " << par.dps_mode << endl;
+		<< " contrib: " << par.dps_mode 
+		<< " kinematics: "; if (STAR) cout << "STAR"; else cout << "PHENIX"; cout << endl;
 	
 	if (dps_mode != 'b' and dps_mode != 'c')
 	{
@@ -576,9 +621,16 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 		return SQR(2.0*M_PI)*Inthelperf_dpsint_y2(miny, &par); //(2\pi)^2 from angural integrals
 	}
 	std::vector<double> yvals; 
-    yvals.push_back(2.4);  yvals.push_back(3.2); yvals.push_back(4);
-    //yvals.push_back(3); yvals.push_back(3.4); yvals.push_back(3.8);
-    //yvals.push_back(3); yvals.push_back(3.266); yvals.push_back(3.533); yvals.push_back(3.8);
+    //
+    //yvals.push_back(2.4); yvals.push_back(2.933); yvals.push_back(3.466); yvals.push_back(4);
+    if (STAR == false)
+    {
+		yvals.push_back(3); yvals.push_back(3.2); yvals.push_back(3.4); yvals.push_back(3.6); yvals.push_back(3.8);
+	}
+	else
+	{
+		yvals.push_back(2.4);  yvals.push_back(3.2); yvals.push_back(4);
+	}
     double result=0;
     for (int y1ind=0; y1ind<yvals.size(); y1ind++)
     {
@@ -588,9 +640,6 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 			cout << "# y1 " << yvals[y1ind] << " y2 " << yvals[y2ind] << endl;
 			par.y1=yvals[y1ind]; par.y2=yvals[y2ind];
 			double res = Inthelperf_dpsint_y2(par.y2, &par);
-			/*if (y2ind==0 or y2ind==4) tmpres += res;
-			else if (y2ind==1 or y2ind==3) tmpres += 4.0*res;
-			else if (y2ind==2) tmpres += 2.0*res;*/
 			if (yvals.size()==3)
 			{
 				if (y2ind==1) tmpres += 4.0*res;
@@ -600,6 +649,12 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 			{
 				if (y2ind==0 or y2ind==3) tmpres += res;
 				else tmpres += 3.0*res;
+			}
+			else if (yvals.size()==5)
+			{
+				if (y2ind==1 or y2ind==3) tmpres += 4.0*res;
+				else if (y2ind==2) tmpres += 2.0*res;
+				else tmpres += res;
 			}
 						
 		}
@@ -615,6 +670,13 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 			if (y1ind==0 or y1ind==3) result += tmpres;
 			else result += 3.0*tmpres;
 		}
+		else if (yvals.size()==5)
+		{
+			tmpres *= (yvals[yvals.size()-1]-yvals[0])/12.0;
+			if (y1ind==1 or y1ind==3) result += 4.0*tmpres;
+			else if (y1ind == 2) result += 2.0*tmpres;
+			else result += tmpres;
+		}
 		else
 			cerr << "WTF! " << LINEINFO << endl;
 	}
@@ -622,7 +684,8 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 		result *= (yvals[yvals.size()-1] - yvals[0])/6.0;
 	else if (yvals.size()==4)
 		result *= ( (yvals[yvals.size()-1] - yvals[0])/8.0);
-    
+    else if (yvals.size()==5)
+		result *= (yvals[yvals.size()-1]-yvals[0])/12.0;
     /*int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_YINTPOINTS);
@@ -673,9 +736,17 @@ double Inthelperf_dpsint_y2(double y2, void* p)
     fun.params=par;
     
     int status=0; double abserr, result;
+    double maxpt=0, minpt=0;
+    if (STAR)
+	{
+		minpt=2; maxpt=3.99;
+	} else
+	{
+		minpt=1.6; maxpt=2;
+	}
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
-    status=gsl_integration_qag(&fun, 2, 4,
+    status=gsl_integration_qag(&fun, minpt, maxpt,
             0, 0.1, DPS_PTINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
 
@@ -697,10 +768,18 @@ double Inthelperf_dpsint_pt1(double pt1, void* p)
 	fun.function=Inthelperf_dpsint_pt2;
     fun.params=par;
     
+    double minpt=0, maxpt=0;
+    if (STAR==false) 
+    {
+		minpt=0.5; maxpt=0.75;
+	} else {
+		minpt=1; maxpt=pt1;
+	}
+    
     int status=0; double abserr, result;
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
-    status=gsl_integration_qag(&fun,1, pt1,
+    status=gsl_integration_qag(&fun,minpt, maxpt,
             0, 0.1, DPS_PTINTPOINTS,
             GSL_INTEG_GAUSS15, workspace, &result, &abserr);
 
