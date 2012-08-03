@@ -1,6 +1,6 @@
 /*
  * Wrapper calss for CTEQ-TEA parton distribution functions CT10
- * Real code is in file CT10Pdf.f downloaded from
+ * Real code is in file CT12Pdf.f downloaded from
  * http://hep.pa.msu.edu/cteq/public/index.html
  *
  * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
@@ -24,10 +24,19 @@ double CTEQ::xq(double x, double q, Parton p)
         cerr << "x=" << x <<" out of range at " << LINEINFO << endl;
         return 0;
     }
-    if (q< MinQ() )
+    if (q< MinQ() or q>MaxQ())
     {
-        cerr << "q=" << q << " out of range at " << LINEINFO << endl;
-        return 0;
+        // This is an ugly hack, but for some reason cteq pdf functions seem
+        // to extrapolate incorrectly(??????) at small-q, at least when
+        // compared with pdfgen website. On the other hand as the dep.
+        // on Q^2 is weak (and one can use pdfgen to check that at
+        // small Q^2 there is basically no evolution) we freeze Q to
+        // minQ at small Q.
+        if (q<MinQ()) q=MinQ()*1.0000001;
+        else
+			cerr << "q=" << q << " out of range at " << LINEINFO << endl;
+			
+        //return 0;
     }
     // Codes
     int u=1; int d=2; int s=3; int c=4; int b=5; int g=0;
@@ -37,12 +46,13 @@ double CTEQ::xq(double x, double q, Parton p)
     
     // LO or NLO
     double (*f)(int& iparton, double& x, double& q);
-    if (order==LO) f = ctq6pdf_;
-    #ifdef NLO_CTEQ10
-    else if (order==NLO) f = ct10pdf_;
-    #else
-    else if (order==NLO) f = ctq6pdf_;
-    #endif
+    //if (order==LO) f = ctq6pdf_;
+    //#ifdef NLO_CTEQ10
+    //else if (order==NLO) f = ct12pdf_; //ct10pdf_;
+    //#else
+    //else if (order==NLO) f = ctq6pdf_;
+    //#endif
+    f = ct12pdf_;
     
     switch(p)
     {
@@ -98,7 +108,9 @@ void CTEQ::SetOrder(Order o)
 	{
 		#ifdef NLO_CTEQ10
 		int set=100;
-		setct10_(set);
+		//setct10_(set);
+		char file[40] = "pdfdata/ct10n.00.pds";
+		setct12_(file);
 		#else
 		int set=1;
 		setctq6_(set);
@@ -107,7 +119,8 @@ void CTEQ::SetOrder(Order o)
 	else if (order==LO)
 	{
 		int set = 3;
-		setctq6_(set);
+		cerr << "CTEQ6 is disabled" << endl;
+		//setctq6_(set);
 	}
 	initialized=true;
 
@@ -126,9 +139,7 @@ std::string CTEQ::GetString()
 
 double CTEQ::MinQ()
 {
-	if (order==NLO)
-		return 0.3;
-	return 1.3;	//LO
+	return 1.3;	
 }
 
 double CTEQ::MaxQ()
@@ -175,6 +186,7 @@ void CTEQ::Test()
 	if (std::abs(result-cor)/cor>0.01)
 		cout << "TEST FAILED!!!" << endl;
 	////////////////////////////////////////////
+	/*
 	cout << "#LO" << endl;
 	SetOrder(LO);
 		result=xq(0.01, std::sqrt(10), U); cor=0.4602;
@@ -196,6 +208,6 @@ void CTEQ::Test()
 	cout <<"f_g(Q^2=1000GeV^2, x=0.05) = " << result << " (correct " << cor << ")" <<  endl;
 	if (std::abs(result-cor)/cor>0.01)
 		cout << "TEST FAILED!!!" << endl;
-	
+	*/
 	cout << "All tests done, if no errors were shown, all tests passed!" << endl;
 }
