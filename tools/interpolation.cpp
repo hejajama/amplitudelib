@@ -324,3 +324,13 @@ gsl_spline* Interpolator::GetGslSpline()
 {
     return spline;
 }
+
+REAL Interpolator::MinX()
+{
+	return minx;
+}
+
+REAL Interpolator::MaxX()
+{
+	return maxx;
+}

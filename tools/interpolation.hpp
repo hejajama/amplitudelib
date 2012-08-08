@@ -42,6 +42,9 @@ class Interpolator
         REAL Derivative2(REAL x);   // 2nd derivative
         void SetMethod(INTERPOLATION_METHOD m);
         int Initialize();
+        
+        REAL MinX();
+        REAL MaxX();
 
         REAL* GetXData();
         REAL* GetYData();
