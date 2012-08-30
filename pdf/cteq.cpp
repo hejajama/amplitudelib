@@ -3,11 +3,12 @@
  * Real code is in file CT12Pdf.f downloaded from
  * http://hep.pa.msu.edu/cteq/public/index.html
  *
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2012
  */
 
 #include "cteq.hpp"
 #include <string>
+#include <cstdlib>
 
 #define NLO_CTEQ10
 
@@ -120,6 +121,7 @@ void CTEQ::SetOrder(Order o)
 	{
 		int set = 3;
 		cerr << "CTEQ6 is disabled" << endl;
+		exit(1);
 		//setctq6_(set);
 	}
 	initialized=true;

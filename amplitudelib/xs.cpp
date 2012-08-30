@@ -49,6 +49,7 @@ double Inthelperf_hadronprod(double z, void *p)
 	double scale=par->scale;
 	if (scale<0) scale = par->pt;
 
+	
     double y_A = std::log(par->N->X0()/x2);
 
     if (y_A<0)
@@ -57,7 +58,8 @@ double Inthelperf_hadronprod(double z, void *p)
             par->xf << " x1 " << x1 << " x2 " << x2 << " y_A " << y_A 
             << " y " << par->y << " sqrts " 
             << par->sqrts << " pt " << par->pt << endl ;
-        return 0;
+        //return 0;
+        y_A=0;
     }
 
     bool deuteron = par->deuteron;
@@ -124,7 +126,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrt
     helper.y=y; helper.scale=scale;
 
     double result=0; double abserr=0;
-    const int MULTIPLICITYXINTPOINTS=4;
+    const int MULTIPLICITYXINTPOINTS=40;
 
     
     gsl_function fun;
@@ -136,7 +138,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrt
 
     int status;
     status=gsl_integration_qag(&fun, xf, 1.0,
-            0, 0.05, MULTIPLICITYXINTPOINTS,
+            0, 0.005, MULTIPLICITYXINTPOINTS,
             GSL_INTEG_GAUSS51, workspace, &result, &abserr);
     gsl_integration_workspace_free(workspace);
 
@@ -168,6 +170,8 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_parton(double y, double pt, doub
 	InitializeInterpolation(ya); 
 	result = (pdf->xq(xp, scale, U) + pdf->xq(xp, scale, D))*S_k(pt, ya);
 	result += pdf->xq(xp, scale, G)*S_k(pt, ya, true);
+	
+	//cout << "x = " << xp << " xfx = " << pdf->xq(xp, scale, U) + pdf->xq(xp, scale, D) << " xg " << pdf->xq(xp, scale, G) << " pt " << pt << endl;
 	
 	if (deuteron) result *= 2;
 	return result/SQR(2.0*M_PI);	
@@ -325,7 +329,7 @@ struct Inthelper_dps
 };
 
 
-const int DPS_ZINTPOINTS = 1;
+const int DPS_ZINTPOINTS = 2;
 
 double Inthelperf_dps_z1(double z1, void* p);
 double Inthelperf_dps_z2(double z2, void* p);
@@ -397,6 +401,7 @@ double Inthelperf_dps_z1(double z1, void* p)
 	// z_1 and x_{A1} are constant
 	double xa1 = par->pt1/z1*std::exp(-par->y1)/par->sqrts;
 	double ya1 = std::log(par->N->X0() / xa1);
+	if (ya1<0) ya1=0; ///TODO
 	par->N->InitializeInterpolation(ya1);
 	par->cache_sk1_fund = par->N->S_k(par->pt1/z1, ya1, false);	// fundamental
 	par->cache_sk1_adj = par->N->S_k(par->pt1/z1, ya1, true); // adjoint
@@ -440,6 +445,7 @@ double Inthelperf_dps_z2(double z2, void* p)
 	double xa2 = xp2 * std::exp(-2.0*par->y2);
 	//double ya1 = std::log( par->N->X0() / xa1);
 	double ya2 = std::log( par->N->X0() / xa2);
+	if (ya2<0) ya2=0;	///TODO
 	par->N->InitializeInterpolation(ya2);
 	double nf2 = par->N->S_k(par->pt2/z2, ya2);
 	double na2 = par->N->S_k(par->pt2/z2, ya2, true);	// adjoint rep
@@ -629,7 +635,7 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 	}
 	else
 	{
-		yvals.push_back(2.4);  yvals.push_back(3.2); yvals.push_back(4);
+		yvals.push_back(2.4); yvals.push_back(2.8);  yvals.push_back(3.2); yvals.push_back(3.6); yvals.push_back(4);
 	}
     double result=0;
     for (int y1ind=0; y1ind<yvals.size(); y1ind++)
@@ -807,7 +813,7 @@ double Inthelperf_dpsint_pt2(double pt2, void* p)
 	// by 2 when calculating pedestal (this code does not multiply the result by 2)
 	else 
 	{
-		
+		// Also this must be multiplied by 2 if the probe is deuteron (neglects isospin symmetry)
 		double scale = std::max(pt2, par->pt1);
 		result = par->N->dHadronMultiplicity_dyd2pt(par->y1, par->pt1, par->sqrts, par->fragfun, par->pdf, false, par->final, scale)
 			*  par->N->dHadronMultiplicity_dyd2pt(par->y2, pt2, par->sqrts, par->fragfun, par->pdf, false, par->final, scale);

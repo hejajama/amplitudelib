@@ -70,6 +70,7 @@ int main(int argc, char* argv[])
     Order order=NLO;
     double sqrts=200;
     char dps_mode='a';
+    double pt1=0,pt2=0,y1=0,y2=0;
     Hadron final_particle = PI0;    // final state particle in single particle
                                     // production
     Parton parton=U;
@@ -94,6 +95,7 @@ int main(int argc, char* argv[])
         cout << "-miny y, -maxy y" << endl;
         cout << "-minpt, -maxpt" << endl;
         cout << "-dps p/d pi0/ch/hn a/b/c: doupe parton scattering" << endl;
+        cout << "-pt1, -pt2, -y1, -y2: set pt/y for dps calculation" << endl;
         cout << "-dsigmady: print d\\sigma/dy" << endl;
         cout << "-satscale Ns, print satscale r_s defined as N(r_s)=Ns" << endl;
         cout << "-F2 Qsqr" << endl;
@@ -223,6 +225,14 @@ int main(int argc, char* argv[])
             }
             dps_mode = string(argv[i+3])[0];
         }
+        else if (string(argv[i])=="-pt1")
+			pt1 = StrToReal(argv[i+1]);
+		else if (string(argv[i])=="-pt2")
+			pt2 = StrToReal(argv[i+1]);
+		else if (string(argv[i])=="-y1")
+			y1 = StrToReal(argv[i+1]);
+		else if (string(argv[i])=="-y2")
+			y2 = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-bspline")
             bspline=true;
         else if (string(argv[i])=="-satscale")
@@ -457,13 +467,15 @@ int main(int argc, char* argv[])
         cout << "# d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
         cout << "# Fragfun: " << fragfun->GetString() << endl;
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
-        cout << "# p_T   dN/(d^2 p_T dy)     parton level yield" << endl;
+        cout << "# p_T   dN/(d^2 p_T dy)     parton level yield     F(\\delta)" << endl;
+        
         for (double pt=minpt; pt<maxpt; pt+=0.1)
         {
             double result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, &pdf,
                 deuteron, final_particle);
             double partonlevel = N.dHadronMultiplicity_dyd2pt_parton(y, pt, sqrts, &pdf, deuteron);
-            cout << pt << " " << result << " " << partonlevel << endl;
+            double ya = std::log(N.X0() / (pt*std::exp(-y)/sqrts) );
+            cout << pt << " " << result << " " << partonlevel << " " << N.S_k(pt, ya)/(4.0*SQR(M_PI)) << endl;
         }
     }
     else if (mode==PTSPECTRUM_AVG)
@@ -512,25 +524,33 @@ int main(int argc, char* argv[])
         cout << "# DPS " << dps_mode << endl;
         cout << "# Fragfun: " << fragfun->GetString() << endl;
         cout << "# sqrt(s)=" << sqrts << " GeV" << endl;
+        cout << "# Deuteron: "<< deuteron << endl;
+
         
-        double y1=3.2, y2=3.2, pt1=2, pt2=3;
-        cout << "# Partonlevel DPS, y1=" << y1 << ", y2=" << y2 << ", pt1=" << pt1 <<", pt2=" << pt2 ;
-        double xp = (pt1*std::exp(y1) + pt2*std::exp(y2))/sqrts;
-        double xa = (pt1*std::exp(-y1) + pt2*std::exp(-y2))/sqrts;
-        cout << " x_p=" << xp <<", x_a=" << xa << endl;
-        cout <<"# Q_s = " << 1.0/N.SaturationScale(std::log(N.X0()/xa), 0.22) << " GeV" << endl;
-        cout <<"# xf(x_p, u) + xf(x_p, d) = " << pdf.xq(xp, std::max(pt1, pt2), U) + pdf.xq(xp, std::max(pt1, pt2), D) << endl;
-        double dps_partonlevel = N.DPS_partonlevel(y1, y2, pt1, pt2, sqrts, &pdf, deuteron, dps_mode);
-        cout << "# DPS " << dps_mode <<": " << dps_partonlevel << endl;
-        //double dps = N.DPS(miny,maxy,1.35,0.7,sqrts, fragfun, &pdf, deuteron, final_particle);
-        //double dps = N.DPSMultiplicity(miny,maxy,1,2,sqrts,fragfun, &pdf, deuteron, final_particle, dps_mode);
+        if (pt1>0 and pt2>0 and y1>0 and y2>0)
+        {
+			double xp = (pt1*std::exp(y1) + pt2*std::exp(y2))/sqrts;
+			double xa = (pt1*std::exp(-y1) + pt2*std::exp(-y2))/sqrts;
+			cout << "# x_p=" << xp <<", x_a=" << xa << endl;
+			cout <<"# Q_s = " << 1.0/N.SaturationScale(std::log(N.X0()/xa), 0.22) << " GeV" << endl;
+			cout <<"# xf(x_p, u) + xf(x_p, d) = " << pdf.xq(xp, std::max(pt1, pt2), U) + pdf.xq(xp, std::max(pt1, pt2), D) 
+			<<", x_p=" << xp << endl;
+			
+			cout << "# Partonlevel DPS, y1=" << y1 << ", y2=" << y2 << ", pt1=" << pt1 <<", pt2=" << pt2 ;
+			double dps_partonlevel = N.DPS_partonlevel(y1, y2, pt1, pt2, sqrts, &pdf, deuteron, dps_mode);
+			double dps_b =  N.DPS_partonlevel(y1, y2, pt1, pt2, sqrts, &pdf, deuteron, 'b');
+			double dps_c =  N.DPS_partonlevel(y1, y2, pt1, pt2, sqrts, &pdf, deuteron, 'c');
+			cout <<"# partonlevel single inclusive, 1: " << N.dHadronMultiplicity_dyd2pt_parton(y1, pt1, sqrts, &pdf, deuteron) 
+				<< " 2: " << N.dHadronMultiplicity_dyd2pt_parton(y2, pt2, sqrts, &pdf, deuteron) << endl;
+			cout << "# DPS " << dps_mode <<": " << dps_partonlevel << endl;
+			cout <<"# DPS b+c = " << dps_b + dps_c << endl;
+        }
+        double dps = N.DPSMultiplicity(miny,maxy,1,2,sqrts,fragfun, &pdf, deuteron, final_particle, dps_mode);
         //double single_sqr = N.dHadronMultiplicity_dyd2pt(y1, pt1, sqrts, fragfun, &pdf, deuteron, final_particle)
 		//		* N.dHadronMultiplicity_dyd2pt(y2, pt2, sqrts, fragfun, &pdf, deuteron, final_particle);
-		//cout << dps << endl; //<< " " << single_sqr << " " << dps+single_sqr << endl;
+		cout << "# Hadronlevel DPS " << dps_mode <<": " << endl << dps << endl; //<< " " << single_sqr << " " << dps+single_sqr << endl;
 		
-		double dps_b =  N.DPS_partonlevel(y1, y2, pt1, pt2, sqrts, &pdf, deuteron, 'b');
-		double dps_c =  N.DPS_partonlevel(y1, y2, pt1, pt2, sqrts, &pdf, deuteron, 'c');
-		cout <<"# DPS b+c = " << dps_b + dps_c << endl;
+		
     }
     
     else if (mode==DSIGMADY)

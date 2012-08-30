@@ -40,8 +40,12 @@ double DSS::Evaluate(Parton p, Hadron h, double x, double qs)
     }
     if (qs*qs<1 or qs*qs>1e5)
     {
-        qs=1;
-        //cerr << "Q=" << qs << " GeV out of Q^2 range [1,1e5] GeV^2. " << LINEINFO << endl;
+		cerr << "Q=" << qs << " GeV out of Q^2 range [1,1e5] GeV^2. " << LINEINFO << endl;
+		if (qs*qs<1)
+			qs=1;
+		else
+			qs=std::sqrt(1e5);
+        
         //exit(1);
         //return 0;
     }
