@@ -104,10 +104,11 @@ REAL Interpolator::Evaluate(REAL x)
 
     if (x<minx or x>maxx)
     {
-        cerr << "x=" << x << " is not within limits [" << minx << ", " << maxx << "], forcing "
-            << "it in that interval! " << LINEINFO << endl;
-            if (x<minx) x=minx*1.00001;
-            if (x>maxx) x=maxx*0.999999;
+		if (x < 0.9999*minx or x > 1.00001*maxx)	// if not true, no need to display error
+			cerr << "x=" << x << " is not within limits [" << minx << ", " << maxx << "], forcing "
+				<< "it in that interval! " << LINEINFO << endl;
+        if (x<minx) x=minx*1.00001;
+        if (x>maxx) x=maxx*0.999999;
     }
     
     REAL res, yerr; int status;
@@ -117,7 +118,7 @@ REAL Interpolator::Evaluate(REAL x)
             status = gsl_spline_eval_e(spline, x, acc, &res);
             if (status)
             {
-                cerr << "Interpolatioin failed at " << LINEINFO << ", error " << gsl_strerror(status)
+                cerr << "Interpolation failed at " << LINEINFO << ", error " << gsl_strerror(status)
                  << " (" << status << "), x=" << x << ", minx=" << xdata[0]
                  << ", maxx=" << xdata[points-1] << ", result=" << res << endl;
                  exit(1);
