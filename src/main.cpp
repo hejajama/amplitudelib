@@ -536,7 +536,7 @@ int main(int argc, char* argv[])
 			cout <<"# xf(x_p, u) + xf(x_p, d) = " << pdf.xq(xp, std::max(pt1, pt2), U) + pdf.xq(xp, std::max(pt1, pt2), D) 
 			<<", x_p=" << xp << endl;
 			
-			cout << "# Partonlevel DPS, y1=" << y1 << ", y2=" << y2 << ", pt1=" << pt1 <<", pt2=" << pt2 ;
+			cout << "# Partonlevel DPS, y1=" << y1 << ", y2=" << y2 << ", pt1=" << pt1 <<", pt2=" << pt2 << endl;
 			double dps_partonlevel = N.DPS_partonlevel(y1, y2, pt1, pt2, sqrts, &pdf, deuteron, dps_mode);
 			double dps_b =  N.DPS_partonlevel(y1, y2, pt1, pt2, sqrts, &pdf, deuteron, 'b');
 			double dps_c =  N.DPS_partonlevel(y1, y2, pt1, pt2, sqrts, &pdf, deuteron, 'c');

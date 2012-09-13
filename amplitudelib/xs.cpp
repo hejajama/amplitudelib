@@ -13,7 +13,7 @@
 #include "../pdf/cteq.hpp"
 #include <gsl/gsl_integration.h>
 
-const double STAR=false;	// true: star kinematics
+const double STAR=true;	// true: star kinematics
 
 /* Differential forward hadron production multiplicity
  * dN_h / (dy_h d^2 p_T)
@@ -342,14 +342,15 @@ double Inthelperf_dps_z2(double z2, void* p);
 
 double AmplitudeLib::DPS(double y1, double y2, double pt1, double pt2, double sqrts,
               FragmentationFunction* fragfun, PDF *pdf, bool deuteron, Hadron final, char dps_mode)
-{	const double ncoll = 15.1;	// central d+Au
-	const double C_p = 1;
+{	
 	Inthelper_dps par;
 	if (dps_mode != 'c')
 	{
 		cerr << "dps_mode " << dps_mode << " is not supported " << LINEINFO << endl;
 		exit(1);
 	}
+	if (deuteron)
+		cerr << "Deuteron is not supported! Assuming proton. " << LINEINFO << endl;
 	par.xf1 = pt1/sqrts*std::exp(y1);
 	par.xf2 = pt2/sqrts*std::exp(y2);
 	
@@ -380,9 +381,7 @@ double AmplitudeLib::DPS(double y1, double y2, double pt1, double pt2, double sq
     }
     
     gsl_integration_workspace_free(workspace);
-	
-	result *= C_p;
-	
+		
 	
 	result /= std::pow(2.0*M_PI, 4);
 	return result;
@@ -401,7 +400,11 @@ double Inthelperf_dps_z1(double z1, void* p)
 	// z_1 and x_{A1} are constant
 	double xa1 = par->pt1/z1*std::exp(-par->y1)/par->sqrts;
 	double ya1 = std::log(par->N->X0() / xa1);
-	if (ya1<0) ya1=0; ///TODO
+	if (ya1<0)
+	{
+		ya1=0; ///TODO
+		cerr << "Negative rapidity " << ya1 << " at " << LINEINFO << endl;
+	}
 	par->N->InitializeInterpolation(ya1);
 	par->cache_sk1_fund = par->N->S_k(par->pt1/z1, ya1, false);	// fundamental
 	par->cache_sk1_adj = par->N->S_k(par->pt1/z1, ya1, true); // adjoint
@@ -445,7 +448,11 @@ double Inthelperf_dps_z2(double z2, void* p)
 	double xa2 = xp2 * std::exp(-2.0*par->y2);
 	//double ya1 = std::log( par->N->X0() / xa1);
 	double ya2 = std::log( par->N->X0() / xa2);
-	if (ya2<0) ya2=0;	///TODO
+	if (ya2<0) 
+	{
+		ya2=0;	///TODO
+		cerr << "Negative rapidity " << ya2 << " at " << LINEINFO << endl;
+	}
 	par->N->InitializeInterpolation(ya2);
 	double nf2 = par->N->S_k(par->pt2/z2, ya2);
 	double na2 = par->N->S_k(par->pt2/z2, ya2, true);	// adjoint rep
@@ -456,6 +463,8 @@ double Inthelperf_dps_z2(double z2, void* p)
 	{
 		for (int p2ind=0; p2ind<=p1ind; p2ind++)
 		{
+			// Combinations uu, du, dd, gu, gd, gg
+			
 			// Ddpf() is symmetrized DPDF with kinematical constraint
 			// Combinatorics: hadron 1/2 can be produced by both partons 1/2
 			double cont_1 = par->pdf->Dpdf(xp1, xp2, scale, partons[p1ind], partons[p2ind])
@@ -468,11 +477,11 @@ double Inthelperf_dps_z2(double z2, void* p)
 			if (partons[p2ind]!=G) cont_1*= nf2;
 			else cont_1 *= na2;
 			 
+			// Swap parton1<->parton2
 			double cont_2 = par->pdf->Dpdf(xp2, xp1, scale, partons[p1ind], partons[p2ind])
 			 * par->fragfun->Evaluate(partons[p2ind], par->final, par->z1, scale)
 			 * par->fragfun->Evaluate(partons[p1ind], par->final, z2, scale);	
 			 
-			 double sk1=0, sk2=0;
 			 // Gluon scattering: S() in adjoint rep
 			 if (partons[p1ind]!=G) cont_2 *= nf2;
 			 else cont_2 *= na2;
@@ -569,7 +578,7 @@ double AmplitudeLib::DPS_partonlevel(double y1, double y2, double pt1, double pt
  * Integrates over d^2 p_1 d^2 p_2 dy1 dy2
  * Notice that for CP() one must calculate dN/d\phi
  * That is, this must be divided by 2\pi when calculating
- * DPS
+ * DPS pedestal
  * 
  * Also Deuteron is not supported: if isospin is neglected the final
  * result is obtained by multiplying this by 2
@@ -643,7 +652,7 @@ double AmplitudeLib::DPSMultiplicity(double miny, double maxy, double minpt, dou
 		double tmpres=0;
 		for (int y2ind=0; y2ind<yvals.size(); y2ind++)
 		{
-			cout << "# y1 " << yvals[y1ind] << " y2 " << yvals[y2ind] << endl;
+			//cout << "# y1 " << yvals[y1ind] << " y2 " << yvals[y2ind] << endl;
 			par.y1=yvals[y1ind]; par.y2=yvals[y2ind];
 			double res = Inthelperf_dpsint_y2(par.y2, &par);
 			if (yvals.size()==3)
@@ -735,7 +744,7 @@ double Inthelperf_dpsint_y1(double y1, void* p)
 double Inthelperf_dpsint_y2(double y2, void* p)
 {
 	Inthelper_dpsint* par = (Inthelper_dpsint*) p;
-	//cout <<"# y1 " << par->y1 << " y2 "  << y2 << endl;
+	
 	par->y2=y2;
 	gsl_function fun;
 	fun.function=Inthelperf_dpsint_pt1;
@@ -745,11 +754,12 @@ double Inthelperf_dpsint_y2(double y2, void* p)
     double maxpt=0, minpt=0;
     if (STAR)
 	{
-		minpt=2; maxpt=3.99;
+		minpt=2; maxpt=4;
 	} else
 	{
-		minpt=1.6; maxpt=2;
+		minpt=1.1; maxpt=1.6;
 	}
+	cout <<"# y1 " << par->y1 << " y2 "  << y2 << " trig ptrange " << minpt << " - " << maxpt <<endl;
     gsl_integration_workspace *workspace 
         = gsl_integration_workspace_alloc(DPS_PTINTPOINTS);
     status=gsl_integration_qag(&fun, minpt, maxpt,

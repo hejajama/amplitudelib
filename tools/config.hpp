@@ -42,7 +42,7 @@ const double ALPHAS = 0.2;    // compare with ALPHABAR_s.... ok, doesn't make se
 
 // Other constants
 
-//const double eps=0.000001;
+const double eps=0.000001;
 
 // Inline functions
 
