@@ -1,6 +1,6 @@
 /*
- * BK equation solver
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * General purpose interpolation class
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2012
  */
 
 #ifndef _INTERPOLATION_H
@@ -51,6 +51,13 @@ class Interpolator
         gsl_spline* GetGslSpline();
         int GetNumOfPoints();
         INTERPOLATION_METHOD GetMethod();
+        
+        bool Freeze(); 
+        void SetFreeze(bool f);
+        void SetUnderflow(REAL min);
+        void SetOverflow(REAL max);
+        REAL UnderFlow();
+        REAL OverFlow();
 
     private:
         INTERPOLATION_METHOD method;
@@ -59,6 +66,10 @@ class Interpolator
         REAL minx,maxx;
         int points;
         bool ready;
+        
+        bool freeze;		// true if return freeze_under/overflow if
+        REAL freeze_underflow;	// asked to evaluate interpolation
+		REAL freeze_overflow;	// outside the spesified range
         
         // spline
         gsl_interp_accel *acc;

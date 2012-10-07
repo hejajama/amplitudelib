@@ -104,6 +104,11 @@ REAL Interpolator::Evaluate(REAL x)
 
     if (x<minx or x>maxx)
     {
+		if (freeze)
+		{
+			if (x<minx) return freeze_underflow;
+			else return freeze_overflow;
+		}
 		if (x < 0.9999*minx or x > 1.00001*maxx)	// if not true, no need to display error
 			cerr << "x=" << x << " is not within limits [" << minx << ", " << maxx << "], forcing "
 				<< "it in that interval! " << LINEINFO << endl;
@@ -200,6 +205,7 @@ Interpolator::Interpolator(REAL *x, REAL *y, int p)
     method = INTERPOLATE_SPLINE;
     allocated_data=false;
     ready=false;
+    freeze=false;
 
     for (int i=0; i<p; i++)
     {
@@ -242,6 +248,7 @@ Interpolator::Interpolator(std::vector<REAL> &x, std::vector<REAL> &y)
     minx=xdata[0]; maxx=xdata[x.size()-1];
     method = INTERPOLATE_SPLINE;
     ready=false;
+    freeze=false;
 }
 
 void Interpolator::SetMethod(INTERPOLATION_METHOD m)
@@ -334,4 +341,35 @@ REAL Interpolator::MinX()
 REAL Interpolator::MaxX()
 {
 	return maxx;
+}
+
+
+bool Interpolator::Freeze()
+{
+	return freeze;
+}
+void Interpolator::SetFreeze(bool f)
+{
+	freeze=f;
+	if (f==true)
+	{
+		// user is expected to set these AFTER freeze is set to true!
+		freeze_underflow=0; freeze_overflow=0;	
+	}
+}
+void Interpolator::SetUnderflow(REAL min)
+{
+	freeze_underflow=min;
+}
+ void Interpolator::SetOverflow(REAL max)
+ {
+	 freeze_overflow=max;
+ }
+REAL Interpolator::UnderFlow()
+{
+	 return freeze_underflow;
+}
+REAL Interpolator::OverFlow()
+{
+	return freeze_overflow;
 }

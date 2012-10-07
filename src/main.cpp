@@ -385,7 +385,7 @@ int main(int argc, char* argv[])
         double minr = N.MinR()*1.1; double maxr=N.MaxR()*0.99;
         for (double r=minr; r<maxr; r*=1.03)
         {
-            cout << std::scientific << std::setprecision(9) << r << " " << N.N(r, y)  <<  " "
+            cout << std::scientific << std::setprecision(9) << r << " " << N.N(r, y)  << " "
              << N.N(r,y,1) << " " << N.N(r,y,2) <<
              " " << N.LogLogDerivative(r,y) << endl;
         }
