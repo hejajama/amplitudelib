@@ -80,6 +80,10 @@ double DSS::Evaluate(Parton p, Hadron h, double x, double qs)
     {
 		ih=4; ic=1;
     } 
+    else if (h==H) // charged hadron
+    {
+		return Evaluate(p, HP, x, qs) + Evaluate(p, HM, x, qs);
+	}
     else if (h==PI)	// pi^+ + pi^-
     {    
 		return Evaluate(p, PIP, x, qs) + Evaluate(p, PIM, x, qs);
@@ -175,23 +179,28 @@ void DSS::Test()
 	SetOrder(NLO);
 	double result, cor;
 	result=0.1*Evaluate(U, PI0, 0.1, std::sqrt(10)); cor=0.64450;
-	cout <<"z*D_{u->pi0}(Q^2=10GeV^2, x=0.1) = " << result << " (correct " << cor << ")" <<  endl;
+	cout <<"z*D_{u->pi0}(Q^2=10GeV^2, z=0.1) = " << result << " (correct " << cor << ")" <<  endl;
 	if (std::abs(result-cor)/cor>0.01)
 		cout << "TEST FAILED!!!" << endl;
 	
 	result=0.2*Evaluate(D, PI, 0.2, std::sqrt(50)); cor=0.97394;
-	cout <<"z*D_{d->pi+ pi-}(Q^2=50GeV^2, x=0.2) = " << result << " (correct " << cor << ")" <<  endl;
+	cout <<"z*D_{d->pi+ pi-}(Q^2=50GeV^2, z=0.2) = " << result << " (correct " << cor << ")" <<  endl;
 	if (std::abs(result-cor)/cor>0.01)
 		cout << "TEST FAILED!!!" << endl;
 	
 	result=0.3*Evaluate(S, HM, 0.3, std::sqrt(20)); cor=0.64972;
-	cout <<"z*D_{s->h-}(Q^2=20GeV^2, x=0.3) = " << result << " (correct " << cor << ")" <<  endl;
+	cout <<"z*D_{s->h-}(Q^2=20GeV^2, z=0.3) = " << result << " (correct " << cor << ")" <<  endl;
 	if (std::abs(result-cor)/cor>0.01)
 		cout << "TEST FAILED!!!" << endl;
 	
 	result=0.3*Evaluate(G, PI0, 0.3, std::sqrt(20)); cor=0.37437;
-	cout <<"z*D_{g->pi0}(Q^2=20GeV^2, x=0.3) = " << result << " (correct " << cor << ")" <<  endl;
+	cout <<"z*D_{g->pi0}(Q^2=20GeV^2, z=0.3) = " << result << " (correct " << cor << ")" <<  endl;
 	if (std::abs(result-cor)/cor>0.01)
+		cout << "TEST FAILED!!!" << endl;
+	
+	result = 0.05 * Evaluate(U, H, 0.05, std::sqrt(20)); cor=1.7988;
+	cout << "z*D_{u->charged hadron}(Q^2=20 GeV^2, z=0.05) = " << result << " (correct " << cor << ")" << endl;
+	if (std::abs(result-cor)/cor > 0.01)
 		cout << "TEST FAILED!!!" << endl;
 		
 	cout <<"#LO:" << endl;
@@ -215,6 +224,11 @@ void DSS::Test()
 	result=0.3*Evaluate(G, PI0, 0.3, std::sqrt(20)); cor=0.6663;
 	cout <<"z*D_{g->pi0}(Q^2=20GeV^2, x=0.3) = " << result << " (correct " << cor << ")" <<  endl;
 	if (std::abs(result-cor)/cor>0.01)
+		cout << "TEST FAILED!!!" << endl;
+	
+	result = 0.05 * Evaluate(U, H, 0.05, std::sqrt(20)); cor=1.9169;
+	cout << "z*D_{u->charged hadron}(Q^2=20 GeV^2, z=0.05) = " << result << " (correct " << cor << ")" << endl;
+	if (std::abs(result-cor)/cor > 0.01)
 		cout << "TEST FAILED!!!" << endl;
 	
 	

@@ -183,7 +183,7 @@ double AmplitudeLib::S(double r, double y, int der)
  */
 struct N_k_helper
 {
-    double y; double kt;
+    double y; double kt; double power;
     bool adjoint;
     AmplitudeLib* N;
 };
@@ -244,17 +244,19 @@ double AmplitudeLib::N_k_to_x(double x, double y)
 
 /*
  * FT S=1-N to the k-space
- * S(k) = \int d^2 r exp(ik.r) (1-N(r))
- *  = (2\pi) \int dr r BesselJ[0,k*r] * (1-N(r))
+ * S(k) = \int d^2 r exp(ik.r) (1-N(r))^power
+ *  = (2\pi) \int dr r BesselJ[0,k*r] * (1-N(r))^power
  * 
  * Note: for performance reasons it is probably a good idea to
  * call AmplitudeLib::InitializeInterpolation(y) before this
  *
  * if adjoint==true, then use adjoint representation for N
  * Default value for adjoint is false
+ * 
+ * Default value for power is 1.0
  */
 double S_k_helperf(double r, void* p);
-double AmplitudeLib::S_k(double kt, double y, bool adjoint)
+double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
 {
 	SetOutOfRangeErrors(false);
 	
@@ -268,11 +270,11 @@ double AmplitudeLib::S_k(double kt, double y, bool adjoint)
     init_workspace_fourier(FOURIER_ZEROS);   // number of bessel zeroes, max 2000
     
     N_k_helper par;
-    par.y=y; par.N=this; par.kt=kt; par.adjoint=adjoint;
+    par.y=y; par.N=this; par.kt=kt; par.adjoint=adjoint; par.power=power;
 
     double result=0;
 
-    if (kt < 1e-3 or true)  // k_T \approx 0 -> integrate just \int d^2 r S(r)
+    if (kt < 1e-3 or true)  // k_T \approx 0 -> integrate just \int d^2 r S(r)^power
     {
         gsl_function fun; fun.function=S_k_helperf;
         fun.params=&par;
@@ -303,11 +305,11 @@ double S_k_helperf(double r, void* p)
     if (!par->adjoint)
     {
         if (r > par->N->MaxR()) return 0;
-        result = r*(1.0-par->N->N(r, par->y));
+        result = r*std::pow(par->N->S(r, par->y), par->power);
     }
     else
     {
-        result = r*(1.0-par->N->N_A(r, par->y));
+        result = r*std::pow(1.0-par->N->N_A(r, par->y), par->power);
     }
     result *= gsl_sf_bessel_J0(par->kt*r);
 

@@ -30,10 +30,10 @@ class AmplitudeLib
         // Amplitude from k space to x space
         double N_k_to_x(double x, double y);
 
-        // Regular ft to k-space for S=1-N, NO normalization factor
+        // Regular ft to k-space for S^p=(1-N)^p, NO normalization factor
         // \int e^(ik.r) S(r)
         // if adjoint=true, then N is in adjoint representation
-        double S_k(double kt, double y, bool adjoint=false);
+        double S_k(double kt, double y, bool adjoint=false, double pow=1.0);
 
         // Amplitude in adjoint representation
         double N_A(double r, double y, int der=0);
