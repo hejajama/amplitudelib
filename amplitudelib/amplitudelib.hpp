@@ -37,6 +37,8 @@ class AmplitudeLib
 
         // Amplitude in adjoint representation
         double N_A(double r, double y, int der=0);
+        
+        void SetX0(double x0_);	// override x0
 
 
         // Virtual photon-proton cross sections, longitudinal and transverse

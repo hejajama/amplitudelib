@@ -716,3 +716,9 @@ double AmplitudeLib::X0()
     return x0;
 }
 
+void AmplitudeLib::SetX0(double x0_)
+{
+	x0=x0_;
+}
+
+

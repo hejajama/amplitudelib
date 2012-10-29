@@ -1,6 +1,6 @@
 /*
- * BK equation solver
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * AmplitudeLib, reads output of the BK equation solver 
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2012
  */
 
 #include "../tools/tools.hpp"
@@ -12,6 +12,7 @@
 #include "../fragmentation/hkns.hpp"
 #include "../fragmentation/dss.hpp"
 #include "../pdf/cteq.hpp"
+#include "../pdf/mrst.hpp"
 #include "../amplitudelib/virtual_photon.hpp"
 #include "../tools/config.hpp"
 #include <iostream>
@@ -75,12 +76,14 @@ int main(int argc, char* argv[])
                                     // production
     Parton parton=U;
     string datafile="amplitude.dat";
+    double x0=-1;	// use default
 
     if (string(argv[1])=="-help")
     {
         cout << "-y y: set rapidity" << endl;
         cout << "-xbj bjorken_x (overrides -y)" << endl;
         cout << "-data datafile" << endl;
+        cout << "-x0 x0val: override x0 value of the datafile" << endl;
         cout << "-kspace: data is in k space" << endl;
         cout << "-x: print amplitude (space-indep.)" << endl;
         cout << "-ydep r: print N(r,y) as a function of y" << endl;
@@ -308,6 +311,8 @@ int main(int argc, char* argv[])
 		}
 		else if (string(argv[i])=="-test")
 			mode=TEST;
+		else if (string(argv[i])=="-x0")
+			x0 = StrToReal(argv[i+1]);
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -319,12 +324,14 @@ int main(int argc, char* argv[])
     cout << "# Reading data from file " << datafile << endl;
     cout <<"# Order: "; if (order==LO) cout << "LO"; else cout << "NLO"; cout << endl;
     CTEQ pdf;
+    //MRST pdf; pdf.Initialize();
     if (fragfun==NULL)
 		fragfun = new DSS(); 
     fragfun->SetOrder(order);
     pdf.SetOrder(order);
     cout << "# PDF: " << pdf.GetString() <<", FF: " << fragfun->GetString() << endl;
     AmplitudeLib N(datafile, kspace);
+    if (x0>0) N.SetX0(x0);
     N.InitializeInterpolation(y,bspline);
     if (xbj>=0) y = std::log(N.X0()/xbj);
     cout << "# y = " << y << ", x_0 = " << N.X0() << " x = " << N.X0()*std::exp(-y) << endl;
@@ -469,7 +476,7 @@ int main(int argc, char* argv[])
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
         cout << "# p_T   dN/(d^2 p_T dy)     parton level yield     F(\\delta)" << endl;
         
-        for (double pt=minpt; pt<maxpt; pt+=0.1)
+        for (double pt=minpt; pt<maxpt; pt+=0.05)
         {
             double result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, &pdf,
                 deuteron, final_particle);
@@ -490,7 +497,7 @@ int main(int argc, char* argv[])
         cout << "# Fragfun: " << fragfun->GetString() << endl;
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
         cout << "# p_T   d\\sigma" << endl;
-        for (double pt=1; pt<4; pt+=0.1)
+        for (double pt=minpt; pt<maxpt; pt+=0.05)
         {
             double result = N.AverageHadronMultiplicity(miny, maxy, pt, sqrts, fragfun, &pdf,
                 deuteron, final_particle);

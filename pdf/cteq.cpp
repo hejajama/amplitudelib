@@ -187,6 +187,7 @@ void CTEQ::Test()
 	cout <<"f_g(Q^2=1000GeV^2, x=0.05) = " << result << " (correct " << cor << ")" <<  endl;
 	if (std::abs(result-cor)/cor>0.01)
 		cout << "TEST FAILED!!!" << endl;
+	
 	////////////////////////////////////////////
 	/*
 	cout << "#LO" << endl;

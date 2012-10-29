@@ -51,6 +51,8 @@ double Inthelperf_hadronprod(double z, void *p)
 
 	
     double y_A = std::log(par->N->X0()/x2);
+    //scale=1.0/par->N->SaturationScale(y_A, 0.22);	///TODO!
+    //scale = 0.2 * std::pow(0.0001/x2,0.3); scale=std::sqrt(scale);
 
     if (y_A<0)
     {
@@ -73,14 +75,14 @@ double Inthelperf_hadronprod(double z, void *p)
     // PDF and fragmentation
     double xqf = par->pdf->xq(x1, scale, U)*par->frag->Evaluate(U, par->final, z, scale)
         + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(D, par->final, z, scale);
-        //+ par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
+        + par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
 
     if (deuteron)
     {
         // isospin symmetry, u in p -> d in n
         xqf += par->pdf->xq(x1, scale, U)*par->frag->Evaluate(D, par->final, z, scale)
         + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(U, par->final, z, scale)
-        ;//+ par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
+        + par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
     }
         
     result = nf*xqf;
