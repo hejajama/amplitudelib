@@ -274,7 +274,7 @@ double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
 
     double result=0;
 
-    if (kt < 1e-3 or true)  // k_T \approx 0 -> integrate just \int d^2 r S(r)^power
+    if (kt < 1e-3 )  // k_T \approx 0 -> integrate just \int d^2 r S(r)^power
     {
         gsl_function fun; fun.function=S_k_helperf;
         fun.params=&par;
@@ -311,7 +311,9 @@ double S_k_helperf(double r, void* p)
     {
         result = r*std::pow(1.0-par->N->N_A(r, par->y), par->power);
     }
-    result *= gsl_sf_bessel_J0(par->kt*r);
+    
+    // J0 is in fourier_j0() fun
+    //result *= gsl_sf_bessel_J0(par->kt*r);
 
     return result;
 }
@@ -658,14 +660,14 @@ void AmplitudeLib::InitializeInterpolation(double y, bool bspline)
  */
 Interpolator* AmplitudeLib::MakeInterpolator(double y)
 {
-    double* interp_narray = new double[rpoints];
+    std::vector<double> tmpnvals;
     for (int i=0; i<rpoints; i++)
     {
-        tmpnarray[i] = N(tmprarray[i], y);
+        tmpnvals.push_back(N(rvals[i], y));
     }
-    Interpolator* inter = new Interpolator(tmprarray, tmpnarray, rpoints);
+    Interpolator* inter = new Interpolator(rvals, tmpnvals);
     inter->Initialize();
-    delete[] interp_narray;
+
     return inter;
         
 }

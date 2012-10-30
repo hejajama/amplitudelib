@@ -47,6 +47,10 @@ class AmplitudeLib
         // pol 0=longitudinal, 1=transverse
         double ProtonPhotonCrossSection(double Qsqr, double y, int pol);
 
+
+		//////////////// SINGLE INCLUSIVE, hybrid formalism
+		//////// File xs.cpp
+
         // Differential forward hadron production multiplicity
         // dN_h / (dy_h d^2 p_T)
         double dHadronMultiplicity_dyd2pt(double y, double pt, double sqrts,
@@ -69,15 +73,22 @@ class AmplitudeLib
         double DPSMultiplicity(double miny, double maxy, double minpt, double maxpt, double sqrts,
 			FragmentationFunction* fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0, char dps_mode='c');
 
-        // Unintegrated gluon density
-        double UGD(double k, double y, Interpolator* interp=NULL);
+		
+		/////////////// UGD  (file ugd.cpp)
+		
+		// KMR UGD C_F/(8\pi^3) S_T/\alpha_s(q) q^4 S_k(q)
+		// returns without factor S_T unless it is specified
+		double UGD(double q, double x, double S_T=1.0);
+		// Integrated GD from UGD
+		double xg(double x, double q);
+		
+		// k_T factorization dN/d^2pt dy, ref e.g. hep-ph/0111362 (40)
+		double dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts );
+		
+		
+		
+		///////
 
-        // k_T factorization: d\sigma / (dyd^2p_T)
-        // = const * 1/p_T^2 \int d^2 k_T/4 \alphas_(Q) \psi(|p_t+k_T|/2,x1)
-        //   * \psi(|p_t-k_T|/2, x2)
-        double dN_gluon_dyd2pt(double pt, double y, double sqrts);
-        double dSigmady(double y, double sqrts);
-        double dSigmady_mc(double y, double sqrts);
 
         // d ln N / d ln r^2
         double LogLogDerivative(double r, double y);

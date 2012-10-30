@@ -36,12 +36,14 @@ enum Mode
     DSIGMADY,
     PTSPECTRUM,
     PTSPECTRUM_AVG,
+    PTSPECTRUM_KTFACT,
     INT_HADRONPROD,
     F2,
     LOGLOGDER,
     DPS,
     PRINT_FF,
     PRINT_PDF,
+    UGD_PDF,
     TEST
 };
 
@@ -94,6 +96,7 @@ int main(int argc, char* argv[])
         cout << "-pt_spectrum p/d pi0/ch/hn: print dN/(d^2 p_T dy), probe is proton or deuteron"
             << " final state pi0/charged/negative hadron" << endl;
         cout << "-pt_spectrum_avg: same as above, but average over y region, must set miny and maxy" << endl;
+        cout <<"-pt_spectrum_ktfact: gluon production dN/(d^2 p_T dy) using k_T factorization" << endl;
         cout << "-hadronprod_int p/d pi0/ch/hn: integrated over pt and y range" << endl;
         cout << "-miny y, -maxy y" << endl;
         cout << "-minpt, -maxpt" << endl;
@@ -108,6 +111,7 @@ int main(int argc, char* argv[])
         cout << "-sqrts sqrts (in GeV)" << endl;
         cout << "-print_ff [u,d,s,g] [pi0,pim,pip,hm,hp] qsqr" << endl;
         cout << "-print_pdf [u,d,g] qsqr" << endl;
+        cout << "-ugd_pdf qsqr: calculate gluon pdf from UGD" << endl;
         cout << "-lo: user LO PDF/FF instead of NLO" << endl;
         cout << "-test: run tests" << endl;
         return 0;
@@ -153,7 +157,6 @@ int main(int argc, char* argv[])
         {
             if (string(argv[i])=="-pt_spectrum")
                 mode=PTSPECTRUM;
-            else
                 mode=PTSPECTRUM_AVG;
             if (string(argv[i+1])=="p")
                 deuteron=false;
@@ -177,6 +180,8 @@ int main(int argc, char* argv[])
                 exit(1);
             }
         }
+        else if (string(argv[i])=="-pt_spectrum_ktfact")
+			mode = PTSPECTRUM_KTFACT;
         else if (string(argv[i])=="-hadronprod_int")
         {
             mode=INT_HADRONPROD;
@@ -305,6 +310,11 @@ int main(int argc, char* argv[])
 			mode = PRINT_PDF;
             Qsqr = StrToReal(argv[i+1]);
         }
+        else if (string(argv[i])=="-ugd_pdf")
+        {
+			mode = UGD_PDF;
+			Qsqr = StrToReal(argv[i+1]);
+		}
         else if (string(argv[i])=="-lo")
         {
 			order=LO;
@@ -520,7 +530,18 @@ int main(int argc, char* argv[])
         cout << N.HadronMultiplicity(miny, maxy, minpt, maxpt, sqrts, fragfun, &pdf,
             deuteron, final_particle) << endl;
     }
-
+	else if (mode==PTSPECTRUM_KTFACT)
+    {
+        cout << "# d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
+		cout << "# Using k_T factorization (gluon production)" << endl;
+        cout << "# p_T   dN/(d^2 p_T dy)    " << endl;
+        
+        for (double pt=minpt; pt<maxpt; pt+=0.2)
+        {
+            double result = N.dHadronMultiplicity_dyd2pt_ktfact(y, pt, sqrts);
+            cout << pt << " " << result << endl;
+        }
+    }
     else if (mode==DPS)
     {
         if (fragfun==NULL)
@@ -562,22 +583,7 @@ int main(int argc, char* argv[])
     
     else if (mode==DSIGMADY)
     {
-        double miny=-3;
-        double maxy=3;
-        int ypoints=30;
-        cout << "#d\\sigma/dy, sqrt(s) = 200" << endl;
-        cout << "# y     d\\sigma/dy" << endl;
-        #pragma omp parallel for
-        for (int yind=0; yind<=ypoints; yind++)
-        {
-            double tmpy = miny + (maxy-miny)/ypoints*yind;
-            double result = N.dSigmady_mc(y, 200);
-            //double result = N.dSigmadyd2pt(3, 3.0/200.0*std::exp(tmpy), 3.0/200.0*std::exp(-tmpy));
-            #pragma omp critical
-            {
-                cout << tmpy << " " << result << endl;
-            }
-        }
+        cerr << "Not implemented! "  << LINEINFO << endl;
     }
     else if (mode==F2)
     {
@@ -631,6 +637,22 @@ int main(int argc, char* argv[])
 		{
 			cout << x << " " << pdf.xq(x, q, U) << " " << pdf.xq(x,q,D)
 				<< " " << pdf.xq(x,q,S) << " " << pdf.xq(x,q,G) << endl;
+		}
+	}
+	
+	else if (mode == UGD_PDF)
+	{
+		double q = std::sqrt(Qsqr);
+		cout << "# PDF x*g(x,Q^2) from UGD, compared with gluon distribution from " << pdf.GetString() << " pdf, Q^2=" << Qsqr << " Gev^2" << endl;
+		/*cout << "# x    ugd     " << pdf.GetString() << endl;
+		for (double x=1e-4; x<1; x*=1.05)
+		{
+			cout << x << " " << N.xg(x, q) << " " << pdf.xq(x, q, G) << endl;
+		}*/
+		
+		for (double qsqr=1; qsqr<100; qsqr*=1.1)
+		{
+			cout << qsqr << " " << N.xg(0.01, std::sqrt(qsqr)) << " " << pdf.xq(0.01, std::sqrt(qsqr), G) << endl;
 		}
 	}
 	else if (mode==TEST)

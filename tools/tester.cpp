@@ -52,6 +52,24 @@ int main()
 	cout << "d ln N(r=2)/d ln r = " << res; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
 	cout << endl;
 	
+	cout << "===== TEST UGD -> xg ===== " << endl;
+	correct=0.185494; res=N.xg(N.X0(), 10);
+	cout << "xg(x=x0, Q^2=100)=" << res; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
+	cout << endl;
+	
+	
+	
+	cout << "===== TESTING INTERPOLATOR =====" << endl;
+	{
+	std::vector<double> y; y.push_back(0); y.push_back(1); y.push_back(4);  y.push_back(9); y.push_back(16);
+	std::vector<double> x; x.push_back(0); x.push_back(1); x.push_back(2);  x.push_back(3); x.push_back(4);
+	Interpolator interp(x,y); interp.Initialize();
+	correct=6.25; res = interp.Evaluate(2.5);	// 2.5^2=6.25
+	cout << "6.25^2 = " << res; if (abs(res-correct)/correct>0.01) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
+	cout << endl;
+	}
+	
+	
 	cout << "===== TEST: CTEQ pdf ===== " << endl;
 	CTEQ pdf;
 	pdf.Initialize();
