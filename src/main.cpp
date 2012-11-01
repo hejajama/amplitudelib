@@ -70,6 +70,7 @@ int main(int argc, char* argv[])
     bool deuteron=false;
     double miny=3; double maxy=4;
     double minpt=1, maxpt=4;
+    double ptstep = 0.1;
     Order order=NLO;
     double sqrts=200;
     char dps_mode='a';
@@ -99,7 +100,7 @@ int main(int argc, char* argv[])
         cout <<"-pt_spectrum_ktfact: gluon production dN/(d^2 p_T dy) using k_T factorization" << endl;
         cout << "-hadronprod_int p/d pi0/ch/hn: integrated over pt and y range" << endl;
         cout << "-miny y, -maxy y" << endl;
-        cout << "-minpt, -maxpt" << endl;
+        cout << "-minpt, -maxpt, -ptstep" << endl;
         cout << "-dps p/d pi0/ch/hn a/b/c: doupe parton scattering" << endl;
         cout << "-pt1, -pt2, -y1, -y2: set pt/y for dps calculation" << endl;
         cout << "-dsigmady: print d\\sigma/dy" << endl;
@@ -129,6 +130,8 @@ int main(int argc, char* argv[])
             maxy = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-minpt")
             minpt = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-ptstep")
+			ptstep = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-maxpt")
             maxpt = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-data")
@@ -157,6 +160,7 @@ int main(int argc, char* argv[])
         {
             if (string(argv[i])=="-pt_spectrum")
                 mode=PTSPECTRUM;
+            else
                 mode=PTSPECTRUM_AVG;
             if (string(argv[i+1])=="p")
                 deuteron=false;
@@ -486,7 +490,7 @@ int main(int argc, char* argv[])
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
         cout << "# p_T   dN/(d^2 p_T dy)     parton level yield     F(\\delta)" << endl;
         
-        for (double pt=minpt; pt<maxpt; pt+=0.05)
+        for (double pt=minpt; pt<maxpt; pt+=ptstep)
         {
             double result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, &pdf,
                 deuteron, final_particle);
@@ -507,7 +511,7 @@ int main(int argc, char* argv[])
         cout << "# Fragfun: " << fragfun->GetString() << endl;
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
         cout << "# p_T   d\\sigma" << endl;
-        for (double pt=minpt; pt<maxpt; pt+=0.05)
+        for (double pt=minpt; pt<maxpt; pt+=ptstep)
         {
             double result = N.AverageHadronMultiplicity(miny, maxy, pt, sqrts, fragfun, &pdf,
                 deuteron, final_particle);
@@ -532,14 +536,20 @@ int main(int argc, char* argv[])
     }
 	else if (mode==PTSPECTRUM_KTFACT)
     {
+		if (fragfun==NULL)
+        {
+            cerr << "Fragfun not spesified!" << endl;
+            return -1;
+        }
         cout << "# d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
 		cout << "# Using k_T factorization (gluon production)" << endl;
-        cout << "# p_T   dN/(d^2 p_T dy)    " << endl;
+        cout << "# p_T   dN/(d^2 p_T dy) hadronlevel    partonlevel   " << endl;
         
-        for (double pt=minpt; pt<maxpt; pt+=0.2)
+        for (double pt=minpt; pt<maxpt; pt+=ptstep)
         {
-            double result = N.dHadronMultiplicity_dyd2pt_ktfact(y, pt, sqrts);
-            cout << pt << " " << result << endl;
+            double partonresult = N.dHadronMultiplicity_dyd2pt_ktfact_parton(y, pt, sqrts);
+            double hadronresult = N.dHadronMultiplicity_dyd2pt_ktfact(y, pt, sqrts, fragfun, H);
+            cout << pt << " " << hadronresult << " " << partonresult << endl;
         }
     }
     else if (mode==DPS)
@@ -644,16 +654,16 @@ int main(int argc, char* argv[])
 	{
 		double q = std::sqrt(Qsqr);
 		cout << "# PDF x*g(x,Q^2) from UGD, compared with gluon distribution from " << pdf.GetString() << " pdf, Q^2=" << Qsqr << " Gev^2" << endl;
-		/*cout << "# x    ugd     " << pdf.GetString() << endl;
+		cout << "# x    ugd     " << pdf.GetString() << endl;
 		for (double x=1e-4; x<1; x*=1.05)
 		{
 			cout << x << " " << N.xg(x, q) << " " << pdf.xq(x, q, G) << endl;
-		}*/
-		
+		}
+		/*
 		for (double qsqr=1; qsqr<100; qsqr*=1.1)
 		{
 			cout << qsqr << " " << N.xg(0.01, std::sqrt(qsqr)) << " " << pdf.xq(0.01, std::sqrt(qsqr), G) << endl;
-		}
+		}*/
 	}
 	else if (mode==TEST)
 	{

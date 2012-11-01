@@ -83,7 +83,8 @@ class AmplitudeLib
 		double xg(double x, double q);
 		
 		// k_T factorization dN/d^2pt dy, ref e.g. hep-ph/0111362 (40)
-		double dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts );
+		double dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts, FragmentationFunction* fragfun, Hadron final );
+		double dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts );
 		
 		
 		

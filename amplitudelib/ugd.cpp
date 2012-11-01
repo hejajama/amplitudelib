@@ -30,7 +30,7 @@ extern "C"
  */
 double AmplitudeLib::UGD(double q, double y, double S_T)
 {
-	return Cf / (8.0 * M_PI*M_PI*M_PI) * 1.0/Alpha_s(q*q) * std::pow(q,4) * S_k(q, y);
+	return Cf / (8.0 * M_PI*M_PI*M_PI) * S_T/Alpha_s(q*q) * std::pow(q,4) * S_k(q, y, true);
 
 }
 
@@ -83,7 +83,7 @@ struct Inthelper_ktfact{ double y1, y2, pt, qt; AmplitudeLib* N; Interpolator *n
 double Inthelperf_ktfact_q(double q, void* p);
 double Inthelperf_ktfact_phi(double phi, void* p);
 const int INTPOINTS_KTFACT = 1;
-double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts )
+double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts )
 {
 	double x1 = pt*std::exp(y)/sqrts;
 	double x2 = pt*std::exp(-y)/sqrts;
@@ -156,4 +156,47 @@ double Inthelperf_ktfact_phi(double phi, void* p)
 	return 2.0*M_PI*par->qt * ugd1/SQR(par->qt) * ugd2/SQR(kt_m_qt);
 	
 	
+}
+
+
+/*
+ * Single inclusive hadron production in k_T factorization, convoluted
+ * with fragmentation function
+ * Integrates \int dz/z^2 dN(k_T/z)
+ * 
+ * Lower cutoff is basically arbitrary now, but in principle it should have
+ * little effect in the final result as p_T specturm is steeply falling
+ */
+struct Inthelper_ktfact_fragfun{ AmplitudeLib* N; FragmentationFunction* fragfun; double scale, pt, y, sqrts; Hadron final; };
+double Inthelperf_ktfact_fragfun(double z, void* p);
+double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts, FragmentationFunction* fragfun, Hadron final )
+{
+	Inthelper_ktfact_fragfun par;
+	par.N=this; par.y=y; par.y=y; par.pt=pt; par.fragfun=fragfun; par.final=final;
+	par.sqrts=sqrts;
+	
+	gsl_function fun; fun.function=Inthelperf_ktfact_fragfun;
+	fun.params=&par;
+	
+	double result, abserr; 
+    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOINTS_KTFACT);
+	int status = gsl_integration_qag(&fun, 0.05, 1.0, 0, 0.05,
+		INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
+	gsl_integration_workspace_free(ws);
+       
+    if (status)
+    {
+		cerr << "kt-factorization z integral failed at " << LINEINFO <<", pt=" << pt
+			<< " result " << result << " relerr " << std::abs(abserr/result) << endl;
+    }
+    
+    return result;
+}
+
+double Inthelperf_ktfact_fragfun(double z, void* p)
+{
+	Inthelper_ktfact_fragfun* par = (Inthelper_ktfact_fragfun*)p;
+	double kt = par->pt/z;
+	double dn = par->N->dHadronMultiplicity_dyd2pt_ktfact_parton(par->y, kt, par->sqrts);
+	return 1.0/SQR(z) * dn * par->fragfun->Evaluate(G, par->final, z, std::min(1.0, par->pt) );
 }
