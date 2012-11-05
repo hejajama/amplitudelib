@@ -25,12 +25,16 @@ extern "C"
 /* KMR UGD C_F/(8\pi^3) S_T/\alpha_s(q) q^4 S_k(q)
  * default value of S_T is 1.0, so it is left for the user to 
  * specify
+ * Scale is the scale at which alpha_s is evaluated, if negative (default)
+ * use q^2
  * S_k is 2d FT of S(r) without extra 2pi factors,
  * S(k) = \int d^2 r e^(iqr) S(r), AmplitudeLib::S_
  */
-double AmplitudeLib::UGD(double q, double y, double S_T)
+double AmplitudeLib::UGD(double q, double y, double scale_, double S_T)
 {
-	return Cf / (8.0 * M_PI*M_PI*M_PI) * S_T/Alpha_s(q*q) * std::pow(q,4) * S_k(q, y, true);
+	double scale;
+	if (scale_<0) scale=q*q; else scale=scale_;
+	return Cf / (8.0 * M_PI*M_PI*M_PI) * S_T/Alpha_s(scale) * std::pow(q,4) * S_k(q, y, true);
 
 }
 
@@ -78,12 +82,14 @@ double Inthelperf_xg(double qsqr, void* p)
  * k_T factorization result for the dN/(d^2kt dy)
  * \alpha_s/S_T 2/C_f 1/k_T^2 \int d^2 q UGD(q)/q^2 UQD(k-q)/|k-q|^2
  * UGD is AmplitudeLib::UGD()
+ * 
+ * If N2!=NULL, it is used to compute \phi_2
  */
-struct Inthelper_ktfact{ double y1, y2, pt, qt; AmplitudeLib* N; Interpolator *n1; Interpolator* n2;};
+struct Inthelper_ktfact{ double y1, y2, pt, qt; AmplitudeLib *N1, *N2; };
 double Inthelperf_ktfact_q(double q, void* p);
 double Inthelperf_ktfact_phi(double phi, void* p);
 const int INTPOINTS_KTFACT = 1;
-double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts )
+double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2 )
 {
 	double x1 = pt*std::exp(y)/sqrts;
 	double x2 = pt*std::exp(-y)/sqrts;
@@ -91,18 +97,25 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
 	double y2 = std::log(X0()/x2);
 	if (y1<0 or y2<0)
 	{
-		cerr << "y1=" << y1 <<", y2=" << y2 <<" is not possible to compute, too small x. " << LINEINFO << endl;
+		cerr << "y1=" << y1 <<", y2=" << y2 <<" is not possible to compute, too small x. pt=" << pt << ", y=" << y << " " << LINEINFO << endl;
 		return 0;
 	}
 	
-	Inthelper_ktfact par; par.y1=y1; par.y2=y2; par.pt=pt; par.N=this;
+	Inthelper_ktfact par; par.y1=y1; par.y2=y2; par.pt=pt; par.N1=this;
+	par.N2=N2;
 	gsl_function fun; fun.params=&par;
 	fun.function=Inthelperf_ktfact_q;
 	
+	if (N2!=NULL) // Initialize interpolators only once
+	{
+		InitializeInterpolation(y1);
+		N2->InitializeInterpolation(y2);
+	}
+	
 	double result, abserr; 
-    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOINTS_KTFACT);
-	int status = gsl_integration_qag(&fun, 0, 99, 0, 0.05,
-		INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
+    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(2*INTPOINTS_KTFACT);
+	int status = gsl_integration_qag(&fun, 0, 30, 0, 0.05,
+		2*INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
 	gsl_integration_workspace_free(ws);
        
     if (status)
@@ -149,10 +162,19 @@ double Inthelperf_ktfact_phi(double phi, void* p)
 	if (kt_m_qt < 1e-5)
 		return 0;	
 	
-	par->N->InitializeInterpolation(par->y1);
-	double ugd1 = par->N->UGD(par->qt, par->y1);
-	par->N->InitializeInterpolation(par->y2);
-	double ugd2 = par->N->UGD(kt_m_qt, par->y2);
+	double ugd1,ugd2;
+	if (par->N2==NULL)
+	{
+		par->N1->InitializeInterpolation(par->y1);
+		ugd1 = par->N1->UGD(par->qt, par->y1, SQR(par->pt));
+		par->N1->InitializeInterpolation(par->y2);
+		ugd2 = par->N1->UGD(kt_m_qt, par->y2, SQR(par->pt));
+	} 
+	else
+	{
+		ugd1 = par->N1->UGD(par->qt, par->y1, SQR(par->pt));
+		ugd2 = par->N2->UGD(kt_m_qt, par->y2, SQR(par->pt));
+	}
 	return 2.0*M_PI*par->qt * ugd1/SQR(par->qt) * ugd2/SQR(kt_m_qt);
 	
 	
@@ -167,12 +189,13 @@ double Inthelperf_ktfact_phi(double phi, void* p)
  * Lower cutoff is basically arbitrary now, but in principle it should have
  * little effect in the final result as p_T specturm is steeply falling
  */
-struct Inthelper_ktfact_fragfun{ AmplitudeLib* N; FragmentationFunction* fragfun; double scale, pt, y, sqrts; Hadron final; };
+struct Inthelper_ktfact_fragfun{ AmplitudeLib* N1, *N2; FragmentationFunction* fragfun; double scale, pt, y, sqrts; Hadron final; };
 double Inthelperf_ktfact_fragfun(double z, void* p);
-double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts, FragmentationFunction* fragfun, Hadron final )
+double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts, FragmentationFunction* fragfun, Hadron final, AmplitudeLib* N2 )
 {
 	Inthelper_ktfact_fragfun par;
-	par.N=this; par.y=y; par.y=y; par.pt=pt; par.fragfun=fragfun; par.final=final;
+	par.N1=this; par.y=y; par.y=y; par.pt=pt; par.fragfun=fragfun; par.final=final;
+	par.N2=N2;
 	par.sqrts=sqrts;
 	
 	gsl_function fun; fun.function=Inthelperf_ktfact_fragfun;
@@ -197,6 +220,6 @@ double Inthelperf_ktfact_fragfun(double z, void* p)
 {
 	Inthelper_ktfact_fragfun* par = (Inthelper_ktfact_fragfun*)p;
 	double kt = par->pt/z;
-	double dn = par->N->dHadronMultiplicity_dyd2pt_ktfact_parton(par->y, kt, par->sqrts);
-	return 1.0/SQR(z) * dn * par->fragfun->Evaluate(G, par->final, z, std::min(1.0, par->pt) );
+	double dn = par->N1->dHadronMultiplicity_dyd2pt_ktfact_parton(par->y, kt, par->sqrts, par->N2);
+	return 1.0/SQR(z) * dn * par->fragfun->Evaluate(G, par->final, z, std::max(1.0, par->pt) );
 }

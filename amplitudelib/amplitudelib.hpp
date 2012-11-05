@@ -78,13 +78,13 @@ class AmplitudeLib
 		
 		// KMR UGD C_F/(8\pi^3) S_T/\alpha_s(q) q^4 S_k(q)
 		// returns without factor S_T unless it is specified
-		double UGD(double q, double x, double S_T=1.0);
+		double UGD(double q, double x, double scale=-1, double S_T=1.0);
 		// Integrated GD from UGD
 		double xg(double x, double q);
 		
 		// k_T factorization dN/d^2pt dy, ref e.g. hep-ph/0111362 (40)
-		double dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts, FragmentationFunction* fragfun, Hadron final );
-		double dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts );
+		double dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts, FragmentationFunction* fragfun, Hadron final, AmplitudeLib* N2=NULL );
+		double dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2=NULL );
 		
 		
 		

@@ -345,7 +345,8 @@ int main(int argc, char* argv[])
     pdf.SetOrder(order);
     cout << "# PDF: " << pdf.GetString() <<", FF: " << fragfun->GetString() << endl;
     AmplitudeLib N(datafile, kspace);
-    if (x0>0) N.SetX0(x0);
+    AmplitudeLib N2(datafile, kspace);
+    if (x0>0) { N.SetX0(x0); N2.SetX0(x0); }
     N.InitializeInterpolation(y,bspline);
     if (xbj>=0) y = std::log(N.X0()/xbj);
     cout << "# y = " << y << ", x_0 = " << N.X0() << " x = " << N.X0()*std::exp(-y) << endl;
@@ -548,7 +549,7 @@ int main(int argc, char* argv[])
         for (double pt=minpt; pt<maxpt; pt+=ptstep)
         {
             double partonresult = N.dHadronMultiplicity_dyd2pt_ktfact_parton(y, pt, sqrts);
-            double hadronresult = N.dHadronMultiplicity_dyd2pt_ktfact(y, pt, sqrts, fragfun, H);
+            double hadronresult = N.dHadronMultiplicity_dyd2pt_ktfact(y, pt, sqrts, fragfun, H, &N2);
             cout << pt << " " << hadronresult << " " << partonresult << endl;
         }
     }
