@@ -38,8 +38,8 @@ extern "C"
     //void setct10_(int& iset_);
     //double ct10pdf_(int& iparton, double& x, double& q);
     
-    //void setctq6_(int& iset_);
-    //double ctq6pdf_(int& iparton, double& x, double& q);
+    void setctq6_(int& iset_);
+    double ctq6pdf_(int& iparton, double& x, double& q);
     
     void setct12_(char* file);		// file is 40-char string!
     double ct12pdf_(int& iparton, double& x, double& q);

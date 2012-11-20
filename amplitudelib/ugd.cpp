@@ -95,10 +95,12 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
 	double x2 = pt*std::exp(-y)/sqrts;
 	double y1 = std::log(X0()/x1);
 	double y2 = std::log(X0()/x2);
+	
 	if (y1<0 or y2<0)
 	{
 		cerr << "y1=" << y1 <<", y2=" << y2 <<" is not possible to compute, too small x. pt=" << pt << ", y=" << y << " " << LINEINFO << endl;
-		return 0;
+		if (y1<0) y1=0; if (y2<0)y2=0;
+		
 	}
 	
 	Inthelper_ktfact par; par.y1=y1; par.y2=y2; par.pt=pt; par.N1=this;
@@ -114,7 +116,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
 	
 	double result, abserr; 
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(2*INTPOINTS_KTFACT);
-	int status = gsl_integration_qag(&fun, 0, 30, 0, 0.05,
+	int status = gsl_integration_qag(&fun, 0.01, std::max(25.0,7.0*pt), 0, 0.05,
 		2*INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
 	gsl_integration_workspace_free(ws);
        
@@ -143,11 +145,11 @@ double Inthelperf_ktfact_q(double q, void *p)
 		INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
 	gsl_integration_workspace_free(ws);
        
-    if (status)
+   /* if (status)
     {
 		cerr << "kt-factorization phi integral failed at " << LINEINFO <<", q=" << q
 			<< ", k_T=" << par->pt << " relerr " << std::abs(abserr/result) << endl;
-    }
+    }*/
 	return result;
 }
 
@@ -172,10 +174,20 @@ double Inthelperf_ktfact_phi(double phi, void* p)
 	} 
 	else
 	{
-		ugd1 = par->N1->UGD(par->qt, par->y1, SQR(par->pt));
-		ugd2 = par->N2->UGD(kt_m_qt, par->y2, SQR(par->pt));
+		#pragma omp parallel sections
+		{
+			#pragma omp section
+			{
+				ugd1 = par->N1->UGD(par->qt, par->y1, SQR(par->pt));
+			}
+			#pragma omp section
+			{
+				ugd2 = par->N2->UGD(kt_m_qt, par->y2, SQR(par->pt));
+			}
+		}
+		
 	}
-	return 2.0*M_PI*par->qt * ugd1/SQR(par->qt) * ugd2/SQR(kt_m_qt);
+	return par->qt * ugd1/SQR(par->qt) * ugd2/SQR(kt_m_qt);
 	
 	
 }
@@ -202,9 +214,9 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, doub
 	fun.params=&par;
 	
 	double result, abserr; 
-    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOINTS_KTFACT);
-	int status = gsl_integration_qag(&fun, 0.05, 1.0, 0, 0.05,
-		INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
+    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(2*INTPOINTS_KTFACT);
+	int status = gsl_integration_qag(&fun, 0.1, 1.0, 0, 0.05,
+		2*INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
 	gsl_integration_workspace_free(ws);
        
     if (status)

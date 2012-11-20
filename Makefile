@@ -13,8 +13,11 @@ amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp
 interpolator: tools/interpolator.o tools/interpolation.o
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/interpolator.o tools/interpolation.o -o interpolator
 
+f2fit: tools/f2fit.o
+	g++ $(CXXFLAGS) $(LDFLAGS) tools/f2fit.o libamplitude.a -o f2fit
+
 .cpp.o:
-	 g++ $(CXXFLAGS) $< -c -o $@
+	 g++ $(CXXFLAGS) $< -c -o $@ -I .
 .c.o:
 	gcc $(CXXFLAGS) $< -c -o $@
 .f.o:

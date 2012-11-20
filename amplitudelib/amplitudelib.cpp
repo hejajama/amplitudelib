@@ -259,7 +259,6 @@ double S_k_helperf(double r, void* p);
 double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
 {
 	SetOutOfRangeErrors(false);
-	
 	if (!InterpolatorInitialized(y))
 		cerr << "Interpolator is not initialized and we are calculating S_k, are you sure? "
 			<< "(interpolator y: " << interpolator_y << ", asked y=" << y <<") "
@@ -373,9 +372,13 @@ double AmplitudeLib::ProtonPhotonCrossSection(double Qsqr, double y, int pol)
     }
 
     return 2.0*M_PI*result; //2\pi from \theta integral
+}
 
-    
-
+double AmplitudeLib::F2(double qsqr, double y)
+{
+	 double xs_l = ProtonPhotonCrossSection(qsqr, y, 0);
+     double xs_t = ProtonPhotonCrossSection(qsqr, y, 1);
+     return qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t);
 }
 
 

@@ -47,13 +47,13 @@ double CTEQ::xq(double x, double q, Parton p)
     
     // LO or NLO
     double (*f)(int& iparton, double& x, double& q);
-    //if (order==LO) f = ctq6pdf_;
-    //#ifdef NLO_CTEQ10
-    //else if (order==NLO) f = ct12pdf_; //ct10pdf_;
-    //#else
-    //else if (order==NLO) f = ctq6pdf_;
-    //#endif
-    f = ct12pdf_;
+    if (order==LO) f = ctq6pdf_;
+    #ifdef NLO_CTEQ10
+    else if (order==NLO) f = ct12pdf_; //ct10pdf_;
+    #else
+    else if (order==NLO) f = ctq6pdf_;
+    #endif
+    //f = ct12pdf_;
     
     switch(p)
     {
@@ -120,9 +120,9 @@ void CTEQ::SetOrder(Order o)
 	else if (order==LO)
 	{
 		int set = 3;
-		cerr << "CTEQ6 is disabled" << endl;
-		exit(1);
-		//setctq6_(set);
+		//cerr << "CTEQ does not currently support LO, setting order to NLO" << endl;
+		//SetOrder(NLO);
+		setctq6_(set);
 	}
 	initialized=true;
 
@@ -189,7 +189,7 @@ void CTEQ::Test()
 		cout << "TEST FAILED!!!" << endl;
 	
 	////////////////////////////////////////////
-	/*
+	
 	cout << "#LO" << endl;
 	SetOrder(LO);
 		result=xq(0.01, std::sqrt(10), U); cor=0.4602;
@@ -211,6 +211,6 @@ void CTEQ::Test()
 	cout <<"f_g(Q^2=1000GeV^2, x=0.05) = " << result << " (correct " << cor << ")" <<  endl;
 	if (std::abs(result-cor)/cor>0.01)
 		cout << "TEST FAILED!!!" << endl;
-	*/
+	
 	cout << "All tests done, if no errors were shown, all tests passed!" << endl;
 }

@@ -46,6 +46,7 @@ class AmplitudeLib
         // impact parameter
         // pol 0=longitudinal, 1=transverse
         double ProtonPhotonCrossSection(double Qsqr, double y, int pol);
+        double F2(double Qsqr, double y);
 
 
 		//////////////// SINGLE INCLUSIVE, hybrid formalism
@@ -78,7 +79,7 @@ class AmplitudeLib
 		
 		// KMR UGD C_F/(8\pi^3) S_T/\alpha_s(q) q^4 S_k(q)
 		// returns without factor S_T unless it is specified
-		double UGD(double q, double x, double scale=-1, double S_T=1.0);
+		double UGD(double q, double y, double scale_=-1, double S_T=1.0);
 		// Integrated GD from UGD
 		double xg(double x, double q);
 		

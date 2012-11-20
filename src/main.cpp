@@ -345,7 +345,7 @@ int main(int argc, char* argv[])
     pdf.SetOrder(order);
     cout << "# PDF: " << pdf.GetString() <<", FF: " << fragfun->GetString() << endl;
     AmplitudeLib N(datafile, kspace);
-    AmplitudeLib N2(datafile, kspace);
+    AmplitudeLib N2(datafile);
     if (x0>0) { N.SetX0(x0); N2.SetX0(x0); }
     N.InitializeInterpolation(y,bspline);
     if (xbj>=0) y = std::log(N.X0()/xbj);
