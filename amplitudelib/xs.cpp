@@ -139,7 +139,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt(double y, double pt, double sqrt
      = gsl_integration_workspace_alloc(MULTIPLICITYXINTPOINTS);
 
     int status;
-    status=gsl_integration_qag(&fun, xf, 1.0,
+    status=gsl_integration_qag(&fun, std::max(xf, 0.05), 1.0,
             0, 0.005, MULTIPLICITYXINTPOINTS,
             GSL_INTEG_GAUSS51, workspace, &result, &abserr);
     gsl_integration_workspace_free(workspace);

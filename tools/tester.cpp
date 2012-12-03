@@ -9,12 +9,15 @@
 #include "../pdf/pdf.hpp"
 #include "../pdf/cteq.hpp"
 #include "../fragmentation/dss.hpp"
+#include <gsl/gsl_errno.h>
 #include <string>
 
 using namespace std;
 
 int main()
+
 {
+	gsl_set_error_handler(&ErrHandler);
 	cout << "This is a tester program for AmplitudeLib" << endl;
 	cout << "=========================================" << endl;
 	
@@ -66,6 +69,11 @@ int main()
 	Interpolator interp(x,y); interp.Initialize();
 	correct=6.25; res = interp.Evaluate(2.5);	// 2.5^2=6.25
 	cout << "6.25^2 = " << res; if (abs(res-correct)/correct>0.01) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
+	cout << endl;
+	
+	// derivative at x=1.5 = 2*1.5=3
+	correct=3; res=interp.Derivative(1.5);
+	cout << "D(x^2, x=1.5) = " << res; if (abs(res-correct)/correct>0.05) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
 	cout << endl;
 	}
 	

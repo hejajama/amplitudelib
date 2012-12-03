@@ -59,7 +59,7 @@ double AmplitudeLib::xg(double x, double q)
 	fun.params=&par;
 	double result, abserr; 
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(100);
-	int status = gsl_integration_qag(&fun, 0, SQR(q), 0, 0.001,
+	int status = gsl_integration_qag(&fun, 0, SQR(q), 0, 0.01,
 		100, GSL_INTEG_GAUSS51, ws, &result, &abserr);
 	gsl_integration_workspace_free(ws);
        
@@ -88,7 +88,7 @@ double Inthelperf_xg(double qsqr, void* p)
 struct Inthelper_ktfact{ double y1, y2, pt, qt; AmplitudeLib *N1, *N2; };
 double Inthelperf_ktfact_q(double q, void* p);
 double Inthelperf_ktfact_phi(double phi, void* p);
-const int INTPOINTS_KTFACT = 1;
+const int INTPOINTS_KTFACT = 2;
 double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2 )
 {
 	double x1 = pt*std::exp(y)/sqrts;
@@ -98,7 +98,9 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
 	
 	if (y1<0 or y2<0)
 	{
-		cerr << "y1=" << y1 <<", y2=" << y2 <<" is not possible to compute, too small x. pt=" << pt << ", y=" << y << " " << LINEINFO << endl;
+		#pragma omp critical
+		cerr << "y1=" << y1 <<", y2=" << y2 <<" is not possible to compute, too large x. pt=" << pt << ", y=" << y << " " << LINEINFO << endl;
+		
 		if (y1<0) y1=0; if (y2<0)y2=0;
 		
 	}
@@ -116,12 +118,13 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
 	
 	double result, abserr; 
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(2*INTPOINTS_KTFACT);
-	int status = gsl_integration_qag(&fun, 0.01, std::max(25.0,7.0*pt), 0, 0.05,
+	int status = gsl_integration_qag(&fun, 0.001, 30, 0, 0.05,
 		2*INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
 	gsl_integration_workspace_free(ws);
        
     if (status)
     {
+		#pragma omp critical
 		cerr << "kt-factorization q integral failed at " << LINEINFO <<", pt=" << pt
 			<< " result " << result << " relerr " << std::abs(abserr/result) << endl;
     }
@@ -140,11 +143,11 @@ double Inthelperf_ktfact_q(double q, void *p)
 	gsl_function fun; fun.function=Inthelperf_ktfact_phi;
 	fun.params=par;
 	double result, abserr; 
-    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOINTS_KTFACT);
-	int status = gsl_integration_qag(&fun, 0, 2.0*M_PI, 0, 0.05,
-		INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
+    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(1);
+	int status = gsl_integration_qag(&fun, 0, M_PI, 0, 0.05,
+		1, GSL_INTEG_GAUSS15, ws, &result, &abserr);
 	gsl_integration_workspace_free(ws);
-       
+    result *= 2.0;	// as we integrate [0,pi], not [0, 2pi]   
    /* if (status)
     {
 		cerr << "kt-factorization phi integral failed at " << LINEINFO <<", q=" << q
@@ -163,6 +166,8 @@ double Inthelperf_ktfact_phi(double phi, void* p)
 	// Int this limit we would have ugd(0)/0 -> 0
 	if (kt_m_qt < 1e-5)
 		return 0;	
+	
+	
 	
 	double ugd1,ugd2;
 	if (par->N2==NULL)
@@ -221,6 +226,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, doub
        
     if (status)
     {
+		#pragma omp critical
 		cerr << "kt-factorization z integral failed at " << LINEINFO <<", pt=" << pt
 			<< " result " << result << " relerr " << std::abs(abserr/result) << endl;
     }

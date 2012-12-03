@@ -1,5 +1,5 @@
 CXXFLAGS = `gsl-config --cflags` -O3 -Wall -pedantic -fopenmp# -I ./libbci-1.1.0/ 
-LDFLAGS = `gsl-config --libs` -lm 
+LDFLAGS = `gsl-config --libs` -lgfortran -lm 
 FORTRANFLAGS = -O3 
 
 include filelist.m
@@ -13,8 +13,12 @@ amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp
 interpolator: tools/interpolator.o tools/interpolation.o
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/interpolator.o tools/interpolation.o -o interpolator
 
-f2fit: tools/f2fit.o
+tester: tools/tester.cpp
+	g++ $(CXXFLAGS) $(LDFLAGS) tools/tester.cpp libamplitude.a -o tester 
+
+fit: tools/f2fit.o tools/lhcfit.o
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/f2fit.o libamplitude.a -o f2fit
+	g++ $(CXXFLAGS) $(LDFLAGS) tools/lhcfit.o libamplitude.a -o lhcfit
 
 .cpp.o:
 	 g++ $(CXXFLAGS) $< -c -o $@ -I .

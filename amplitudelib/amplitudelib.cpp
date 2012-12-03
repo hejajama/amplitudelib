@@ -358,9 +358,9 @@ double AmplitudeLib::ProtonPhotonCrossSection(double Qsqr, double y, int pol)
     
 
     double result,abserr; size_t eval;
-    const int MAXITER_RINT=1000;
+    const int MAXITER_RINT=100;
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_RINT);
-    int status = gsl_integration_qag(&fun, 0.1*MinR(), 100.0*MaxR(), 0, 0.001,
+    int status = gsl_integration_qag(&fun, 0.1*MinR(), 10.0*MaxR(), 0, 0.01,
         MAXITER_RINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
     gsl_integration_workspace_free(ws);
     //int status = gsl_integration_qng(&fun, MinR(), MaxR(),
@@ -376,9 +376,20 @@ double AmplitudeLib::ProtonPhotonCrossSection(double Qsqr, double y, int pol)
 
 double AmplitudeLib::F2(double qsqr, double y)
 {
-	 double xs_l = ProtonPhotonCrossSection(qsqr, y, 0);
-     double xs_t = ProtonPhotonCrossSection(qsqr, y, 1);
-     return qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t);
+	double xs_l, xs_t;
+	#pragma omp parallel sections
+	{
+		#pragma omp section
+		{
+			xs_l = ProtonPhotonCrossSection(qsqr, y, 0);
+		}
+		#pragma omp section
+		{
+			xs_t = ProtonPhotonCrossSection(qsqr, y, 1);
+		}
+	}
+	
+    return qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t);
 }
 
 

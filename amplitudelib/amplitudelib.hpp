@@ -34,6 +34,8 @@ class AmplitudeLib
         // \int e^(ik.r) S(r)
         // if adjoint=true, then N is in adjoint representation
         double S_k(double kt, double y, bool adjoint=false, double pow=1.0);
+        
+        
 
         // Amplitude in adjoint representation
         double N_A(double r, double y, int der=0);
@@ -96,6 +98,7 @@ class AmplitudeLib
         double LogLogDerivative(double r, double y);
 
         // Saturation scale N(r, y) = Ns
+        // Returns r
         double SaturationScale(double y, double Ns);
 
         void InitializeInterpolation(double y, bool bspline=false);

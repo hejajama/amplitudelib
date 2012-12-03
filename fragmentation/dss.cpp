@@ -35,7 +35,7 @@ double DSS::Evaluate(Parton p, Hadron h, double x, double qs)
 {
     if (x<0.05 or x>1)
     {
-        cerr << "x=" << x <<" out of range [0.05, 1] at " << LINEINFO << endl;
+        cerr << "z=" << x <<" out of range [0.05, 1] at " << LINEINFO << endl;
         return 0;
     }
     if (qs*qs<1 or qs*qs>1e5)

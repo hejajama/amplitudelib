@@ -55,6 +55,7 @@ int main(int argc, char* argv[])
 		stringstream l(line);
 		l >> qsqr; l>>x; l>>f2; l>>f2err;
 		if (std::abs(StrToReal(f2)) <1e-10) continue;
+		if (StrToReal(x)>N.X0()) continue;
 		qsqrvals.push_back(StrToReal(qsqr)); xvals.push_back(StrToReal(x));
 		expvals.push_back(StrToReal(f2)); experrors.push_back(StrToReal(f2err)); 
 	}
@@ -65,8 +66,11 @@ int main(int argc, char* argv[])
 	for (int i=0; i<xvals.size(); i++)
 	{
 		double x = log(N.X0()/xvals[i]);
+		const double mf=0.14;
+		double xredef = x * (1.0 + 4.0*SQR(mf)/qsqrvals[i]);
 		double f2 = N.F2(qsqrvals[i], x);
-		cout << qsqrvals[i] << " " << xvals[i] << " " << expvals[i] << " " << experrors[i] << " " << f2 << endl;
+		double f2_2 = N.F2(qsqrvals[i], xredef);
+		cout << qsqrvals[i] << " " << xvals[i] << " " << expvals[i] << " " << experrors[i] << " " << f2 << " " << f2_2 << endl;
 	}
 	
 }
