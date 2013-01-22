@@ -69,3 +69,11 @@ double UGDPDF::MinX()
 	return N->X0()*std::exp(-N->MaxY());
 }
 
+double UGDPDF::MinQ()
+{
+	return 0.1;
+}
+double UGDPDF::MaxQ()
+{
+	return 100000;
+}

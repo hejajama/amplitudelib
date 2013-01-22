@@ -170,7 +170,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_parton(double y, double pt, doub
 	double xa = pt*std::exp(-y)/sqrts;
 	double ya = std::log(X0()/xa);
 	InitializeInterpolation(ya); 
-	result = (pdf->xq(xp, scale, U) + pdf->xq(xp, scale, D))*S_k(pt, ya);
+	//result = (pdf->xq(xp, scale, U) + pdf->xq(xp, scale, D))*S_k(pt, ya);
 	result += pdf->xq(xp, scale, G)*S_k(pt, ya, true);
 	
 	//cout << "x = " << xp << " xfx = " << pdf->xq(xp, scale, U) + pdf->xq(xp, scale, D) << " xg " << pdf->xq(xp, scale, G) << " pt " << pt << endl;

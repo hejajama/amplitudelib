@@ -88,13 +88,17 @@ double Inthelperf_xg(double qsqr, void* p)
 struct Inthelper_ktfact{ double y1, y2, pt, qt; AmplitudeLib *N1, *N2; };
 double Inthelperf_ktfact_q(double q, void* p);
 double Inthelperf_ktfact_phi(double phi, void* p);
-const int INTPOINTS_KTFACT = 2;
+const int INTPOINTS_KTFACT = 3;
 double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2 )
 {
 	double x1 = pt*std::exp(y)/sqrts;
 	double x2 = pt*std::exp(-y)/sqrts;
 	double y1 = std::log(X0()/x1);
-	double y2 = std::log(X0()/x2);
+	double y2;
+	if (N2==NULL)
+		y2 = std::log(X0()/x2);
+	else
+		y2 = std::log(N2->X0()/x2);
 	
 	if (y1<0 or y2<0)
 	{
@@ -219,9 +223,9 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, doub
 	fun.params=&par;
 	
 	double result, abserr; 
-    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(2*INTPOINTS_KTFACT);
+    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOINTS_KTFACT);
 	int status = gsl_integration_qag(&fun, 0.1, 1.0, 0, 0.05,
-		2*INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
+		INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
 	gsl_integration_workspace_free(ws);
        
     if (status)

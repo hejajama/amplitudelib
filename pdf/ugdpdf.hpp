@@ -29,6 +29,8 @@ class UGDPDF : public PDF
         
         double MaxX();
         double MinX();
+        double MaxQ();
+        double MinQ();
         
         UGDPDF();
         UGDPDF(AmplitudeLib* N, double sigma02_=1.0);

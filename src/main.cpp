@@ -44,6 +44,7 @@ enum Mode
     DPS,
     PRINT_FF,
     PRINT_PDF,
+    PRINT_PDF_Q,
     UGD_PDF,
     TEST
 };
@@ -113,7 +114,8 @@ int main(int argc, char* argv[])
         cout << "-fragfun [kkp, pkh, hkns, dss]: select fragmentation function" << endl;
         cout << "-sqrts sqrts (in GeV)" << endl;
         cout << "-print_ff [u,d,s,g] [pi0,pim,pip,hm,hp] qsqr" << endl;
-        cout << "-print_pdf [u,d,g] qsqr" << endl;
+        cout << "-print_pdf qsqr" << endl;
+        cout << "-print_pdf_q" << endl;
         cout << "-ugd_pdf qsqr: calculate gluon pdf from UGD" << endl;
         cout << "-lo: user LO PDF/FF instead of NLO" << endl;
         cout << "-pdf [ctreq, ugd] [params], ugdparams: amplitudefile sigma0/2" << endl;
@@ -327,11 +329,13 @@ int main(int argc, char* argv[])
 
             Qsqr = StrToReal(string(argv[i+3]));
         }
-        else if (string(argv[i])=="-print_pdf")
+        else if (string(argv[i])=="-print_pdf" )
 		{
 			mode = PRINT_PDF;
             Qsqr = StrToReal(argv[i+1]);
         }
+        else if (string(argv[i])=="-print_pdf_q")
+			mode = PRINT_PDF_Q;
         else if (string(argv[i])=="-ugd_pdf")
         {
 			mode = UGD_PDF;
@@ -447,7 +451,7 @@ int main(int argc, char* argv[])
         cout <<"# y    Q_s [GeV]    d ln Q_s/dy   x" << endl;
 
         // Solve satscale and save it to array, then interpolate=>get also derivative
-        double ystep=0.2;
+        double ystep=0.1;
         int points = (int)(N.MaxY()/ystep);
         double* rapidities = new double[points];
         double* lnqs = new double[points];
@@ -455,8 +459,8 @@ int main(int argc, char* argv[])
         for (int i=0; i<points; i++)
         {
             rapidities[i]=(double)i*ystep;
-            double sqrt2qs = N.SaturationScale(rapidities[i], Ns);
-            lnqs[i] = std::log( SQR( std::sqrt(2)/sqrt2qs ) );
+            double rs = N.SaturationScale(rapidities[i], Ns);
+            lnqs[i] = std::log( 2.0 / SQR(rs) );
             //lnqs[i] = std::log(1.0/N.SaturationScale(rapidities[i], Ns));
         }
         Interpolator interp(rapidities, lnqs, points);
@@ -466,6 +470,7 @@ int main(int argc, char* argv[])
         {
             cout << y << " " << std::exp(0.5*interp.Evaluate(y)) << " "
                 << interp.Derivative(y) <<  " " << N.X0()*std::exp(-y) << endl;
+            
         }
 
         delete[] rapidities;
@@ -512,14 +517,14 @@ int main(int argc, char* argv[])
         cout << "# d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
         cout << "# Fragfun: " << fragfun->GetString() << endl;
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
-        //cout << "# p_T   dN/(d^2 p_T dy)     parton level yield     F(\\delta)" << endl;
-        cout << "# pt   cteq-partonlevel   ugd-partonlevel " << endl;
+        cout << "# p_T   dN/(d^2 p_T dy)     parton level yield   " << endl;
+        //cout << "# pt   cteq-partonlevel   ugd-partonlevel " << endl;
         for (double pt=minpt; pt<maxpt; pt+=ptstep)
         {
             double result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, pdf,
                 deuteron, final_particle);
-            /*double partonlevel = N.dHadronMultiplicity_dyd2pt_parton(y, pt, sqrts, pdf, deuteron);
-            
+            double partonlevel = N.dHadronMultiplicity_dyd2pt_parton(y, pt, sqrts, pdf, deuteron);
+            /*
             double xa = pt*std::exp(-y)/sqrts;
             double ya = std::log(N.X0() / xa );
             double xp = pt*std::exp(y)/sqrts;
@@ -529,7 +534,8 @@ int main(int argc, char* argv[])
             double sk = 0; // N.S_k(pt,ya,true)
             cout << pt << " " << partonlevel << " " << ugdpartonlevel << " " << sk << endl;
             */
-            cout << pt << " " << result << endl;//" " << partonlevel << " " << N.S_k(pt, ya)/(4.0*SQR(M_PI)) << endl;
+            cout << pt << " " << result << " " << partonlevel << endl;
+            //cout << pt << " " << partonlevel << endl;
         }
     }
     else if (mode==PTSPECTRUM_AVG)
@@ -580,10 +586,10 @@ int main(int argc, char* argv[])
         
         for (double pt=minpt; pt<maxpt; pt+=ptstep)
         {
-            //double partonresult = N.dHadronMultiplicity_dyd2pt_ktfact_parton(y, pt, sqrts, &N2);
-            double hadronresult = N.dHadronMultiplicity_dyd2pt_ktfact(y, pt, sqrts, fragfun, H, &N2);
-            cout << pt << " " << hadronresult << endl;//" " << partonresult << endl;
-            //cout << pt << " " << partonresult << endl;
+            double partonresult = N.dHadronMultiplicity_dyd2pt_ktfact_parton(y, pt, sqrts, &N2);
+            //double hadronresult = N.dHadronMultiplicity_dyd2pt_ktfact(y, pt, sqrts, fragfun, H, &N2);
+            //cout << pt << " " << hadronresult << endl;//" " << partonresult << endl;
+            cout << pt << " " << partonresult << endl;
         }
     }
     else if (mode==DPS)
@@ -676,11 +682,22 @@ int main(int argc, char* argv[])
     {
 		double q = std::sqrt(Qsqr);
 		cout <<"# PDF: " << pdf->GetString() << ", Q^2 = " << Qsqr << " GeV^2 " << endl;
-		cout << "# x    x*f_u  x*f_d  x*f_s  x_f_g " << endl;
-		for (double x=1e-3; x<1; x*=1.05)
+		cout << "# x    x*f_u  x*f_d  x*f_s  x*f_g " << endl;
+		for (double x=1e-5; x<1; x*=1.05)
 		{
 			cout << x << " " << pdf->xq(x, q, U) << " " << pdf->xq(x,q,D)
 				<< " " << pdf->xq(x,q,S) << " " << pdf->xq(x,q,G) << endl;
+		}
+	}
+	
+	else if (mode == PRINT_PDF_Q)
+	{
+		cout <<"# PDF: " << pdf->GetString() <<", x=" << xbj << endl;
+		cout << "# Q^2 [GeV^2]   x*f_u   x*f_d   x*f_s    x*f_g" << endl;
+		for (double q=pdf->MinQ(); q*q<std::min(1000.0,pdf->MaxQ()); q*=1.05)
+		{
+			cout << q*q << " " << pdf->xq(xbj, q, U) << " " << pdf->xq(xbj,q,D)
+				<< " " << pdf->xq(xbj,q,S) << " " << pdf->xq(xbj,q,G) << endl;
 		}
 	}
 	
@@ -715,7 +732,6 @@ int main(int argc, char* argv[])
 
 	if (fragfun != NULL)
 		delete fragfun;
-    delete fragfun;
     if (pdf != NULL)
 		delete pdf;
     return 0;
