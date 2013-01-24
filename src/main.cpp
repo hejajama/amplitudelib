@@ -640,26 +640,17 @@ int main(int argc, char* argv[])
         cout <<"# F_2 at Q^2=" << Qsqr << " GeV^2" << endl;
         VirtualPhoton wf;
         cout << "# Virtual photon wavef params: " << wf.GetParamString() << endl;       
-        cout <<"# x   F_2   F_L   scaled_x     y" << endl;
+        cout <<"# x   F_2   F_L  reduced_xs  scaled_x     y" << endl;
         for(double x=1e-5; x<=N.X0(); x*=1.2)
         {
             // To go smoothly into the photoproduction region, scale
             // x -> x*(1 + 4m_f^2/Qsqr)
             double x2 = x*(1.0+4.0*SQR(0.14)/Qsqr);
-            double y = std::log(N.X0()/x2);    // TODO: or x2?
-            double xs_l = N.ProtonPhotonCrossSection(Qsqr, y, 0);
-            double xs_t = N.ProtonPhotonCrossSection(Qsqr, y, 1);
-            cout << x << " " << Qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t)
-                << " " << Qsqr/(4.0*SQR(M_PI)*ALPHA_e)*xs_l << " "
-                << x2 << " " << y << endl;
-
+            double evol_y = std::log(N.X0()/x2);
             
+            cout << x << " " << N.F2(Qsqr, evol_y) << " " << N.FL(Qsqr, evol_y)
+				<< " " << N.ReducedCrossSection(Qsqr, evol_y, sqrts) << " " << x2 << " " << evol_y << endl;       
         }
-        double xs_l = N.ProtonPhotonCrossSection(Qsqr, 0, 0);
-        double xs_t = N.ProtonPhotonCrossSection(Qsqr, 0, 1);
-        cout << N.X0() << " " << Qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t)
-                << " " << Qsqr/(4.0*SQR(M_PI)*ALPHA_e)*xs_l << " "
-                << N.X0()*(1.0+4.0*SQR(0.14)/Qsqr) << " " << 0 << endl;
 
     }
 

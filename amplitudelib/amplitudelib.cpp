@@ -324,7 +324,7 @@ double S_k_helperf(double r, void* p)
 struct Inthelper_totxs
 {
     AmplitudeLib* N;
-    int pol;    // 0: L, 1: T
+    Polarization pol;    // L (longitudinal) or T (transverse)
     double Qsqr,y;
     WaveFunction* wf;
 };
@@ -334,9 +334,9 @@ double Inthelperf_totxs(double r, void* p)
     Inthelper_totxs* par = (Inthelper_totxs*)p;
 
     double result = r*par->N->N(r,par->y);
-    if (par->pol==0)    // Longitudinal
+    if (par->pol==L)    // Longitudinal
         result *= par->wf->PsiSqr_L_intz(par->Qsqr, r);
-    else if (par->pol==1)   // Transverse
+    else if (par->pol==T)   // Transverse
         result *= par->wf->PsiSqr_T_intz(par->Qsqr, r);
     else
         cerr << "Invalid polarization " << par->pol << " at " << LINEINFO << endl;
@@ -344,7 +344,7 @@ double Inthelperf_totxs(double r, void* p)
     return result;
 }
 
-double AmplitudeLib::ProtonPhotonCrossSection(double Qsqr, double y, int pol)
+double AmplitudeLib::ProtonPhotonCrossSection(double Qsqr, double y, Polarization pol)
 {
     Inthelper_totxs par; par.N=this;
     par.pol=pol; par.Qsqr=Qsqr; par.y=y;
@@ -381,17 +381,33 @@ double AmplitudeLib::F2(double qsqr, double y)
 	{
 		#pragma omp section
 		{
-			xs_l = ProtonPhotonCrossSection(qsqr, y, 0);
+			xs_l = ProtonPhotonCrossSection(qsqr, y, L);
 		}
 		#pragma omp section
 		{
-			xs_t = ProtonPhotonCrossSection(qsqr, y, 1);
+			xs_t = ProtonPhotonCrossSection(qsqr, y, T);
 		}
 	}
 	
     return qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t);
 }
 
+double AmplitudeLib::FL(double qsqr, double y)
+{
+	return qsqr/(4.0*SQR(M_PI)*ALPHA_e) * ProtonPhotonCrossSection(qsqr, y, L);	
+}
+
+double AmplitudeLib::ReducedCrossSection(double qsqr, double y, double sqrts)
+{
+	double bjorkx = X0()*std::exp(-y);
+	double kin_y = qsqr/(sqrts*sqrts*bjorkx);
+	
+	///TODO: Optimize, now computes \sigma_L twise
+	double f2 = F2(qsqr, y);
+	double fl = FL(qsqr, y);
+	
+	return f2 - SQR(kin_y) / ( 1.0 + SQR(1.0-kin_y) ) * fl;
+}
 
 /*
  * d ln N / d ln r^2 = 1/N * d N / d ln r^2 = 1/N d N / dr^2  dr^2 / d ln r^2

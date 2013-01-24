@@ -1,16 +1,17 @@
 /* HERA f2 fitter
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2012
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2012-2013
  * 
  * Computes F2 using the AmplitudeLib at the kinematical
  * values for which combined HERA F2 values are given
  * 
  * First argument is the BK solution datafile, 2nd argument is the 
  * HERA datafile with structure
- * Q^2 x experimental_f2 f2_error
+ * Q^2 x inelasticity sigma_r error
  * Lines starting with # are ignored
+ * inelasticity is the DIS y variable y=Q^2/(sx)
  * 
  * Prints the computed F2 values in the standard output, and the format is
- * Q^2 x experimental_f2 f2_error theoryf2 (without normalization)
+ * Q^2 x y experimental_f2 f2_error theoryf2 (without normalization)
  */
  
 
@@ -37,7 +38,8 @@ int main(int argc, char* argv[])
 	AmplitudeLib N(datafile);
 	
 	// Rear HERA data
-	vector<double> xvals, qsqrvals, expvals, experrors;
+	vector<double> xvals, yvals, qsqrvals, expvals, experrors;
+	//NB: yvals is now vector of the inelasticities, y=Q^2/(sx)
     ifstream file(herafile.c_str());
     if (!file.is_open())
     {
@@ -51,26 +53,28 @@ int main(int argc, char* argv[])
         getline(file, line);
         if (line.substr(0, 1)=="#")
 			continue;
-		string x,qsqr,f2,f2err;
+		string x,qsqr,y,sigmar,err;
 		stringstream l(line);
-		l >> qsqr; l>>x; l>>f2; l>>f2err;
-		if (std::abs(StrToReal(f2)) <1e-10) continue;
-		if (StrToReal(x)>N.X0()) continue;
+		l >> qsqr; l>>x; l>>y; l>>sigmar; l>>err;
+		//if (std::abs(StrToReal(f2)) <1e-10) continue;
+		if (StrToReal(x)>N.X0() or StrToReal(x)<1e-100) continue;
 		qsqrvals.push_back(StrToReal(qsqr)); xvals.push_back(StrToReal(x));
-		expvals.push_back(StrToReal(f2)); experrors.push_back(StrToReal(f2err)); 
+		yvals.push_back(StrToReal(y));
+		expvals.push_back(StrToReal(sigmar)); experrors.push_back(StrToReal(err)); 
 	}
 	file.close();
 	
-	cout << "# Q^2 [GeV^2]  x  HERA-F2  HERA-err Theory-f2 (no normalization) " << endl;
-	// Compute F2
+	cout << "# Q^2 [GeV^2]  x  y  HERA-\sigma_r  HERA-err theory-\sigma_r (no normalization) " << endl;
+	// Compute reduced cross section
 	for (int i=0; i<xvals.size(); i++)
 	{
-		double x = log(N.X0()/xvals[i]);
+		double x = xvals[i];
 		const double mf=0.14;
 		double xredef = x * (1.0 + 4.0*SQR(mf)/qsqrvals[i]);
-		double f2 = N.F2(qsqrvals[i], x);
-		double f2_2 = N.F2(qsqrvals[i], xredef);
-		cout << qsqrvals[i] << " " << xvals[i] << " " << expvals[i] << " " << experrors[i] << " " << f2 << " " << f2_2 << endl;
+		double sqrts = std::sqrt( qsqrvals[i]/(x * yvals[i]) );
+		double sigmar = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts);
+		
+		cout << qsqrvals[i] << " " << xvals[i] << " " << yvals[i] << " " << expvals[i] << " " << experrors[i] << " " << sigmar << endl;
 	}
 	
 }

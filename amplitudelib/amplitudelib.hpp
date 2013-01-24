@@ -12,6 +12,12 @@
 #include "../pdf/pdf.hpp"
 #include <vector>
 
+enum Polarization
+{
+	L,
+	T
+};
+
 class AmplitudeLib
 {
     public:
@@ -46,9 +52,10 @@ class AmplitudeLib
         // Virtual photon-proton cross sections, longitudinal and transverse
         // Notice that these are not normalized, as we don't integrate over
         // impact parameter
-        // pol 0=longitudinal, 1=transverse
-        double ProtonPhotonCrossSection(double Qsqr, double y, int pol);
+        double ProtonPhotonCrossSection(double Qsqr, double y, Polarization pol);
         double F2(double Qsqr, double y);
+        double FL(double Qsqr, double y);
+        double ReducedCrossSection(double qsqr, double y, double sqrts);
 
 
 		//////////////// SINGLE INCLUSIVE, hybrid formalism

@@ -151,7 +151,7 @@ double W_S(double r, int A)
 		return 0;
 	}
 	// R = 1.12 fm A^(1/3) - 0.86 fm * A^(-1/3)
-	double ra = 1.13 * std::pow(A, 1.0/3.0) - 0.86 * std::pow(A, -1.0/3.0);
+	double ra = 1.12 * std::pow(A, 1.0/3.0) - 0.86 * std::pow(A, -1.0/3.0);
 	double delta = 0.54 * FMGEV;
 	ra *= FMGEV;	// fm => 1/GeV
 
