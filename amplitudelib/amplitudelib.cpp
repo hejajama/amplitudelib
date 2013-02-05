@@ -1,6 +1,6 @@
 /*
  * BK equation solver
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2013
  */
 
 #include "amplitudelib.hpp"
@@ -402,10 +402,27 @@ double AmplitudeLib::ReducedCrossSection(double qsqr, double y, double sqrts)
 	double bjorkx = X0()*std::exp(-y);
 	double kin_y = qsqr/(sqrts*sqrts*bjorkx);
 	
-	///TODO: Optimize, now computes \sigma_L twise
-	double f2 = F2(qsqr, y);
-	double fl = FL(qsqr, y);
+	InitializeInterpolation(y);
 	
+	///TODO: Optimize, now computes \sigma_L twise
+	//double f2 = F2(qsqr, y);
+	//double fl = FL(qsqr, y);
+	
+	double xs_l, xs_t;
+	#pragma omp parallel sections
+	{
+		#pragma omp section
+		{
+			xs_l = ProtonPhotonCrossSection(qsqr, y, L);
+		}
+		#pragma omp section
+		{
+			xs_t = ProtonPhotonCrossSection(qsqr, y, T);
+		}
+	}
+	double f2 = qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t);
+	double fl = qsqr/(4.0*SQR(M_PI)*ALPHA_e)*xs_l;
+		
 	return f2 - SQR(kin_y) / ( 1.0 + SQR(1.0-kin_y) ) * fl;
 }
 

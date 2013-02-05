@@ -1,6 +1,6 @@
 /*
- * BK equation solver
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * AmplitudeLib for the dipole amplitude
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2013
  */
 
 #ifndef _AMPLITUDELIB_H

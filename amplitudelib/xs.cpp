@@ -74,7 +74,7 @@ double Inthelperf_hadronprod(double z, void *p)
     double nf = par->N->S_k(par->pt/z, y_A);
     // PDF and fragmentation
     double xqf = par->pdf->xq(x1, scale, U)*par->frag->Evaluate(U, par->final, z, scale)
-        + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(D, par->final, z, scale);
+        + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(D, par->final, z, scale)
         + par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
 
     if (deuteron)
@@ -170,7 +170,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_parton(double y, double pt, doub
 	double xa = pt*std::exp(-y)/sqrts;
 	double ya = std::log(X0()/xa);
 	InitializeInterpolation(ya); 
-	//result = (pdf->xq(xp, scale, U) + pdf->xq(xp, scale, D))*S_k(pt, ya);
+	result = (pdf->xq(xp, scale, U) + pdf->xq(xp, scale, D) + pdf->xq(xp, scale, ::S))*S_k(pt, ya) ;
 	result += pdf->xq(xp, scale, G)*S_k(pt, ya, true);
 	
 	//cout << "x = " << xp << " xfx = " << pdf->xq(xp, scale, U) + pdf->xq(xp, scale, D) << " xg " << pdf->xq(xp, scale, G) << " pt " << pt << endl;

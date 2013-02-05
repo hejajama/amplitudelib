@@ -58,8 +58,7 @@ void ErrHandler(const char * reason,
  * Q^2 dependent strong coupling constant
  * Takes into account only u,d ands s quarks
  *
- * Reqularized to avoind infrared divergence following e.g.
- * Berger&Stasto 1010.0671 [hep-ph]
+ * Reqularized to avoind infrared divergence 
  * Reqularization is set in file config.hpp
  */
 REAL Alpha_s(REAL Qsqr, REAL scaling)
@@ -101,6 +100,7 @@ std::string Alpha_s_str()
 
 /* Returns index i for which
  * vec[i]<=val
+ * Assumes that vec[i]<vec[i+1]
  * If such index can't be found, returns -1
  */
 

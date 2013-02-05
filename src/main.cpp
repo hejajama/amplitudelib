@@ -14,6 +14,7 @@
 #include "../pdf/ugdpdf.hpp"
 #include "../pdf/cteq.hpp"
 #include "../pdf/mrst.hpp"
+#include "../pdf/eps09.hpp"
 #include "../amplitudelib/virtual_photon.hpp"
 #include "../tools/config.hpp"
 #include <iostream>
@@ -100,7 +101,7 @@ int main(int argc, char* argv[])
         cout << "-pt_spectrum p/d pi0/ch/hn: print dN/(d^2 p_T dy), probe is proton or deuteron"
             << " final state pi0/charged/negative hadron" << endl;
         cout << "-pt_spectrum_avg: same as above, but average over y region, must set miny and maxy" << endl;
-        cout <<"-pt_spectrum_ktfact: gluon production dN/(d^2 p_T dy) using k_T factorization" << endl;
+        cout <<"-pt_spectrum_ktfact [final particle]: gluon production dN/(d^2 p_T dy) using k_T factorization" << endl;
         cout << "-hadronprod_int p/d pi0/ch/hn: integrated over pt and y range" << endl;
         cout << "-miny y, -maxy y" << endl;
         cout << "-minpt, -maxpt, -ptstep" << endl;
@@ -118,7 +119,7 @@ int main(int argc, char* argv[])
         cout << "-print_pdf_q" << endl;
         cout << "-ugd_pdf qsqr: calculate gluon pdf from UGD" << endl;
         cout << "-lo: user LO PDF/FF instead of NLO" << endl;
-        cout << "-pdf [ctreq, ugd] [params], ugdparams: amplitudefile sigma0/2" << endl;
+        cout << "-pdf [ctreq, ugd, eps09] [params], ugdparams: amplitudefile sigma0/2; eps09: A" << endl;
         cout << "-test: run tests" << endl;
         return 0;
     }
@@ -190,7 +191,16 @@ int main(int argc, char* argv[])
             }
         }
         else if (string(argv[i])=="-pt_spectrum_ktfact")
+		{
 			mode = PTSPECTRUM_KTFACT;
+			if (string(argv[i+1])=="pi0")
+                final_particle = PI0;
+            else if (string(argv[i+1])=="ch")
+                final_particle = H; // charged hadrons
+            else if (string(argv[i+1])=="hm")    // negative hadrons
+                final_particle = HM;
+        }
+			
         else if (string(argv[i])=="-hadronprod_int")
         {
             mode=INT_HADRONPROD;
@@ -288,6 +298,11 @@ int main(int argc, char* argv[])
 			{
 				AmplitudeLib* ugdn = new AmplitudeLib(string(argv[i+2]));
 				pdf = new UGDPDF(ugdn, StrToReal(argv[i+3]));
+			}
+			else if (string(argv[i+1])=="eps09")
+			{
+				pdf = new EPS09();
+				pdf->SetA(StrToInt(argv[i+2]));
 			}
 			else
 			{
@@ -517,15 +532,18 @@ int main(int argc, char* argv[])
         cout << "# d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
         cout << "# Fragfun: " << fragfun->GetString() << endl;
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
-        cout << "# p_T   dN/(d^2 p_T dy)     parton level yield   " << endl;
+        cout << "# p_T   dN/(d^2 p_T dy)     parton level yield   S(k)" << endl;
         //cout << "# pt   cteq-partonlevel   ugd-partonlevel " << endl;
         for (double pt=minpt; pt<maxpt; pt+=ptstep)
         {
-            double result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, pdf,
-                deuteron, final_particle);
+            double result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, pdf,deuteron, final_particle);
             double partonlevel = N.dHadronMultiplicity_dyd2pt_parton(y, pt, sqrts, pdf, deuteron);
+             double xa = pt*std::exp(-y)/sqrts;
+             //cout << "# Evol y = " << log(N.X0()/xa) << endl;
+             //N.InitializeInterpolation(y);
+            double sk = 0;//N.S_k(pt, y);
             /*
-            double xa = pt*std::exp(-y)/sqrts;
+           
             double ya = std::log(N.X0() / xa );
             double xp = pt*std::exp(y)/sqrts;
             N.InitializeInterpolation(ya);
@@ -534,7 +552,7 @@ int main(int argc, char* argv[])
             double sk = 0; // N.S_k(pt,ya,true)
             cout << pt << " " << partonlevel << " " << ugdpartonlevel << " " << sk << endl;
             */
-            cout << pt << " " << result << " " << partonlevel << endl;
+            cout << pt << " " << result << " " << partonlevel << " " << sk << endl;
             //cout << pt << " " << partonlevel << endl;
         }
     }
@@ -587,9 +605,9 @@ int main(int argc, char* argv[])
         for (double pt=minpt; pt<maxpt; pt+=ptstep)
         {
             double partonresult = N.dHadronMultiplicity_dyd2pt_ktfact_parton(y, pt, sqrts, &N2);
-            //double hadronresult = N.dHadronMultiplicity_dyd2pt_ktfact(y, pt, sqrts, fragfun, H, &N2);
-            //cout << pt << " " << hadronresult << endl;//" " << partonresult << endl;
-            cout << pt << " " << partonresult << endl;
+            double hadronresult = N.dHadronMultiplicity_dyd2pt_ktfact(y, pt, sqrts, fragfun, H, &N2);
+            cout << pt << " " << hadronresult << " " << partonresult << endl;
+            //cout << pt << " " << partonresult << endl;
         }
     }
     else if (mode==DPS)

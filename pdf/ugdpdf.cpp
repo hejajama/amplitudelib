@@ -44,9 +44,9 @@ double UGDPDF::xq(double x, double q, Parton p)
 	}
 	if (x>MaxX())
 	{
-		//cerr << "x > MaxX()=" << MaxX()<< ", exiting.." << endl;
-		x = MaxX();
-		//return 0;
+		cerr << "x=" << x <<" > MaxX()=" << MaxX()<< endl;
+		//x = MaxX();
+		return 0;
 		//exit(1);
 	}
 	

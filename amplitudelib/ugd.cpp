@@ -104,7 +104,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
 	{
 		#pragma omp critical
 		cerr << "y1=" << y1 <<", y2=" << y2 <<" is not possible to compute, too large x. pt=" << pt << ", y=" << y << " " << LINEINFO << endl;
-		
+		return 0;
 		if (y1<0) y1=0; if (y2<0)y2=0;
 		
 	}

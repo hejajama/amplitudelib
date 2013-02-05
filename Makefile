@@ -1,6 +1,6 @@
-CXXFLAGS = `gsl-config --cflags` -O3 -Wall -pedantic -fopenmp# -I ./libbci-1.1.0/ 
+CXXFLAGS = `gsl-config --cflags` -O2 -Wall -pedantic -fopenmp# -I ./libbci-1.1.0/ 
 LDFLAGS = `gsl-config --libs` -lgfortran -lm 
-FORTRANFLAGS = -O3 
+FORTRANFLAGS = -O2 
 
 include filelist.m
 
