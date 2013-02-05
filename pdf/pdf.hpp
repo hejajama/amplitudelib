@@ -24,6 +24,7 @@ class PDF
         virtual double MaxX();
         virtual double MaxQ();
         virtual void SetOrder(Order o);
+        virtual int SetA(int A_);	// set A for nuclear pdf, returns -1 if does not support other than proton
         
         virtual void Test();
 
@@ -31,6 +32,7 @@ class PDF
 	protected:
 		bool initialized;
 		Order order;
+		int A;
 };
 
 #endif

@@ -8,6 +8,7 @@
 PDF::PDF()
 {
 	initialized=false;
+	A=1;
 }
 
 void PDF::Initialize(int param)
@@ -84,3 +85,8 @@ void PDF::Test()
 	cerr << "PDF::Test is not implemented! " << LINEINFO << endl;
 }
 
+int PDF::SetA(int A_)
+{
+	cerr << "PDF::SetA() is not implemented, most likely the current PDF (" << GetString() <<") only supports proton (A=1)" << endl;
+	return -1;
+}
