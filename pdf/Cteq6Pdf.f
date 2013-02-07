@@ -161,13 +161,20 @@ C   or if you find problems/bugs using this package, direct inquires to
 C   Pumplin@pa.msu.edu or Tung@pa.msu.edu.
 C
 C===========================================================================
+C
+C CHANGES BY H.M.
+C   * All COMMON blocks renamed NAME -> NAME_06 in order to avoid overlap
+C     with blocks in CT12Pdf.f
+C   * SUBROUTINE POLINT4F (XA,YA,X,Y) removed as it is defined in CT12Pdf.f
+C
+C
 
       Function Ctq6Pdf (Iparton, X, Q)
       Implicit Double Precision (A-H,O-Z)
       Logical Warn
       Common
-     > / CtqPar2 / Nx, Nt, NfMx, MxVal
-     > / QCDtable /  Alambda, Nfl, Iorder
+     > / CtqPar2_06 / Nx, Nt, NfMx, MxVal
+     > / QCDtable_06 /  Alambda, Nfl, Iorder
 
       Data Warn, smll /.true., 1d-10/
       save Warn
@@ -218,7 +225,7 @@ C                             ********************
       Data IsetmnSm07,IsetmxSm07 /35,37/
       Data IsetmnC07,IsetmxC07 /40,46/
       Data IsetHQ /21/
-      Common /Setchange/ Isetch
+      Common /Setchange_06/ Isetch
       save
 
 C             If data file not initialized, do so.
@@ -305,11 +312,11 @@ C                             ********************
       PARAMETER (MXX = 105, MXQ = 25, MXF = 6, MaxVal=4)
       PARAMETER (MXPQX = (MXF+1+MaxVal) * MXQ * MXX)
       Common
-     > / CtqPar1 / Al, XV(0:MXX), TV(0:MXQ), UPD(MXPQX)
-     > / CtqPar2 / Nx, Nt, NfMx, MxVal
-     > / XQrange / Qini, Qmax, Xmin
-     > / QCDtable /  Alambda, Nfl, Iorder
-     > / Masstbl / Amass(6)
+     > / CtqPar1_06 / Al, XV(0:MXX), TV(0:MXQ), UPD(MXPQX)
+     > / CtqPar2_06 / Nx, Nt, NfMx, MxVal
+     > / XQrange_06 / Qini, Qmax, Xmin
+     > / QCDtable_06 /  Alambda, Nfl, Iorder
+     > / Masstbl_06 / Amass(6)
 
       Read  (Nu, '(A)') Line
       Read  (Nu, '(A)') Line
@@ -370,10 +377,10 @@ c
       PARAMETER (MXPQX = (MXF+1+MaxVal) * MXQ * MXX)
 
       Common
-     > / CtqPar1 / Al, XV(0:MXX), TV(0:MXQ), UPD(MXPQX)
-     > / CtqPar2 / Nx, Nt, NfMx, MxVal
-     > / XQrange / Qini, Qmax, Xmin
-     > /Setchange/ Isetch
+     > / CtqPar1_06 / Al, XV(0:MXX), TV(0:MXQ), UPD(MXPQX)
+     > / CtqPar2_06 / Nx, Nt, NfMx, MxVal
+     > / XQrange_06 / Qini, Qmax, Xmin
+     > /Setchange_06/ Isetch
 
       Dimension fvec(4), fij(4)
       Dimension xvpow(0:mxx)
@@ -610,5 +617,5 @@ C                                       ********************
       End
 
 C      SUBROUTINE POLINT4F (XA,YA,X,Y)
-C Already in CT10Pdf.f -H.M.
+C Already in CT12Pdf.f -H.M.
  
