@@ -79,6 +79,7 @@ int main(int argc, char* argv[])
     double sqrts=200;
     char dps_mode='a';
     double pt1=0,pt2=0,y1=0,y2=0;
+    double sigma02=1.0;
     Hadron final_particle = PI0;    // final state particle in single particle
                                     // production
     Parton parton=U;
@@ -101,7 +102,8 @@ int main(int argc, char* argv[])
         cout << "-pt_spectrum p/d pi0/ch/hn: print dN/(d^2 p_T dy), probe is proton or deuteron"
             << " final state pi0/charged/negative hadron" << endl;
         cout << "-pt_spectrum_avg: same as above, but average over y region, must set miny and maxy" << endl;
-        cout <<"-pt_spectrum_ktfact [final particle]: gluon production dN/(d^2 p_T dy) using k_T factorization" << endl;
+        cout << "-pt_spectrum_ktfact [final particle]: gluon production dN/(d^2 p_T dy) using k_T factorization" << endl;
+        cout << "-sigma02 val: proton or target area; ktfactorization results are multiplied by this" << endl;
         cout << "-hadronprod_int p/d pi0/ch/hn: integrated over pt and y range" << endl;
         cout << "-miny y, -maxy y" << endl;
         cout << "-minpt, -maxpt, -ptstep" << endl;
@@ -121,6 +123,7 @@ int main(int argc, char* argv[])
         cout << "-lo: user LO PDF/FF instead of NLO" << endl;
         cout << "-pdf [ctreq, ugd, eps09] [params], ugdparams: amplitudefile sigma0/2; eps09: A" << endl;
         cout << "-test: run tests" << endl;
+        cout << endl << "All dimensionfull values are GeV^n" << endl;
         return 0;
     }
 
@@ -360,6 +363,8 @@ int main(int argc, char* argv[])
         {
 			order=LO;
 		}
+		else if (string(argv[i])=="-sigma02")
+			sigma02 = StrToReal(argv[i+1]);
 		else if (string(argv[i])=="-test")
 			mode=TEST;
 		else if (string(argv[i])=="-x0")
@@ -384,6 +389,7 @@ int main(int argc, char* argv[])
     cout << "# PDF: " << pdf->GetString() <<", FF: " << fragfun->GetString() << endl;
     AmplitudeLib N(datafile, kspace);
     AmplitudeLib N2(datafile);
+    N.SetSigma02(sigma02); N2.SetSigma02(sigma02);
     if (x0>0) { N.SetX0(x0); N2.SetX0(x0); }
     N.InitializeInterpolation(y,bspline);
     if (xbj>=0) y = std::log(N.X0()/xbj);
@@ -599,13 +605,13 @@ int main(int argc, char* argv[])
             return -1;
         }
         cout << "# d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
-		cout << "# Using k_T factorization (gluon production)" << endl;
+		cout << "# Using k_T factorization (gluon production); sigma02 = " << N.Sigma02() << " GeV^-2" << endl;
         cout << "# p_T   dN/(d^2 p_T dy) hadronlevel   " << endl;
         
         for (double pt=minpt; pt<maxpt; pt+=ptstep)
         {
-            double partonresult = N.dHadronMultiplicity_dyd2pt_ktfact_parton(y, pt, sqrts, &N2);
-            double hadronresult = N.dHadronMultiplicity_dyd2pt_ktfact(y, pt, sqrts, fragfun, H, &N2);
+            double partonresult = 0;//N.dHadronMultiplicity_dyd2pt_ktfact_parton(y, pt, sqrts, &N2);
+            double hadronresult = N.dHadronMultiplicity_dyd2pt_ktfact(y, pt, sqrts, fragfun, final_particle, &N2);
             cout << pt << " " << hadronresult << " " << partonresult << endl;
             //cout << pt << " " << partonresult << endl;
         }

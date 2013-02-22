@@ -15,6 +15,8 @@
 
 const double STAR=true;	// true: star kinematics
 
+
+
 /* Differential forward hadron production multiplicity
  * dN_h / (dy_h d^2 p_T)
  * Ref 1001.1378 eq (1), normalization is arbitrary
@@ -51,8 +53,7 @@ double Inthelperf_hadronprod(double z, void *p)
 
 	
     double y_A = std::log(par->N->X0()/x2);
-    //scale=1.0/par->N->SaturationScale(y_A, 0.22);	///TODO!
-    //scale = 0.2 * std::pow(0.0001/x2,0.3); scale=std::sqrt(scale);
+
 
     if (y_A<0)
     {
@@ -169,9 +170,17 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_parton(double y, double pt, doub
 	double xp = pt*std::exp(y)/sqrts;
 	double xa = pt*std::exp(-y)/sqrts;
 	double ya = std::log(X0()/xa);
+	
+	if (ya<0)
+	{
+		cerr << "Probing too large-x=" << xa << " structure... " << LINEINFO << endl;
+		return 0;
+	}
+	
 	InitializeInterpolation(ya); 
 	result = (pdf->xq(xp, scale, U) + pdf->xq(xp, scale, D) + pdf->xq(xp, scale, ::S))*S_k(pt, ya) ;
 	result += pdf->xq(xp, scale, G)*S_k(pt, ya, true);
+	
 	
 	//cout << "x = " << xp << " xfx = " << pdf->xq(xp, scale, U) + pdf->xq(xp, scale, D) << " xg " << pdf->xq(xp, scale, G) << " pt " << pt << endl;
 	
@@ -309,6 +318,8 @@ double AmplitudeLib::AverageHadronMultiplicity(double miny, double maxy, double 
     
     return result / (maxy-miny);
 }
+
+
 
 /*
  * Douple parton scattering

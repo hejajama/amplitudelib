@@ -36,6 +36,10 @@ int main(int argc, char* argv[])
 	cout << "# Reading BK equation solution from " << datafile << " and HERA data from " << herafile << endl;
 	
 	AmplitudeLib N(datafile);
+	//N.SetX0(0.002);
+	
+	cout << "# " << N.GetString() << endl;
+	cout <<"# x0 = " << N.X0() << endl;
 	
 	// Rear HERA data
 	vector<double> xvals, yvals, qsqrvals, expvals, experrors;

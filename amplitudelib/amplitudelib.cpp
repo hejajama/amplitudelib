@@ -17,6 +17,8 @@
 #include <gsl/gsl_monte_miser.h>
 #include <gsl/gsl_sf_bessel.h>
 #include <gsl/gsl_min.h>
+#include <string>
+#include <sstream>
 
 
 #include <algorithm>
@@ -603,6 +605,7 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
 {
     out_of_range_errors=true;
     kspace=kspace_;
+    sigma02=1.0;
     DataFile data(datafile);
     data.GetData(n, yvals);
     minr = data.MinR();
@@ -631,14 +634,13 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
     interpolator_y=-1;  // if >=0, interpolator is initialized, must free
     // memory (delete tmprarray and tmpnarray at the end)
 
-    //double satscale = 1.0/SaturationScale(0, 0.22);
 
-    /*
-    cout << "# Data read from file " << datafile << ", minr: " << minr
+	std::stringstream ss;
+    ss << "# Data read from file " << datafile << ", minr: " << minr
         << " maxr: " << MaxR() << " rpoints: " << rpoints << " maxy "
         << yvals[yvals.size()-1] << " x0 " << X0()
-        << " Q_{s,0}^2 = " << SQR(satscale) << " GeV^2 [ N(r=1/Q_s) = 0.22]" << endl;
-    */
+        << " Q_{s,0}^2 = " << SaturationScale(0, 0.22) << " GeV^2 [ N(r=1/Q_s) = 0.22]" ;
+    info_string = ss.str();
 }
 
 /*
@@ -770,4 +772,18 @@ void AmplitudeLib::SetX0(double x0_)
 	x0=x0_;
 }
 
+void AmplitudeLib::SetSigma02(double s)
+{
+	sigma02 = s;
+}
+
+double AmplitudeLib::Sigma02()
+{
+	return sigma02;
+}
+
+std::string AmplitudeLib::GetString()
+{
+	return info_string;
+}
 

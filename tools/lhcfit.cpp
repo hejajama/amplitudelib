@@ -1,15 +1,16 @@
 /* LHC hadronprod fitter
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2012
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2012-2013
  * 
- * Computes hadron production in lhc kinematics using the AmplitudeLib 
+ * Computes hadron production pp collisions using AmplitudeLib 
  * 
  * First argument is the BK solution datafile, 2nd argument is the 
- * LHC datafile with structure
- * y hadron pt yield error
+ * pp datafile with structure
+ * miny maxy minpt maxpt hadron yield error
+ * If minpt=maxpt (or y) then compute at fixed y/pt
  * Lines starting with # are ignored
  * 
  * Prints the computed F2 values in the standard output, and the format is
- * y hadron sqrts pt yield error theory-yield (without normalization)
+ * miny maxy minpt maxpt hadron sqrts yield error theory-yield (without normalization)
  */
  
 
@@ -29,17 +30,20 @@ using namespace std;
 int main(int argc, char* argv[])
 {
 	gsl_set_error_handler(&ErrHandler);
-	cout << "# LHC fitter" << endl;
+	cout << "# Hadron yield fitter" << endl;
 	string datafile = argv[1];
 	string lhcfile = argv[2];
 	
-	cout << "# Reading BK equation solution from " << datafile << " and LHC data from " << lhcfile << endl;
+	cout << "# Reading BK equation solution from " << datafile << " and hadron data from " << lhcfile << endl;
 	
 	AmplitudeLib N(datafile);
 	AmplitudeLib N2(datafile);
+	double s02 = 84.474/2.0;
+	N.SetSigma02(s02);
+	N2.SetSigma02(s02);
 	
-	// Rear HERA data
-	vector<double> yvals,ptvals,yieldvals,errors,sqrtsvals; vector<Hadron> hadrons;
+	// Reardata
+	vector<double> minyvals,maxyvals,minptvals,maxptvals,yieldvals,errors,sqrtsvals; vector<Hadron> hadrons;
     ifstream file(lhcfile.c_str());
     if (!file.is_open())
     {
@@ -53,15 +57,17 @@ int main(int argc, char* argv[])
         getline(file, line);
         if (line.substr(0, 1)=="#" or line.length()<10)
 			continue;
-		string y,hadron,pt,yield,err,sqrts;
+		string miny,maxy,minpt,maxpt,hadron,yield,err,sqrts;
 		stringstream l(line);
-		l >> y; l>>hadron; l>>sqrts; l>>pt; l>>yield; l>>err;
+		l >> miny; l>>maxy; l>>minpt; l>>maxpt; l>>hadron; l>>sqrts; l>>yield; l>>err;
 		Hadron h;
 		if (hadron=="CH") h=H;
 		else if (hadron=="PI0") h=PI0;
+		else if (hadron=="HM") h=HM;
 		else { cerr << "Unknown hadron " << hadron << endl; exit(1); }
 		
-		yvals.push_back(StrToReal(y)); ptvals.push_back(StrToReal(pt));
+		minyvals.push_back(StrToReal(miny)); maxyvals.push_back(StrToReal(maxy));
+		minptvals.push_back(StrToReal(minpt)); maxptvals.push_back(StrToReal(maxpt));
 		sqrtsvals.push_back(StrToReal(sqrts));
 		yieldvals.push_back(StrToReal(yield)); errors.push_back(StrToReal(err));
 		hadrons.push_back(h);
@@ -69,14 +75,16 @@ int main(int argc, char* argv[])
 	}
 	file.close();
 	
-	cout << "# y hadron  sqrts pt yield err theory  [1/GeV^2] " << endl;
+	cout <<"# sigma0 = " << N.Sigma02() << " GeV^-2" << endl;
+	cout << "#  miny maxy minpt maxpt hadron sqrts yield error theory-yield   [1/GeV^2] " << endl;
 	DSS ff;
 	ff.SetOrder(LO);
-	// Compute F2
-	for (int i=0; i<yvals.size(); i++)
+	cout <<"# FF: " << ff.GetString() << endl;
+
+	for (int i=0; i<minyvals.size(); i++)
 	{
-		double res = N.dHadronMultiplicity_dyd2pt_ktfact(yvals[i], ptvals[i], sqrtsvals[i], &ff, hadrons[i], &N2);
-		cout << yvals[i] << " " << hadrons[i] << "  " << sqrtsvals[i] << " " << ptvals[i] << " " << yieldvals[i] << " " << errors[i] << " " << res << endl;
+		double res = N.dHadronMultiplicity_dyd2pt_ktfact(minyvals[i], minptvals[i], sqrtsvals[i], &ff, hadrons[i], &N2);
+		cout << minyvals[i] << " " << maxyvals[i] << " " << minptvals[i] << " " << maxptvals[i] << " " << hadrons[i] << "  " << sqrtsvals[i] << " " << yieldvals[i] << " " << errors[i] << " " << res << endl;
 	}
 	
 }

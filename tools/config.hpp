@@ -1,6 +1,6 @@
 /*
  * BK equation solver
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2013
  */
 
 #ifndef _CONFIG_HPP
@@ -21,7 +21,7 @@ typedef unsigned int uint;
 
 // Physical constants
 //const REAL LAMBDAQCD2 = 0.21416*0.21416;   // GeV^2
-const double LAMBDAQCD2 = 0.241*0.241;    // 0902.1112
+const double LAMBDAQCD2 = 0.241*0.241;
 const double LAMBDAQCD = 0.241;
 //const double LAMBDAQCD2 = 0.2*0.2;    // 0704.0612, AN06 model
 const int Nf=3;

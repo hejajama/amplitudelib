@@ -11,6 +11,7 @@
 #include "../fragmentation/fragmentation.hpp"
 #include "../pdf/pdf.hpp"
 #include <vector>
+#include <string>
 
 enum Polarization
 {
@@ -97,7 +98,6 @@ class AmplitudeLib
 		double dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2=NULL );
 		
 		
-		
 		///////
 
 
@@ -118,10 +118,15 @@ class AmplitudeLib
         double MinR();
         double MaxR();
         double MaxY();
+        
+        double Sigma02();
+        void SetSigma02(double s_);
 
         double X0();
 
         bool SetOutOfRangeErrors(bool er);
+        
+        std::string GetString();
         
         
     private:
@@ -147,8 +152,12 @@ class AmplitudeLib
         int rpoints;
 
         double x0;
+        
+        double sigma02;		// sigma_0 / 2,  ktfactorization hadronprod results are multiplied by this
 
         bool out_of_range_errors;  // don't print "out of range" errors
+        
+        std::string info_string;
 };
 
 const int INTERPOLATION_POINTS = 12;
