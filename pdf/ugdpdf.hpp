@@ -36,6 +36,8 @@ class UGDPDF : public PDF
         UGDPDF(AmplitudeLib* N, double sigma02_=1.0);
         ~UGDPDF();
         
+        AmplitudeLib* GetN();
+        
         //void Test();
     private:
 		AmplitudeLib* N;

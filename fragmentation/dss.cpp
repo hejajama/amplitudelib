@@ -90,7 +90,7 @@ double DSS::Evaluate(Parton p, Hadron h, double x, double qs)
 	}
     else
     {
-        cerr << "Hadron " << h << " is not supported by DSS " << LINEINFO << endl;
+        cerr << "Hadron " << h << "(" << ParticleStr(h) <<") is not supported by DSS " << LINEINFO << endl;
         return 0;
     }
 

@@ -19,6 +19,13 @@ enum Polarization
 	T
 };
 
+// Running/fixed coupling
+enum RUNNING_ALPHAS
+{
+	RUNNING,
+	FIXED,
+};
+
 class AmplitudeLib
 {
     public:
@@ -129,6 +136,13 @@ class AmplitudeLib
         std::string GetString();
         
         
+        double Alphas(double qsqr);
+        
+        void SetRunningCoupling(RUNNING_ALPHAS as_);
+        RUNNING_ALPHAS GetRunningCoupling();
+
+        
+        
     private:
         // [yind][r/kind]
         std::vector< std::vector<double> > n;
@@ -158,6 +172,8 @@ class AmplitudeLib
         bool out_of_range_errors;  // don't print "out of range" errors
         
         std::string info_string;
+        
+        RUNNING_ALPHAS as;
 };
 
 const int INTERPOLATION_POINTS = 12;

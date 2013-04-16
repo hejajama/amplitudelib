@@ -36,7 +36,8 @@ double AmplitudeLib::UGD(double q, double y, double scale_, double S_T)
 {
 	double scale;
 	if (scale_<0) scale=q*q; else scale=scale_;
-	return Cf / (8.0 * M_PI*M_PI*M_PI) * S_T/Alpha_s(scale) * std::pow(q,4) * S_k(q, y, true);
+	double alphas = Alphas(scale);
+	return Cf / (8.0 * M_PI*M_PI*M_PI) * S_T/alphas * std::pow(q,4) * S_k(q, y, true);
 
 }
 
@@ -48,14 +49,14 @@ double AmplitudeLib::UGD(double q, double y, double scale_, double S_T)
 double Inthelperf_xg(double qsqr, void* p);
 struct Inthelper_xg
 {
-	double y; AmplitudeLib* N;
+	double y,q; AmplitudeLib* N;
 };
 double AmplitudeLib::xg(double x, double q)
 {
 	Inthelper_xg par; 
 	par.N=this;
 	double y = std::log(X0()/x); InitializeInterpolation(y);
-	par.y=y;
+	par.y=y; par.q=q;
 	
 	gsl_function fun; fun.function=Inthelperf_xg;
 	fun.params=&par;
@@ -76,7 +77,7 @@ double AmplitudeLib::xg(double x, double q)
 double Inthelperf_xg(double qsqr, void* p)
 {
 	Inthelper_xg* par = (Inthelper_xg*) p;
-	return 1.0/qsqr * par->N->UGD(std::sqrt(qsqr), par->y);
+	return 1.0/qsqr * par->N->UGD(std::sqrt(qsqr), par->y, SQR(par->q));
 }
 
 
@@ -122,10 +123,13 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
 		N2->InitializeInterpolation(y2);
 	}
 	
+	double maxq = std::max(2.0*pt, 30.0);
+	if (maxq>50) maxq=pt;	// max momentum in ktint
+	
 	double result, abserr; 
-    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(2*INTPOINTS_KTFACT);
-	int status = gsl_integration_qag(&fun, 0.001, 30, 0, 0.05,
-		2*INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
+    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOINTS_KTFACT);
+	int status = gsl_integration_qag(&fun, 0.001, maxq, 0, 0.05,
+		INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
 	gsl_integration_workspace_free(ws);
        
     if (status)
@@ -136,9 +140,9 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
     }
     
     result *= 2.0/(Cf*SQR(pt));
-    result *= Alpha_s(pt*pt);
-    
-    result *= sigma02;
+    double alphas=Alphas(pt*pt);
+    result *= alphas;
+
     
     return result;
 }
@@ -216,7 +220,8 @@ double Inthelperf_ktfact_phi(double phi, void* p)
  */
  
  // if true, change between ktfact and hybrid formalism when x_p>X0()
-const bool HADRONPROD_TRANSITION = true;
+const bool HADRONPROD_TRANSITION = false;
+const int INTPOITNS_KTFACT_Z = 1;
 struct Inthelper_ktfact_fragfun{ AmplitudeLib* N1, *N2; FragmentationFunction* fragfun; double scale, pt, y, sqrts; Hadron final; PDF *pdf; };
 double Inthelperf_ktfact_fragfun(double z, void* p);
 
@@ -238,9 +243,9 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, doub
 	fun.params=&par;
 	
 	double result, abserr; 
-    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOINTS_KTFACT);
-	int status = gsl_integration_qag(&fun, std::max(0.1,pt*std::exp(y)/sqrts), 1.0, 0, 0.05,
-		INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
+    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOITNS_KTFACT_Z);
+	int status = gsl_integration_qag(&fun, std::max(0.2,pt*std::exp(y)/sqrts), 1.0, 0, 0.05,
+		INTPOITNS_KTFACT_Z, GSL_INTEG_GAUSS15, ws, &result, &abserr);
 	gsl_integration_workspace_free(ws);
        
     if (status)

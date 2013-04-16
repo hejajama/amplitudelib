@@ -61,9 +61,9 @@ void ErrHandler(const char * reason,
  * Reqularized to avoind infrared divergence 
  * Reqularization is set in file config.hpp
  */
+
 REAL Alpha_s(REAL Qsqr, REAL scaling)
 {
-	//return 0.2;
     if (scaling*Qsqr < LAMBDAQCD2)
         return MAXALPHA;
     REAL alpha = 12.0*M_PI/( (33.0-2.0*Nf)*log(scaling*Qsqr/LAMBDAQCD2) );

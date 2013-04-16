@@ -47,4 +47,6 @@ class FragmentationFunction
 };
 
 
+std::string ParticleStr(Hadron h);
+
 #endif

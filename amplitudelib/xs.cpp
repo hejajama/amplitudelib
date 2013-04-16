@@ -57,11 +57,11 @@ double Inthelperf_hadronprod(double z, void *p)
 
     if (y_A<0)
     {
-        cerr << "Negative rapidity at " << LINEINFO <<", z " << z << " xf " <<
+        cerr << "Negative rapidity at " << LINEINFO <<", z " << z << " parton_pt " << par->pt/z << " xf " <<
             par->xf << " x1 " << x1 << " x2 " << x2 << " y_A " << y_A 
             << " y " << par->y << " sqrts " 
             << par->sqrts << " pt " << par->pt << endl ;
-        //return 0;
+        return 0;
         y_A=0;
     }
 

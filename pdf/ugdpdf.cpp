@@ -11,6 +11,7 @@
 
 #include "ugdpdf.hpp"
 #include <string>
+#include <sstream>
 
 UGDPDF::UGDPDF()
 {
@@ -26,7 +27,13 @@ UGDPDF::UGDPDF(AmplitudeLib* N_, double sigma02_)
 
 std::string UGDPDF::GetString()
 {
-	return "UGD PDF" ;
+	std::stringstream ss;
+	ss << "UGD PDF, sigma0/2 = " << sigma02 << " GeV^(-2), alphas ";
+	if (N->GetRunningCoupling()==RUNNING)
+		ss << "running";
+	else
+		ss << "fixed";
+	return ss.str();
 }
 
 double UGDPDF::xq(double x, double q, Parton p)
@@ -39,12 +46,12 @@ double UGDPDF::xq(double x, double q, Parton p)
 	
 	if (x < MinX())
 	{
-		cerr << "x < MinX()=" << MinX() << ", exit..." << endl;
+		cerr << "x < MinX()=" << MinX() << ", exit... " << LINEINFO << endl;
 		exit(1);
 	}
 	if (x>MaxX())
 	{
-		cerr << "x=" << x <<" > MaxX()=" << MaxX()<< endl;
+		cerr << "x=" << x <<" > MaxX()=" << MaxX()<< " " << LINEINFO << endl;
 		//x = MaxX();
 		return 0;
 		//exit(1);
@@ -76,4 +83,9 @@ double UGDPDF::MinQ()
 double UGDPDF::MaxQ()
 {
 	return 100000;
+}
+
+AmplitudeLib* UGDPDF::GetN()
+{
+	return N;
 }

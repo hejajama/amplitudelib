@@ -1,10 +1,11 @@
 /*
  * Virtual class to hide different fragmentation functions
  * Uses directly dlib.f from http://www2.pv.infn.it/~radici/FFdatabase/
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2013
  */
 
 #include <string>
+#include <sstream>
 #include "../tools/config.hpp"
 #include "fragmentation.hpp"
 
@@ -85,4 +86,33 @@ Order FragmentationFunction::GetOrder()
 void FragmentationFunction::Test()
 {
 	cerr << "FragmentationFunction::Test() is not implemented" << endl;
+}
+
+
+std::string ParticleStr(Hadron h)
+{
+	switch(h)
+	{
+		case P:
+			return "proton";
+		case PI0:
+			return "pi0";
+		case H:
+			return "charged hadron";
+		case HM:
+			return "h-";
+		case HP:
+			return "h+";
+		case PIP:
+			return "pi+";
+		case PIM:
+			return "pi-";
+		default:
+			std::stringstream ss;
+			ss << "unkown particle type " << h;
+			return ss.str();
+	}
+	
+	return "ERROR!";
+	
 }

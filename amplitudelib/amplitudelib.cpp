@@ -172,6 +172,7 @@ double AmplitudeLib::S(double r, double y, int der)
 {
     double s = 1.0 - N(r,y,der);
     if (s<=0) return 0;
+    if (s>1.0) return 1.0;
     return s;
 }
 
@@ -603,6 +604,7 @@ double AmplitudeLib::N_A(double r, double y, int der)
  */
 AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
 {
+	as=RUNNING;
     out_of_range_errors=true;
     kspace=kspace_;
     sigma02=1.0;
@@ -787,3 +789,23 @@ std::string AmplitudeLib::GetString()
 	return info_string;
 }
 
+double AmplitudeLib::Alphas(double Qsqr)
+{
+	if (as == FIXED)
+		return 0.2;
+
+    double alpha = 12.0*M_PI/( (33.0-2.0*Nf)*log(Qsqr/LAMBDAQCD2) );
+    if (alpha > MAXALPHA)
+        return MAXALPHA;
+    return alpha;
+}
+
+void AmplitudeLib::SetRunningCoupling(RUNNING_ALPHAS as_)
+{
+	as=as_;
+}
+
+RUNNING_ALPHAS AmplitudeLib::GetRunningCoupling()
+{
+	return as;
+}

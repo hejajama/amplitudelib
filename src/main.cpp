@@ -80,6 +80,7 @@ int main(int argc, char* argv[])
     char dps_mode='a';
     double pt1=0,pt2=0,y1=0,y2=0;
     double sigma02=1.0;
+    RUNNING_ALPHAS as = RUNNING;
     Hadron final_particle = PI0;    // final state particle in single particle
                                     // production
     Parton parton=U;
@@ -121,7 +122,8 @@ int main(int argc, char* argv[])
         cout << "-print_pdf_q" << endl;
         cout << "-ugd_pdf qsqr: calculate gluon pdf from UGD" << endl;
         cout << "-lo: user LO PDF/FF instead of NLO" << endl;
-        cout << "-pdf [ctreq, ugd, eps09] [params], ugdparams: amplitudefile sigma0/2; eps09: A" << endl;
+        cout << "-pdf [ctreq, ugd, ugd_fixed, eps09] [params], ugdparams: amplitudefile sigma0/2 (ugd_fixed is fixed alphas); eps09: A" << endl;
+        cout << "-fixed_alphas: use fixed coupling" << endl;
         cout << "-test: run tests" << endl;
         cout << endl << "All dimensionfull values are GeV^n" << endl;
         return 0;
@@ -202,6 +204,11 @@ int main(int argc, char* argv[])
                 final_particle = H; // charged hadrons
             else if (string(argv[i+1])=="hm")    // negative hadrons
                 final_particle = HM;
+            else
+			{
+				cerr << "Unknown final particle " << argv[i+1] << endl;
+				return -1;
+			}
         }
 			
         else if (string(argv[i])=="-hadronprod_int")
@@ -297,10 +304,12 @@ int main(int argc, char* argv[])
         {
 			if (string(argv[i+1])=="cteq")
 				pdf = new CTEQ();
-			else if (string(argv[i+1])=="ugd")
+			else if (string(argv[i+1])=="ugd" or string(argv[i+1])=="ugd_fixed")
 			{
 				AmplitudeLib* ugdn = new AmplitudeLib(string(argv[i+2]));
 				pdf = new UGDPDF(ugdn, StrToReal(argv[i+3]));
+				if (string(argv[i+1])=="ugd_fixed")
+					ugdn->SetRunningCoupling(FIXED);
 			}
 			else if (string(argv[i+1])=="eps09")
 			{
@@ -369,6 +378,8 @@ int main(int argc, char* argv[])
 			mode=TEST;
 		else if (string(argv[i])=="-x0")
 			x0 = StrToReal(argv[i+1]);
+		else if (string(argv[i])=="-fixed_alphas")
+			as = FIXED;
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -386,13 +397,19 @@ int main(int argc, char* argv[])
 		fragfun = new DSS(); 
     fragfun->SetOrder(order);
     pdf->SetOrder(order);
+    
     cout << "# PDF: " << pdf->GetString() <<", FF: " << fragfun->GetString() << endl;
     AmplitudeLib N(datafile, kspace);
     AmplitudeLib N2(datafile);
     N.SetSigma02(sigma02); N2.SetSigma02(sigma02);
+    N.SetRunningCoupling(as); N2.SetRunningCoupling(as);
     if (x0>0) { N.SetX0(x0); N2.SetX0(x0); }
     N.InitializeInterpolation(y,bspline);
     if (xbj>=0) y = std::log(N.X0()/xbj);
+    if (N.GetRunningCoupling()==FIXED)
+		cout << "# Fixed alphas = " << N.Alphas(1) << endl;
+	else
+		cout << "# Running alphas" << endl;
     cout << "# y = " << y << ", x_0 = " << N.X0() << " x = " << N.X0()*std::exp(-y) << endl;
 
     
@@ -537,13 +554,17 @@ int main(int argc, char* argv[])
         }
         cout << "# d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
         cout << "# Fragfun: " << fragfun->GetString() << endl;
-        cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
+        cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << "Producing particle " << ParticleStr(final_particle) <<  endl;
         cout << "# p_T   dN/(d^2 p_T dy)     parton level yield   S(k)" << endl;
         //cout << "# pt   cteq-partonlevel   ugd-partonlevel " << endl;
         for (double pt=minpt; pt<maxpt; pt+=ptstep)
         {
             double result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, pdf,deuteron, final_particle);
-            double partonlevel = N.dHadronMultiplicity_dyd2pt_parton(y, pt, sqrts, pdf, deuteron);
+            cout << pt << " " << result << endl;
+            //double partonlevel = N.dHadronMultiplicity_dyd2pt_parton(y, pt, sqrts, pdf, deuteron);
+            //cout << pt << " " << partonlevel << endl;
+            
+            
              double xa = pt*std::exp(-y)/sqrts;
              //cout << "# Evol y = " << log(N.X0()/xa) << endl;
              //N.InitializeInterpolation(y);
@@ -558,7 +579,7 @@ int main(int argc, char* argv[])
             double sk = 0; // N.S_k(pt,ya,true)
             cout << pt << " " << partonlevel << " " << ugdpartonlevel << " " << sk << endl;
             */
-            cout << pt << " " << result << " " << partonlevel << " " << sk << endl;
+            // " " << partonlevel << " " << sk << endl;
             //cout << pt << " " << partonlevel << endl;
         }
     }
@@ -606,13 +627,16 @@ int main(int argc, char* argv[])
         }
         cout << "# d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
 		cout << "# Using k_T factorization (gluon production); sigma02 = " << N.Sigma02() << " GeV^-2" << endl;
+		cout << "# Producing particle " << ParticleStr(final_particle) << endl;
+		cout << "# NOTICE: results must be multiplied by (\\sigma_0/2)^2/S_T" << endl;
         cout << "# p_T   dN/(d^2 p_T dy) hadronlevel   " << endl;
         
         for (double pt=minpt; pt<maxpt; pt+=ptstep)
         {
-            double partonresult = 0;//N.dHadronMultiplicity_dyd2pt_ktfact_parton(y, pt, sqrts, &N2);
+            //double partonresult = N.dHadronMultiplicity_dyd2pt_ktfact_parton(y, pt, sqrts, &N2);
             double hadronresult = N.dHadronMultiplicity_dyd2pt_ktfact(y, pt, sqrts, fragfun, final_particle, &N2);
-            cout << pt << " " << hadronresult << " " << partonresult << endl;
+            
+			cout << pt << " " << hadronresult << endl;// << " " << partonresult << endl;
             //cout << pt << " " << partonresult << endl;
         }
     }
