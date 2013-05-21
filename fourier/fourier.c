@@ -172,8 +172,9 @@ double fourier_j_i(x,Ni,func,param,n)
        * are zero (within the numerical accuracy), thus compute the sum of
        * the nonzero terms and return it.
        * Added by H.M. */
-       if (tmp[j-Ni]==0)
+       if (tmp[j-Ni]==0 )
        {
+		 
          sum=0;
          for (i=0; i<=j-Ni; i++)
            sum += tmp[i];

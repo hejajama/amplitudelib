@@ -46,8 +46,8 @@ DataFile::DataFile(string fname)
                     x0 = StrToReal(line.substr(3,line.length()-3));
                     if (x0 < 1e-4 or x0>1)
                     {
-                        cerr <<"Invalid x0! " << LINEINFO << endl;
-                        exit(1);
+                        cerr <<"Invalid x0! " << x0 <<", correct x0 must be set by SetX0() before usage! " << LINEINFO << endl;
+                        x0=0;
                     }
                     break;
                 default:

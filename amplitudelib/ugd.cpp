@@ -94,8 +94,8 @@ double Inthelperf_ktfact_phi(double phi, void* p);
 const int INTPOINTS_KTFACT = 2;
 double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2 )
 {
-	double x1 = pt*std::exp(y)/sqrts;
-	double x2 = pt*std::exp(-y)/sqrts;
+	double x1 = pt*std::exp(-y)/sqrts;
+	double x2 = pt*std::exp(y)/sqrts;
 	double y1 = std::log(X0()/x1);
 	double y2;
 	if (N2==NULL)
@@ -134,9 +134,9 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
        
     if (status)
     {
-		#pragma omp critical
-		cerr << "kt-factorization q integral failed at " << LINEINFO <<", pt=" << pt <<", x1=" << x1 <<", x2=" << x2 
-			<< ", result " << result << " relerr " << std::abs(abserr/result) << endl;
+		//#pragma omp critical
+		//cerr << "kt-factorization q integral failed at " << LINEINFO <<", pt=" << pt <<", x1=" << x1 <<", x2=" << x2 
+		//	<< ", result " << result << " relerr " << std::abs(abserr/result) << endl;
     }
     
     result *= 2.0/(Cf*SQR(pt));

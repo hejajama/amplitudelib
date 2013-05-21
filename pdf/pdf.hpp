@@ -14,7 +14,7 @@ class PDF
     public:
 		PDF();
         ~PDF();
-        virtual double xq(double x, double q, Parton p)=0;    // return x*q(x,q)
+        virtual double xq(double x, double q, Parton p)=0;    // return x*q(x,q), q in GeV
         // x_1*x_2*f(x_1,x_2) dpfd with kinematical constraint x_1+x_2 < 1
         double Dpdf(double x1, double x2, double q, Parton p1, Parton p2);	
         virtual void Initialize(int param=-1);

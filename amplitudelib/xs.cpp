@@ -77,6 +77,7 @@ double Inthelperf_hadronprod(double z, void *p)
     double xqf = par->pdf->xq(x1, scale, U)*par->frag->Evaluate(U, par->final, z, scale)
         + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(D, par->final, z, scale)
         + par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
+        //+ par->pdf->xq(x1, scale, C)*par->frag->Evaluate(C, par->final, z, scale)
 
     if (deuteron)
     {
@@ -84,6 +85,7 @@ double Inthelperf_hadronprod(double z, void *p)
         xqf += par->pdf->xq(x1, scale, U)*par->frag->Evaluate(D, par->final, z, scale)
         + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(U, par->final, z, scale)
         + par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
+        //+ par->pdf->xq(x1, scale, C)*par->frag->Evaluate(C, par->final, z, scale);
     }
         
     result = nf*xqf;

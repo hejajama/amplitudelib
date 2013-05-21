@@ -74,7 +74,7 @@ double AmplitudeLib::N(double r, double y, int der, bool bspline)
         double result=0;
         if (der==0)
         { 
-            if (r >= maxr_interpolate and maxr_interpolate>0 and !kspace) return 1.0;
+            if (r >= maxr_interpolate and maxr_interpolate>0 and !kspace) { return 1.0; }
             result = interpolator->Evaluate(r);
         }
         if (der==1)
@@ -90,6 +90,7 @@ double AmplitudeLib::N(double r, double y, int der, bool bspline)
         return result;
 
     }
+
 /*
     if (interpolator_y > 0)
         cerr << "Interpolator was initialized but can't use it at y=" << y << " "
@@ -258,6 +259,10 @@ double AmplitudeLib::N_k_to_x(double x, double y)
  * 
  * Default value for power is 1.0
  */
+ 
+const bool GSL_FT = true;	// false: use j0_transfer from fourier/fourier.c,	
+	// it should be faster but sometimes it is much slower!!
+
 double S_k_helperf(double r, void* p);
 double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
 {
@@ -276,7 +281,7 @@ double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
 
     double result=0;
 
-    if (kt < 1e-3 )  // k_T \approx 0 -> integrate just \int d^2 r S(r)^power
+    if (kt < 1e-3  or GSL_FT)  // k_T \approx 0 -> integrate just \int d^2 r S(r)^power
     {
         gsl_function fun; fun.function=S_k_helperf;
         fun.params=&par;
@@ -297,6 +302,13 @@ double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
     }
     else
         result = fourier_j0(kt,S_k_helperf,&par);
+        
+        
+    if (result<-0.00001){	////TODO: DEBUG
+		return 0;
+		#pragma omp criticall
+		cerr << "S_k transfer is negative=" << result*2.0*M_PI <<", kt=" << kt <<", y=" << y <<", adj: " << adjoint <<", power=" << power << " " << LINEINFO << endl;
+    }
     return result*2.0*M_PI; 
 }
 
@@ -315,7 +327,8 @@ double S_k_helperf(double r, void* p)
     }
     
     // J0 is in fourier_j0() fun
-    //result *= gsl_sf_bessel_J0(par->kt*r);
+    if (GSL_FT)		// not using fourier_j0
+		result *= gsl_sf_bessel_J0(par->kt*r);
 
     return result;
 }
@@ -576,6 +589,9 @@ double AmplitudeLib::N_A(double r, double y, int der)
     {
         double n = N(r,y);
         result = 2.0*n - n*n;
+        if (result>1) result=1;
+        if (result<0) result=0;
+        return result;
     }
     else if (der==1)
     {
@@ -641,7 +657,7 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
     ss << "# Data read from file " << datafile << ", minr: " << minr
         << " maxr: " << MaxR() << " rpoints: " << rpoints << " maxy "
         << yvals[yvals.size()-1] << " x0 " << X0()
-        << " Q_{s,0}^2 = " << SaturationScale(0, 0.22) << " GeV^2 [ N(r=1/Q_s) = 0.22]" ;
+        << " Q_{s,0}^2 = " << SQR(1.0/SaturationScale(0, 0.22)) << " GeV^2 [ N(r=1/Q_s) = 0.22]" ;
     info_string = ss.str();
 }
 
@@ -653,8 +669,14 @@ void AmplitudeLib::InitializeInterpolation(double y, bool bspline)
 {
 	if (y<0)
 	{
-		cerr << "Asked to initialize interpolator with negative rapidity! "
+		cerr << "Asked to initialize interpolator with negative rapidity " << y <<"! "
 			<< "Dont know what to do, panicking... " << LINEINFO << endl;
+		exit(1);
+	}
+	
+	if (y>MaxY())
+	{
+		cerr << "Asked to initialize interpolator with too large y=" << y <<", maxy=" << MaxY() << endl;
 		exit(1);
 	}
 	
@@ -683,7 +705,7 @@ void AmplitudeLib::InitializeInterpolation(double y, bool bspline)
     const int MAXITER=40;
     for (double r=0.01; r<=MaxR(); r+=step)
     {
-        if (N(r,y)>=0.999999)
+        if (N(r,y)>=0.99999)		// check that this accuracy is the same as in rbk/src/solver.cpp
         {
             if (step<1e-2)
             {
@@ -697,8 +719,8 @@ void AmplitudeLib::InitializeInterpolation(double y, bool bspline)
         iter++;
         if (iter > MAXITER)
         {
-            cerr << "Didn't find maxr_interpolate at y=" << y <<", line " << LINEINFO 
-                << ", best guess " << r << endl;
+            //cerr << "Didn't find maxr_interpolate at y=" << y <<", ignoring it " << LINEINFO << endl;
+            maxr_interpolate=-1;
             break;  // Didn't find, dont force any upper limit
         }
     }
