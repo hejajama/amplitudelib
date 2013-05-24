@@ -2,26 +2,35 @@
 #-*- coding: UTF-8 -*-
 # Computes impact parameter average
 # \int \der^2 b f(b) / \int \der^2 b rho_inel(b)
-# CLI arguments are bmin and bmax
+# CLI arguments are fileprefix, filepostfix, bmin, bmax, bstep
 #
 # Part of AmplitudeLib 
 # Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2013
 
 
-# Configs
-fileprefix="sinc/lhc_pA/theory/paperi/minft0/pA_b"
-filepostfix="_hybrid_y_2_sqrts_5020_cteq_dss_lo"
-# filename is fileprefix+b+filepostfix
 
+# Configs
 mbgevsqr = 2.568
 sigmann = 60 * mbgevsqr
 A=208
 
 import sys 
-minb=float(sys.argv[1])
-maxb=float(sys.argv[2])
-bstep=2
+#fileprefix="sinc/lhc_pA/theory/paperi/minft0/pA_b"
+#filepostfix="_ch_hybrid_y_0_sqrts_5020_cteq_dss_lo"
+# filename is fileprefix+b+filepostfix
+if (len(sys.argv)<4):
+    print "Syntax: " + sys.argv[0] + " fileprefix filepostfix minb maxb"
+    sys.exit(0)
 
+fileprefix=sys.argv[1]
+filepostfix=sys.argv[2]
+minb=int(sys.argv[3])
+maxb=int(sys.argv[4])
+bstep=int(sys.argv[5])
+
+
+
+print "# b-average, minb " + str(minb) + " maxb " + str(maxb) + " bstep " + str(bstep) +" sigmann " + str(sigmann/mbgevsqr) +" mb, A " + str(A)
 
 
 import os
@@ -32,6 +41,8 @@ from matplotlibhelper import *
 import pylab
 import scipy.integrate
 from scipy import interpolate
+import locale
+locale.setlocale(locale.LC_ALL,"C")
 
 def Inthelper_bint(b, interpolator):
     return 2.0*pi*b*interpolabor(b)
