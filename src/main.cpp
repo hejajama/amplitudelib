@@ -1,6 +1,6 @@
 /*
  * AmplitudeLib, reads output of the BK equation solver 
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2012
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2013
  */
 
 #include "../tools/tools.hpp"
@@ -24,7 +24,7 @@
 #include <fstream>
 #include <iomanip>
 using std::string;
-const string version = "v. 0.999";
+
 
 enum Mode
 {
@@ -54,7 +54,7 @@ enum Mode
 int main(int argc, char* argv[])
 {
     std::stringstream infostr;
-    infostr << "# amplitudeLib " << version << " (build " << __DATE__ << " " << __TIME__ << ")" << endl << "#" <<  endl;
+    infostr << "# amplitudeLib   (c) Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2013 " << endl;
     infostr << "#";
     for (int i=0; i<argc; i++)
         infostr << argv[i] << " ";
@@ -402,6 +402,11 @@ int main(int argc, char* argv[])
     }
 
     cout << "# Reading data from file " << datafile << endl;
+   
+    AmplitudeLib N(datafile, kspace);
+    cout <<"#"<<endl<<"# AmplitudeLib v. " << N.Version() << endl<<"#"<<endl;
+    
+   
     cout <<"# Order: "; if (order==LO) cout << "LO"; else cout << "NLO"; cout << endl;
 	if (pdf==NULL)
 		pdf = new CTEQ();
@@ -411,9 +416,10 @@ int main(int argc, char* argv[])
     pdf->SetOrder(order);
     
     cout << "# PDF: " << pdf->GetString() <<", FF: " << fragfun->GetString() << endl;
-    AmplitudeLib N(datafile, kspace);
+   
     if (mode==PTSPECTRUM_KTFACT and ktfact_datafile2 != "")
 		datafile=ktfact_datafile2;
+	
     AmplitudeLib N2(datafile);
     N.SetSigma02(sigma02); N2.SetSigma02(sigma02);
     N.SetRunningCoupling(as); N2.SetRunningCoupling(as);
@@ -426,6 +432,7 @@ int main(int argc, char* argv[])
 		cout << "# Running alphas" << endl;
     cout << "# y = " << y << ", x_0 = " << N.X0() << endl;
 
+	
     
     if (mode==X_TO_K)
     {

@@ -244,7 +244,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, doub
 	
 	double result, abserr; 
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOITNS_KTFACT_Z);
-	int status = gsl_integration_qag(&fun, std::max(0.2,pt*std::exp(y)/sqrts), 1.0, 0, 0.05,
+	int status = gsl_integration_qag(&fun, std::max(0.1,pt*std::exp(y)/sqrts), 1.0, 0, 0.05,
 		INTPOITNS_KTFACT_Z, GSL_INTEG_GAUSS15, ws, &result, &abserr);
 	gsl_integration_workspace_free(ws);
        

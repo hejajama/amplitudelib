@@ -11,7 +11,7 @@
 
 # Configs
 mbgevsqr = 2.568
-sigmann = 60 * mbgevsqr
+sigmann = 70 * mbgevsqr
 A=208
 
 import sys 

@@ -304,9 +304,9 @@ double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
         result = fourier_j0(kt,S_k_helperf,&par);
         
         
-    if (result<-0.00001){	////TODO: DEBUG
+    if (result<-0.00001){
 		//return 0;
-		#pragma omp criticall
+		#pragma omp critical
 		cerr << "S_k transfer is negative=" << result*2.0*M_PI <<", kt=" << kt <<", y=" << y <<", adj: " << adjoint <<", power=" << power << " " << LINEINFO << endl;
     }
     return result*2.0*M_PI; 
@@ -830,4 +830,11 @@ void AmplitudeLib::SetRunningCoupling(RUNNING_ALPHAS as_)
 RUNNING_ALPHAS AmplitudeLib::GetRunningCoupling()
 {
 	return as;
+}
+
+std::string AmplitudeLib::Version()
+{
+	std::stringstream s;
+	s << AMPLITUDELIB_VERSION << " (build " <<  __DATE__ << " " << __TIME__ << ")";
+	return s.str();
 }

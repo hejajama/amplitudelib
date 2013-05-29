@@ -23,7 +23,7 @@ enum Polarization
 enum RUNNING_ALPHAS
 {
 	RUNNING,
-	FIXED,
+	FIXED
 };
 
 class AmplitudeLib
@@ -140,6 +140,8 @@ class AmplitudeLib
         
         void SetRunningCoupling(RUNNING_ALPHAS as_);
         RUNNING_ALPHAS GetRunningCoupling();
+        
+        std::string Version();
 
         
         
@@ -174,6 +176,8 @@ class AmplitudeLib
         std::string info_string;
         
         RUNNING_ALPHAS as;
+        
+        
 };
 
 const int INTERPOLATION_POINTS = 12;
@@ -181,4 +185,7 @@ const double UGD_IR_CUTOFF=0.3;   // ugd(k<UGD_IR_CUTOFF)=0     BAD?????
 
 const int FOURIER_ZEROS=1000;   // How many zeros of the Bessel functions is
                     // used when Fourier transforming
+
+
+const std::string AMPLITUDELIB_VERSION = "1.0 2013-05-29";
 #endif
