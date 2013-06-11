@@ -23,7 +23,9 @@
 #include <sstream>
 #include <fstream>
 #include <iomanip>
-using std::string;
+#include <ctime>
+
+using namespace std;
 
 
 enum Mode
@@ -40,6 +42,7 @@ enum Mode
     PTSPECTRUM_PARTON,
     PTSPECTRUM_AVG,
     PTSPECTRUM_KTFACT,
+    PTSPECTRUM_KTFACT_PARTON,
     INT_HADRONPROD,
     F2,
     LOGLOGDER,
@@ -108,7 +111,8 @@ int main(int argc, char* argv[])
             << " final state pi0/charged/negative hadron" << endl;
         cout << "-pt_spectrum_parton: dN/(d^2 p_t dY) for quark/gluon scattering" << endl;
         cout << "-pt_spectrum_avg: same as above, but average over y region, must set miny and maxy" << endl;
-        cout << "-pt_spectrum_ktfact [final particle]: gluon production dN/(d^2 p_T dy) using k_T factorization" << endl;
+        cout << "-pt_spectrum_ktfact [final particle]: hadron production dN/(d^2 p_T dy) using k_T factorization" << endl;
+        cout << "-pt_spectrum_ktfact_parton: dN/(d^2 p_t dY) for gluon production" << endl;
         cout << "-ktfact_probe datafile: in asymmetric collisions dipole amplitude for probe " << endl;
         cout << "-sigma02 val: proton or target area; ktfactorization results are multiplied by this" << endl;
         cout << "-hadronprod_int p/d pi0/ch/hn: integrated over pt and y range" << endl;
@@ -218,6 +222,10 @@ int main(int argc, char* argv[])
 				return -1;
 			}
         }
+        else if (string(argv[i])=="-pt_spectrum_ktfact_parton")
+        {
+			mode=PTSPECTRUM_KTFACT_PARTON;
+		}
         
         else if (string(argv[i])=="-ktfact_probe")
         {
@@ -404,7 +412,14 @@ int main(int argc, char* argv[])
     cout << "# Reading data from file " << datafile << endl;
    
     AmplitudeLib N(datafile, kspace);
-    cout <<"#"<<endl<<"# AmplitudeLib v. " << N.Version() << endl<<"#"<<endl;
+    
+    time_t now = time(0);
+    string today = ctime(&now);
+    
+    cout <<"#"<<endl<<"# AmplitudeLib v. " << N.Version() << endl;
+    cout <<"# Now is " << today ;
+    cout <<"#"<<endl;
+   
     
    
     cout <<"# Order: "; if (order==LO) cout << "LO"; else cout << "NLO"; cout << endl;
@@ -668,14 +683,34 @@ int main(int argc, char* argv[])
         
         for (double pt=minpt; pt<=maxpt; pt+=ptstep)
         {
-           // double partonresult = N.dHadronMultiplicity_dyd2pt_ktfact_parton(y, pt, sqrts, &N2);
-            //cout << pt << " " << partonresult << endl;
             
             double hadronresult = N.dHadronMultiplicity_dyd2pt_ktfact(y, pt, sqrts, fragfun, final_particle, &N2);
             cout << pt << " " << hadronresult << endl;// << " " << partonresult << endl;
             
         }
     }
+    
+    else if (mode==PTSPECTRUM_KTFACT_PARTON)
+    {
+		if (fragfun==NULL)
+        {
+            cerr << "Fragfun not spesified!" << endl;
+            return -1;
+        }
+        cout << "# d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
+		cout << "# Using k_T factorization (gluon production); sigma02 = " << N.Sigma02() << " GeV^-2" << endl;
+		cout << "# Gluon production (parton level)" << endl;
+		cout << "# Probe: " << N2.GetString() << endl << "# Target: " << N.GetString() << endl;
+		cout << "# NOTICE: results must be multiplied by (\\sigma_0/2)^2/S_T" << endl;
+        cout << "# p_T   dN/(d^2 p_T dy) hadronlevel   " << endl;
+        
+        for (double pt=minpt; pt<=maxpt; pt+=ptstep)
+        {
+			double partonresult = N.dHadronMultiplicity_dyd2pt_ktfact_parton(y, pt, sqrts, &N2);
+            cout << pt << " " << partonresult << endl;            
+        }
+    }
+    
     else if (mode==DPS)
     {
         if (fragfun==NULL)

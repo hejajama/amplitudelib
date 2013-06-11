@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 	}
 	file.close();
 	
-	cout << "# Q^2 [GeV^2]  x  y  HERA-\sigma_r  HERA-err theory-\sigma_r (no normalization) " << endl;
+	cout << "# Q^2 [GeV^2]  x  y  HERA-\\sigma_r  HERA-err theory-\\sigma_r (no normalization) " << endl;
 	// Compute reduced cross section
 	for (int i=0; i<xvals.size(); i++)
 	{

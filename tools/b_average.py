@@ -8,7 +8,6 @@
 # Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2013
 
 
-
 # Configs
 mbgevsqr = 2.568
 sigmann = 70 * mbgevsqr
@@ -59,7 +58,9 @@ while b <= maxb:
     
     xdata=[]
     ydata=[]
-    readfile_xy(fname, xdata, ydata)
+    readfile_xy(fname, xdata, ydata,xcol=0, ycol=1)
+    #xdata=list(reversed(xdata))
+    #ydata=list(reversed(ydata))
     if (b==minb):
         xvals=xdata
     interp=interpolate.interp1d(xdata, ydata, kind="cubic")

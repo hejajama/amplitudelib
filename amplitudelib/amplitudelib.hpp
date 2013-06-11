@@ -187,5 +187,5 @@ const int FOURIER_ZEROS=1000;   // How many zeros of the Bessel functions is
                     // used when Fourier transforming
 
 
-const std::string AMPLITUDELIB_VERSION = "1.0 2013-05-29";
+const std::string AMPLITUDELIB_VERSION = "1.1-dev 2013-06-xx";
 #endif

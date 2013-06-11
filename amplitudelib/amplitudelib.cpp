@@ -305,7 +305,7 @@ double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
         
         
     if (result<-0.00001){
-		//return 0;
+		return 0;
 		#pragma omp critical
 		cerr << "S_k transfer is negative=" << result*2.0*M_PI <<", kt=" << kt <<", y=" << y <<", adj: " << adjoint <<", power=" << power << " " << LINEINFO << endl;
     }
