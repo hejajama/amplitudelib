@@ -705,7 +705,7 @@ void AmplitudeLib::InitializeInterpolation(double y, bool bspline)
     const int MAXITER=40;
     for (double r=0.01; r<=MaxR(); r+=step)
     {
-        if (N(r,y)>=0.99999)		// check that this accuracy is the same as in rbk/src/solver.cpp
+        if (N(r,y)>=0.9999)		// check that this accuracy is the same as in rbk/src/solver.cpp
         {
             if (step<1e-2)
             {
