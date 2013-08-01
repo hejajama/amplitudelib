@@ -51,7 +51,6 @@ enum Mode
     PRINT_FF,
     PRINT_PDF,
     PRINT_PDF_Q,
-    UGD_PDF,
     TEST
 };
 
@@ -59,7 +58,7 @@ int main(int argc, char* argv[])
 {
     std::stringstream infostr;
     infostr << "# amplitudeLib   (c) Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2013 " << endl;
-    infostr << "#";
+    infostr << "# Command: ";
     for (int i=0; i<argc; i++)
         infostr << argv[i] << " ";
     
@@ -97,17 +96,25 @@ int main(int argc, char* argv[])
 
     if (string(argv[1])=="-help")
     {
+		cout <<"==== General parameters ====" << endl;
         cout << "-y y: set rapidity" << endl;
         cout << "-xbj bjorken_x (overrides -y)" << endl;
-        cout << "-data datafile" << endl;
-        cout << "-x0 x0val: override x0 value of the datafile" << endl;
-        cout << "-kspace: data is in k space" << endl;
-        cout << "-x: print amplitude (space-indep.)" << endl;
+        cout << "-data datafile (bk solution)" << endl;
+        cout << "-x0 x0val: overrides x0 value of the datafile" << endl;
+        cout << "-kspace: data is in k (momentum) space" << endl;
+        cout << "-bspline: use bspline interpolation (for noisy data) [EXPERIMENTAL]" << endl;
+        cout << "-loglogder: print d ln N / d ln x^2" << endl;
+        cout << "-sqrts sqrts (in GeV)" << endl;
+        
+        cout << endl << "==== Study dipole amplitude " << endl;
+        cout << "-x: print amplitude as a function of r or k" << endl;
         cout << "-ydep r: print N(r,y) as a function of y" << endl;
-        cout << "-x_to_k: FT ampltiude from x to k space" << endl;
+        cout << "-x_to_k: FT N(r)/r^2 from x to k space" << endl;
         cout << "-k_to_x: FT amplitude from k to x space" << endl;
         cout << "-s_x_to_k: FT S(r)" << endl;
-        cout << "-ugd: print unintegrated gluon distribution" << endl;
+        cout << "-satscale Ns, print satscale r_s defined as N(r_s)=Ns" << endl;
+        
+        cout << endl <<"==== Single inclusive ====" << endl;
         cout << "-pt_spectrum p/d pi0/ch/hn: print dN/(d^2 p_T dy), probe is proton or deuteron"
             << " final state pi0/charged/negative hadron" << endl;
         cout << "-pt_spectrum_parton: dN/(d^2 p_t dY) for quark/gluon scattering" << endl;
@@ -115,28 +122,33 @@ int main(int argc, char* argv[])
         cout << "-pt_spectrum_ktfact [final particle]: hadron production dN/(d^2 p_T dy) using k_T factorization" << endl;
         cout << "-pt_spectrum_ktfact_parton: dN/(d^2 p_t dY) for gluon production" << endl;
         cout << "-ktfact_probe datafile: in asymmetric collisions dipole amplitude for probe " << endl;
+        cout << "-fixed_alphas: use fixed coupling in ktfactorization" << endl;
         cout << "-sigma02 val: proton or target area; ktfactorization results are multiplied by this" << endl;
+        cout << "-dsigmady: print d\\sigma/dy" << endl;
         cout << "-hadronprod_int p/d pi0/ch/hn: integrated over pt and y range" << endl;
         cout << "-miny y, -maxy y" << endl;
         cout << "-minpt, -maxpt, -ptstep" << endl;
-        cout << "-dps p/d pi0/ch/hn a/b/c: doupe parton scattering" << endl;
+        
+        cout << endl << "==== Double inclusive ====" << endl;
+        cout << "-dps p/d pi0/ch/hn a/b/c: double parton scattering" << endl;
         cout << "-pt1, -pt2, -y1, -y2: set pt/y for dps calculation" << endl;
-        cout << "-dsigmady: print d\\sigma/dy" << endl;
-        cout << "-satscale Ns, print satscale r_s defined as N(r_s)=Ns" << endl;
-        cout << "-F2 Qsqr" << endl;
-        cout << "-loglogder: print d ln N / d ln x^2" << endl;
-        cout << "-bspline: use bspline interpolation (for noisy data)" << endl;
+        
+        
+        cout << endl << "==== PDF and FF ====" << endl;
+        cout << "-pdf [ctreq, ugd, ugd_fixed, eps09] [params]   , parameters for ugdpdf: amplitudefile sigma0/2 (ugd_fixed is fixed alphas); for eps09: A" << endl;
+        cout << "-lo: use LO PDF and FF;  -nlo: use NLO PDF and FF (default) "<< endl;
         cout << "-fragfun [kkp, pkh, hkns, dss]: select fragmentation function" << endl;
-        cout << "-sqrts sqrts (in GeV)" << endl;
+        cout << "-ugd: print unintegrated gluon distribution computed from dipole amplitude" << endl;
         cout << "-print_ff [u,d,s,g] [pi0,pim,pip,hm,hp] qsqr" << endl;
         cout << "-print_pdf qsqr" << endl;
         cout << "-print_pdf_q x" << endl;
-        cout << "-ugd_pdf qsqr: calculate gluon pdf from UGD" << endl;
-        cout << "-lo: use LO PDF/FF instead of NLO,  -nlo: use NLO (default)" << endl;
-        cout << "-pdf [ctreq, ugd, ugd_fixed, eps09] [params], ugdparams: amplitudefile sigma0/2 (ugd_fixed is fixed alphas); eps09: A" << endl;
-        cout << "-fixed_alphas: use fixed coupling" << endl;
+        
+        
+        cout << endl << "==== Misc ==== " << endl;
+        cout << "-F2 Qsqr   compute structure function F2 and reduced cross section" << endl;
         cout << "-test: run tests" << endl;
-        cout << endl << "All dimensionfull values are GeV^n" << endl;
+        cout << endl << "==== Notes: ==== " << endl;
+        cout << "* All dimensionfull values are GeV^n" << endl;
         return 0;
     }
 
@@ -387,11 +399,6 @@ int main(int argc, char* argv[])
 		{
 			mode = PRINT_PDF_Q;
 			xbj = StrToReal(argv[i+1]);
-		}
-        else if (string(argv[i])=="-ugd_pdf")
-        {
-			mode = UGD_PDF;
-			Qsqr = StrToReal(argv[i+1]);
 		}
         else if (string(argv[i])=="-lo")
 			order=LO;
@@ -818,21 +825,7 @@ int main(int argc, char* argv[])
 		}
 	}
 	
-	else if (mode == UGD_PDF)
-	{
-		double q = std::sqrt(Qsqr);
-		cout << "# PDF x*g(x,Q^2) from UGD, compared with gluon distribution from " << pdf->GetString() << " pdf, Q^2=" << Qsqr << " Gev^2" << endl;
-		cout << "# x    ugd     " << pdf->GetString() << endl;
-		for (double x=1e-4; x<1; x*=1.05)
-		{
-			cout << x << " " << N.xg(x, q) << " " << pdf->xq(x, q, G) << endl;
-		}
-		/*
-		for (double qsqr=1; qsqr<100; qsqr*=1.1)
-		{
-			cout << qsqr << " " << N.xg(0.01, std::sqrt(qsqr)) << " " << pdf->xq(0.01, std::sqrt(qsqr), G) << endl;
-		}*/
-	}
+
 	else if (mode==TEST)
 	{
 		cout << "##### Running tests......" << endl;
