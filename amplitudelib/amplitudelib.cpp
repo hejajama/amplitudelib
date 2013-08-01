@@ -815,10 +815,18 @@ double AmplitudeLib::Alphas(double Qsqr)
 {
 	if (as == FIXED)
 		return 0.2;
+	
+	if (Qsqr <= LAMBDAQCD2)
+		return MAXALPHA;
 
     double alpha = 12.0*M_PI/( (33.0-2.0*Nf)*log(Qsqr/LAMBDAQCD2) );
     if (alpha > MAXALPHA)
         return MAXALPHA;
+    if (alpha < 0)
+    {
+		cerr << "WTF, alphas = " << alpha << " " << "(Qsqr=" << Qsqr <<", lambdaqcd^2=" << LAMBDAQCD2 << ") " << LINEINFO << endl;
+		return 0;
+	}
     return alpha;
 }
 

@@ -69,7 +69,7 @@ double AmplitudeLib::xg(double x, double q)
     if (status)
     {
 		cerr << "UGD integral failed at " << LINEINFO <<", x=" << x
-			<< ", k_T=" << q << " relerr " << std::abs(abserr/result) << endl;
+			<< ", k_T=" << q << " res " << result << " relerr " << std::abs(abserr/result)  << endl;
     }
 	return result;
 }

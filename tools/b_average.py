@@ -2,7 +2,7 @@
 #-*- coding: UTF-8 -*-
 # Computes impact parameter average
 # \int \der^2 b f(b) / \int \der^2 b rho_inel(b)
-# CLI arguments are fileprefix, filepostfix, bmin, bmax, bstep, protonb protonfile
+# CLI arguments are fileprefix, filepostfix, bmin, bmax, bstep, protonb protonfile A model
 #
 # Part of AmplitudeLib 
 # Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2013
@@ -10,14 +10,12 @@
 
 # Configs
 mbgevsqr = 2.568
-sigmann = 70 * mbgevsqr
-sigma02 = 16.45*mbgevsqr
-A=208
+
 
 import sys 
 # filename is fileprefix+b+filepostfix
-if (len(sys.argv)<8):
-    print "Syntax: " + sys.argv[0] + " fileprefix filepostfix minb maxb bstep protonb protonfile "
+if (len(sys.argv)<10):
+    print "Syntax: " + sys.argv[0] + " fileprefix filepostfix minb maxb bstep protonb protonfile A model"
     sys.exit(0)
 
 fileprefix=sys.argv[1]
@@ -29,9 +27,29 @@ bstep=int(sys.argv[5])
 switch_proton_b=int(sys.argv[6])
 proton_file=sys.argv[7]
 
+A=int(sys.argv[8])
+sigmann=0
+if A==208:
+    sigmann=70 * mbgevsqr
+elif A==197:
+    sigmann=42*mbgevsqr
+else:
+    print "ERROR! Unknown A " + str(A)
+    
 
+model=sys.argv[9]
+sigma02=0
+if model=="mv1":
+    sigma02=18.81*mbgevsqr
+elif model=="mvgamma":
+    sigma02=16.45*mbgevsqr
+elif model=="mve":
+    sigma02=16.36*mbgevsqr
+else:
+    print "ERROR! Unknown model " + model
+    
 
-print "# b-average, minb " + str(minb) + " maxb " + str(maxb) + " bstep " + str(bstep) +" sigmann " + str(sigmann/mbgevsqr) +" mb, A " + str(A) +", switching to proton file " + proton_file + " at b>" + str(switch_proton_b) +" GeV^-1"
+print "# b-average, minb " + str(minb) + " maxb " + str(maxb) + " bstep " + str(bstep) +" sigmann " + str(sigmann/mbgevsqr) +" mb, sigma02 " + str(sigma02/mbgevsqr)+ " mb, A " + str(A) +", switching to proton file " + proton_file + " at b>" + str(switch_proton_b) +" GeV^-1"
 
 
 import os

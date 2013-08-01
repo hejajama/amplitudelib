@@ -30,6 +30,11 @@ int main(int argc, char* argv[])
 {
 	gsl_set_error_handler(&ErrHandler);
 	cout << "# F2 fitter" << endl;
+	if (argc != 3)
+	{
+		cout << "Syntax: " << argv[0] << " bksol  heradata " << endl;
+		return 0;
+	}
 	string datafile = argv[1];
 	string herafile = argv[2];
 	

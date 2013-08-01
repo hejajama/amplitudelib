@@ -24,6 +24,7 @@
 #include <fstream>
 #include <iomanip>
 #include <ctime>
+#include <unistd.h>
 
 using namespace std;
 
@@ -79,7 +80,7 @@ int main(int argc, char* argv[])
     bool bspline=false;
     bool deuteron=false;
     double miny=3; double maxy=4;
-    double minpt=1, maxpt=4;
+    double minpt=1, maxpt=8;
     double ptstep = 0.1;
     Order order=NLO;
     double sqrts=200;
@@ -129,7 +130,7 @@ int main(int argc, char* argv[])
         cout << "-sqrts sqrts (in GeV)" << endl;
         cout << "-print_ff [u,d,s,g] [pi0,pim,pip,hm,hp] qsqr" << endl;
         cout << "-print_pdf qsqr" << endl;
-        cout << "-print_pdf_q" << endl;
+        cout << "-print_pdf_q x" << endl;
         cout << "-ugd_pdf qsqr: calculate gluon pdf from UGD" << endl;
         cout << "-lo: user LO PDF/FF instead of NLO" << endl;
         cout << "-pdf [ctreq, ugd, ugd_fixed, eps09] [params], ugdparams: amplitudefile sigma0/2 (ugd_fixed is fixed alphas); eps09: A" << endl;
@@ -383,7 +384,10 @@ int main(int argc, char* argv[])
             Qsqr = StrToReal(argv[i+1]);
         }
         else if (string(argv[i])=="-print_pdf_q")
+		{
 			mode = PRINT_PDF_Q;
+			xbj = StrToReal(argv[i+1]);
+		}
         else if (string(argv[i])=="-ugd_pdf")
         {
 			mode = UGD_PDF;
@@ -416,10 +420,13 @@ int main(int argc, char* argv[])
     time_t now = time(0);
     string today = ctime(&now);
     
-    cout <<"#"<<endl<<"# AmplitudeLib v. " << N.Version() << endl;
+    char *hostname = new char[500];
+    gethostname(hostname, 500);
+    
+    cout <<"#"<<endl<<"# AmplitudeLib v. " << N.Version()  << " running on " << hostname << endl;
     cout <<"# Now is " << today ;
     cout <<"#"<<endl;
-   
+	delete[] hostname;
     
    
     cout <<"# Order: "; if (order==LO) cout << "LO"; else cout << "NLO"; cout << endl;
