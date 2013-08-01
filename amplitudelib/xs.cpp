@@ -1,6 +1,6 @@
 /*
  * AmplitudeLib cross section calculation methods
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2012
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2013
  */
 
 #include "amplitudelib.hpp"

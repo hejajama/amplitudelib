@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
         cout << "-print_pdf qsqr" << endl;
         cout << "-print_pdf_q x" << endl;
         cout << "-ugd_pdf qsqr: calculate gluon pdf from UGD" << endl;
-        cout << "-lo: user LO PDF/FF instead of NLO" << endl;
+        cout << "-lo: use LO PDF/FF instead of NLO,  -nlo: use NLO (default)" << endl;
         cout << "-pdf [ctreq, ugd, ugd_fixed, eps09] [params], ugdparams: amplitudefile sigma0/2 (ugd_fixed is fixed alphas); eps09: A" << endl;
         cout << "-fixed_alphas: use fixed coupling" << endl;
         cout << "-test: run tests" << endl;
@@ -394,9 +394,9 @@ int main(int argc, char* argv[])
 			Qsqr = StrToReal(argv[i+1]);
 		}
         else if (string(argv[i])=="-lo")
-        {
 			order=LO;
-		}
+		else if (string(argv[i])=="-nlo")
+			order=NLO;
 		else if (string(argv[i])=="-sigma02")
 			sigma02 = StrToReal(argv[i+1]);
 		else if (string(argv[i])=="-test")
