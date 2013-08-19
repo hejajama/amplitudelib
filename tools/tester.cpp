@@ -55,10 +55,16 @@ int main()
 	cout << "d ln N(r=2)/d ln r = " << res; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
 	cout << endl;
 	
+	cout << "===== TEST UGD  ===== " << endl;
+	N.SetRunningCoupling(FIXED);
+	correct=0.0891024; res=N.UGD(1, y, 1, 1);
+	cout << "UGD(x=x0, Q^2=1 GeV^2)=" << res; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
+	cout << endl;
+	
 	cout << "===== TEST UGD -> xg ===== " << endl;
 	N.SetRunningCoupling(FIXED);
-	correct=0.185494; res=N.xg(N.X0(), 10);
-	cout << "xg(x=x0, Q^2=100)=" << res; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
+	correct=0.266333; res=N.xg(N.X0(), 4);
+	cout << "xg(x=x0, Q^2=16 GeV^2)=" << res; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
 	cout << endl;
 	
 	

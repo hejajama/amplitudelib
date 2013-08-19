@@ -87,6 +87,7 @@ int main(int argc, char* argv[])
     double pt1=0,pt2=0,y1=0,y2=0;
     double sigma02=1.0;
     RUNNING_ALPHAS as = RUNNING;
+    FT_METHOD ft = ACC_SERIES;
     Hadron final_particle = PI0;    // final state particle in single particle
                                     // production
     Parton parton=U;
@@ -101,6 +102,8 @@ int main(int argc, char* argv[])
         cout << "-xbj bjorken_x (overrides -y)" << endl;
         cout << "-data datafile (bk solution)" << endl;
         cout << "-x0 x0val: overrides x0 value of the datafile" << endl;
+        cout << "-gsl_ft: use GSL numerical integral to compute FT for S_k " << endl;
+        cout << "-bessel_ft: use in principle more advanced accelerated summation method to compute FT for S_k (default)" << endl;
         cout << "-kspace: data is in k (momentum) space" << endl;
         cout << "-bspline: use bspline interpolation (for noisy data) [EXPERIMENTAL]" << endl;
         cout << "-loglogder: print d ln N / d ln x^2" << endl;
@@ -186,6 +189,10 @@ int main(int argc, char* argv[])
             mode=K_TO_X;
         else if (string(argv[i])=="-s_x_to_k")
 			mode=S_X_TO_K;
+		else if (string(argv[i])=="-gsl_ft")
+			ft = GSL;
+		else if (string(argv[i])=="-bessel_ft")
+			ft = ACC_SERIES;
         else if (string(argv[i])=="-ugd")
             mode=GD;
         else if (string(argv[i])=="-dsigmady")
@@ -423,6 +430,7 @@ int main(int argc, char* argv[])
     cout << "# Reading data from file " << datafile << endl;
    
     AmplitudeLib N(datafile, kspace);
+    N.SetFTMethod(ft);
     
     time_t now = time(0);
     string today = ctime(&now);
@@ -434,6 +442,8 @@ int main(int argc, char* argv[])
     cout <<"# Now is " << today ;
     cout <<"#"<<endl;
 	delete[] hostname;
+	
+	cout <<"# FT method: "; if (N.GetFTMethod()==GSL) cout << "GSL"; else if (N.GetFTMethod()==ACC_SERIES) cout << "Acc Series"; else cout << "Unknown"; cout << endl;
     
    
     cout <<"# Order: "; if (order==LO) cout << "LO"; else cout << "NLO"; cout << endl;
@@ -481,7 +491,7 @@ int main(int argc, char* argv[])
     }
     else if (mode==S_X_TO_K)
     {
-		double qs = 1.0/N.SaturationScale(y, 0.22);
+		double qs = std::sqrt(2.0)/N.SaturationScale(y, 0.393469);
 		cout << "#FT of S(r), Q_s = " << qs << endl;
         double mink = 1e-5; double maxk = 40;// 1.0/N.MinR()*100;
         int kpoints=500;
@@ -608,7 +618,7 @@ int main(int argc, char* argv[])
         cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << " Producing particle " << ParticleStr(final_particle) <<  endl;
         cout << "# p_T   dN/(d^2 p_T dy) " << endl;
         //cout << "# pt   cteq-partonlevel   ugd-partonlevel " << endl;
-        for (double pt=minpt; pt<=maxpt; pt+=ptstep)
+        for (double pt=minpt; pt<=maxpt*1.01; pt+=ptstep)
         {
             double result = N.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, pdf,deuteron, final_particle);
             cout << pt << " " << result << endl;

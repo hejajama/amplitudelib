@@ -56,7 +56,6 @@ static int Nzeros;
 static double epsilon1=1.0e-7; //1.0e-12;
 static double epsilon=1.0e-7; //1.0e-12;
 
-
 /* Table with the first 1000 zeros of J0(x) */
 
 /* double J0zero[2001]={0.0,\ ... */

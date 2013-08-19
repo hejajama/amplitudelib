@@ -259,9 +259,7 @@ double AmplitudeLib::N_k_to_x(double x, double y)
  * 
  * Default value for power is 1.0
  */
- 
-const bool GSL_FT = false;	// false: use j0_transfer from fourier/fourier.c,	
-	// it should be faster but sometimes it is much slower!!
+
 
 double S_k_helperf(double r, void* p);
 double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
@@ -281,7 +279,7 @@ double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
 
     double result=0;
 
-    if (kt < 1e-3  or GSL_FT)  // k_T \approx 0 -> integrate just \int d^2 r S(r)^power
+    if (kt < 1e-3  or GetFTMethod()==GSL)  // k_T \approx 0 -> integrate just \int d^2 r S(r)^power
     {
         gsl_function fun; fun.function=S_k_helperf;
         fun.params=&par;
@@ -327,7 +325,7 @@ double S_k_helperf(double r, void* p)
     }
     
     // J0 is in fourier_j0() fun
-    if (GSL_FT)		// not using fourier_j0
+    if (par->N->GetFTMethod()==GSL)		// not using fourier_j0
 		result *= gsl_sf_bessel_J0(par->kt*r);
 
     return result;
@@ -838,6 +836,17 @@ void AmplitudeLib::SetRunningCoupling(RUNNING_ALPHAS as_)
 RUNNING_ALPHAS AmplitudeLib::GetRunningCoupling()
 {
 	return as;
+}
+
+void AmplitudeLib::SetFTMethod(FT_METHOD f)
+{
+	ft=f;	
+}
+
+
+FT_METHOD AmplitudeLib::GetFTMethod()
+{
+	return ft;
 }
 
 std::string AmplitudeLib::Version()

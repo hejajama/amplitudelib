@@ -26,6 +26,12 @@ enum RUNNING_ALPHAS
 	FIXED
 };
 
+enum FT_METHOD
+{
+	GSL,
+	ACC_SERIES   // fourier/fourier.c
+};
+
 class AmplitudeLib
 {
     public:
@@ -142,6 +148,9 @@ class AmplitudeLib
         RUNNING_ALPHAS GetRunningCoupling();
         
         std::string Version();
+        
+        void SetFTMethod(FT_METHOD f);
+        FT_METHOD GetFTMethod();		
 
         
         
@@ -176,6 +185,8 @@ class AmplitudeLib
         std::string info_string;
         
         RUNNING_ALPHAS as;
+        FT_METHOD ft;  // ACC SERIES: use j0_transfer from fourier/fourier.c,	
+					// it should be faster but sometimes it is much slower!!
         
         
 };
@@ -183,8 +194,9 @@ class AmplitudeLib
 const int INTERPOLATION_POINTS = 12;
 const double UGD_IR_CUTOFF=0.3;   // ugd(k<UGD_IR_CUTOFF)=0     BAD?????
 
-const int FOURIER_ZEROS=1000;   // How many zeros of the Bessel functions is
+const int FOURIER_ZEROS=2000;   // How many zeros of the Bessel functions is
                     // used when Fourier transforming
+
 
 
 const std::string AMPLITUDELIB_VERSION = "1.1-dev 2013-06-xx";
