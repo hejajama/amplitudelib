@@ -66,10 +66,11 @@ class AmplitudeLib
         // Virtual photon-proton cross sections, longitudinal and transverse
         // Notice that these are not normalized, as we don't integrate over
         // impact parameter
-        double ProtonPhotonCrossSection(double Qsqr, double y, Polarization pol);
-        double F2(double Qsqr, double y);
-        double FL(double Qsqr, double y);
-        double ReducedCrossSection(double qsqr, double y, double sqrts);
+        
+        double ProtonPhotonCrossSection(double Qsqr, double y, Polarization pol, Parton=LIGHT); // default: sum over u,d,s quarks
+        double F2(double Qsqr, double y, Parton=LIGHT);
+        double FL(double Qsqr, double y, Parton=LIGHT);
+        double ReducedCrossSection(double qsqr, double y, double sqrts, Parton=LIGHT);
 
 
 		//////////////// SINGLE INCLUSIVE, hybrid formalism

@@ -456,11 +456,12 @@ int main(int argc, char* argv[])
     
     cout << "# PDF: " << pdf->GetString() <<", FF: " << fragfun->GetString() << endl;
    
-    if (mode==PTSPECTRUM_KTFACT and ktfact_datafile2 != "")
+    if ((mode==PTSPECTRUM_KTFACT or mode==PTSPECTRUM_KTFACT_PARTON) and ktfact_datafile2 != "")
 		datafile=ktfact_datafile2;
 	
     AmplitudeLib N2(datafile);
     N.SetSigma02(sigma02); N2.SetSigma02(sigma02);
+    N2.SetFTMethod(ft);
     N.SetRunningCoupling(as); N2.SetRunningCoupling(as);
     if (x0>0) { N.SetX0(x0); N2.SetX0(x0); }
     N.InitializeInterpolation(y,bspline);
@@ -630,7 +631,8 @@ int main(int argc, char* argv[])
     {
 		cout <<"# Parton level hybrid formalism" << endl;
 		cout <<"# sqrt(s)=" << sqrts << " GeV" << endl;
-		cout <<"# p_T   dN/(d^2 p_T dy)-uquark  dquark  squark  gluon" << endl;
+		cout <<"# pdf: " << pdf->GetString() << endl;
+		cout <<"# p_T   dN/(d^2 p_T dy)-gluon uquark  dquark  squark  " << endl;
 		pdf->Initialize();
         
         for (double pt=minpt; pt<=maxpt; pt+=ptstep)
@@ -651,7 +653,7 @@ int main(int argc, char* argv[])
 			double partonlevel_s = 1.0/SQR(2.0*M_PI)  * sk * pdf->xq(xp, scale, S);
 			double partonlevel_g = 1.0/SQR(2.0*M_PI)  * sk_adj * pdf->xq(xp, scale, G);
        
-            cout << pt << " " << partonlevel_u << " " << partonlevel_d << " " << partonlevel_s << " " << partonlevel_g << endl;
+            cout << pt << " " << partonlevel_g << " " << partonlevel_u << " " << partonlevel_d << " " << partonlevel_s  << endl;
         }
 		
 	}
@@ -716,17 +718,12 @@ int main(int argc, char* argv[])
     
     else if (mode==PTSPECTRUM_KTFACT_PARTON)
     {
-		if (fragfun==NULL)
-        {
-            cerr << "Fragfun not spesified!" << endl;
-            return -1;
-        }
         cout << "# d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
 		cout << "# Using k_T factorization (gluon production); sigma02 = " << N.Sigma02() << " GeV^-2" << endl;
 		cout << "# Gluon production (parton level)" << endl;
 		cout << "# Probe: " << N2.GetString() << endl << "# Target: " << N.GetString() << endl;
 		cout << "# NOTICE: results must be multiplied by (\\sigma_0/2)^2/S_T" << endl;
-        cout << "# p_T   dN/(d^2 p_T dy) hadronlevel   " << endl;
+        cout << "# p_T   dN/(d^2 p_T dy) partonlevel   " << endl;
         
         for (double pt=minpt; pt<=maxpt; pt+=ptstep)
         {

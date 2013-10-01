@@ -1,10 +1,11 @@
 /*
  * Virtual photon wave function
  *
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2010
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2010-2013
  */
  
 #include "virtual_photon.hpp"
+#include "../tools/config.hpp"
 #include "../tools/tools.hpp"
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_sf_bessel.h>
@@ -23,13 +24,13 @@ const double MAXZ=0.9999;
 
 VirtualPhoton::VirtualPhoton()
 {
+	// Initialize with light quarks
+	
     // Quark charges, 0=u, 1=d, 2=s
     // Parameters same as in Ref. 0902.1112
-    e_f[0]=2.0/3.0; e_f[1]=-1.0/3.0; e_f[2]=-1.0/3.0;
-    m_f[0]=0.14; m_f[1]=0.14; m_f[2]=0.14;
+    e_f.push_back(2.0/3.0); e_f.push_back(-1.0/3.0); e_f.push_back(-1.0/3.0);
+    m_f.push_back(0.14); m_f.push_back(0.14); m_f.push_back(0.14);
     
-    /*e_f[0]=2.0/3.0; e_f[1]=-1.0/3.0; e_f[2]=-1.0/3.0;
-    m_f[0]=0.0024; m_f[1]=0.0048; m_f[2]=0.104;*/
 }
 
 /*
@@ -39,7 +40,7 @@ VirtualPhoton::VirtualPhoton()
 double VirtualPhoton::PsiSqr_T(double Qsqr, double r, double z)
 {
     double result=0;
-    for (int f=0; f<=2; f++)     // Sum quar flavors
+    for (unsigned int f=0; f<e_f.size(); f++)     // Sum quar flavors
     {
         double epstmp=Epsilon(Qsqr,z,f);
         result += SQR(e_f[f])*(
@@ -60,7 +61,7 @@ double VirtualPhoton::PsiSqr_T(double Qsqr, double r, double z)
 double VirtualPhoton::PsiSqr_L(double Qsqr, double r, double z)
 {
     double result=0;
-    for (int f=0; f<=2; f++)     // Sum quar flavors
+    for (unsigned int f=0; f<e_f.size(); f++)     // Sum quar flavors
     {
         double epstmp=Epsilon(Qsqr,z,f);
         result += SQR(e_f[f])* SQR( gsl_sf_bessel_K0(epstmp*r) );
@@ -158,11 +159,61 @@ double VirtualPhoton::Epsilon(double Qsqr, double z, int f)
     return std::sqrt( z*(1.0-z)*Qsqr+SQR(m_f[f]) );
 }
 
+
+/*
+ * Change wave function to the specific quark, supported quarks are u,d,s,c,b
+ * Note: Only this quark is used once this function is called
+ * 
+ * A good way to check that everything works is to compute e.g. F2 using the
+ * default quark content (u,d,s) and these quarks separately
+ * 
+ * If mass<0 (default value), then use standard literature value for the masses
+ */
+
+void VirtualPhoton::SetQuark(Parton p, double mass)
+{
+	// Clear 
+	e_f.clear();
+	m_f.clear();
+	
+	switch(p)
+	{
+		case U:
+			m_f.push_back(0.14);
+			e_f.push_back(2.0/3.0);
+			break;
+		case D:
+			m_f.push_back(0.14);
+			e_f.push_back(-1.0/3.0);
+			break;
+		case S:
+			m_f.push_back(0.14);
+			e_f.push_back(-1.0/3.0);
+			break;
+		case C:
+			m_f.push_back(1.27);
+			e_f.push_back(2.0/3.0);
+			break;
+		case B:
+			m_f.push_back(4.2);
+			e_f.push_back(-1.0/3.0);
+			break;
+		default:
+			cerr << "Unknown parton " << p << " at " << LINEINFO << endl;
+	}
+	if (m_f.size()!=1 or e_f.size()!=1)
+		 cerr << "WTF; there should be only one quark... " << LINEINFO << endl;
+	
+	if (mass>0)	// Change default mass
+		m_f[0]=mass;
+
+}
+
 std::string VirtualPhoton::GetParamString()
 {
     std::stringstream str;
-    str << "e_f[0]=" << e_f[0] << ", e_f[1]=" << e_f[1] << ", e_f[2]=" << e_f[2]
-    << ", m_f[0]=" << m_f[0] << ", m_f[1]=" << m_f[1] << ", m_f[2]=" << m_f[2];
+    for (unsigned int f=0; f<e_f.size(); f++)
+		str << "e_f[" << f << "]=" << e_f[f]  << ", m_f[" << f <<"]=" << m_f[f] << " ";
     return str.str();
 }
 

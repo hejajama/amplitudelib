@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
 	}
 	file.close();
 	
-	cout << "# Q^2 [GeV^2]  x  y  HERA-\\sigma_r  HERA-err theory-\\sigma_r (no normalization) " << endl;
+	cout << "# Q^2 [GeV^2]  x  y  HERA-\\sigma_r  HERA-err theory-\\sigma_r(light c b) " << endl;
 	// Compute reduced cross section
 	for (int i=0; i<xvals.size(); i++)
 	{
@@ -81,9 +81,11 @@ int main(int argc, char* argv[])
 		const double mf=0.14;
 		double xredef = x * (1.0 + 4.0*SQR(mf)/qsqrvals[i]);
 		double sqrts = std::sqrt( qsqrvals[i]/(x * yvals[i]) );
-		double sigmar = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts);
+		double sigmar_light = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts, LIGHT);
+		double sigmar_c = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts, C);
+		double sigmar_b = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts, B);
 		
-		cout << qsqrvals[i] << " " << xvals[i] << " " << yvals[i] << " " << expvals[i] << " " << experrors[i] << " " << sigmar << endl;
+		cout << qsqrvals[i] << " " << xvals[i] << " " << yvals[i] << " " << expvals[i] << " " << experrors[i] << " " << sigmar_light << " " << sigmar_c << " " << sigmar_b << endl;
 	}
 	
 }

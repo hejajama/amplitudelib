@@ -29,12 +29,16 @@ proton_file=sys.argv[7]
 
 A=int(sys.argv[8])
 sigmann=0
-if A==208:
+sqrts=int(sys.argv[10])
+if sqrts==5020 or sqrts==7000:
     sigmann=70 * mbgevsqr
-elif A==197:
+elif sqrts==8800:
+    sigmann=75*mbgevsqr
+elif sqrts==200:
     sigmann=42*mbgevsqr
 else:
-    print "ERROR! Unknown A " + str(A)
+    sys.stderr.write("ERROR! Unknown A " + str(A) +"\n")
+    sys.exit(-1)
     
 
 model=sys.argv[9]
@@ -45,8 +49,10 @@ elif model=="mvgamma":
     sigma02=16.45*mbgevsqr
 elif model=="mve":
     sigma02=16.36*mbgevsqr
+elif model=="mvgamma_oma":
+    sigma02=41.985
 else:
-    print "ERROR! Unknown model " + model
+    sys.stderr.write("ERROR! Unknown model " + model + "\n")
     
 
 print "# b-average, minb " + str(minb) + " maxb " + str(maxb) + " bstep " + str(bstep) +" sigmann " + str(sigmann/mbgevsqr) +" mb, sigma02 " + str(sigma02/mbgevsqr)+ " mb, A " + str(A) +", switching to proton file " + proton_file + " at b>" + str(switch_proton_b) +" GeV^-1"
@@ -98,12 +104,20 @@ while b <= min(switch_proton_b, maxb):
     ydata=[]
         
     print "#" + fname
-    readfile_xy(fname, xdata, ydata,xcol=0, ycol=1)
+    try:
+        readfile_xy(fname, xdata, ydata,xcol=0, ycol=1)
+    except IOError:
+        sys.stderr.write("ERROR: Nukefile " + fname + " does not exist\n")
+        sys.exit(-1)
     #xdata=list(reversed(xdata))
     #ydata=list(reversed(ydata))
     if (b==minb):
         xvals=xdata
-    interp=interpolate.interp1d(xdata, ydata, kind="cubic")
+    try:
+        interp=interpolate.interp1d(xdata, ydata, kind="cubic")
+    except:
+        sys.stderr.write("Interpolation failed, too few datapoints in file " + fname + "\n")
+        sys.exit(0)
     interpolators.append(interp) 
     bvals.append(b)   
     b=b+bstep
@@ -113,7 +127,11 @@ proton_interpolator=None
 if float(switch_proton_b) < float(maxb):
     xdata=[]
     ydata=[]
-    readfile_xy(proton_file, xdata, ydata, xcol=0, ycol=1)
+    try:
+        readfile_xy(proton_file, xdata, ydata, xcol=0, ycol=1)
+    except IOError:
+        sys.stderr.write("ERROR: Proton file " + proton_file + " does not exist\n")
+        sys.exit(-1)
     proton_interpolator = interpolate.interp1d(xdata, ydata, kind="cubic")
 
 # compute normalization \int der^2 b rho_inel(b)
@@ -144,7 +162,11 @@ for x in xvals:
     intvals=[]
     i=0
     for i in range(len(bvals)):
-        intvals.append(interpolators[i](x)*2.0*pi*bvals[i])
+        try:
+            intvals.append(interpolators[i](x)*2.0*pi*bvals[i])
+        except ValueError as detail:
+            sys.stderr.write("ValueError: x=" + str(x) + "\n")
+            sys.exit(1)
         if (interpolators[i](x)*2.0*pi*bvals[i] < 0):
             print "#WWWTTTTTTTFFFFFFFFFF, b=" + str(bvals[i]) +" pt " + str(x) + " interp " + str(interpolators[i](x)*2.0*pi*bvals[i])
     
@@ -153,7 +175,11 @@ for x in xvals:
     bintres = scipy.integrate.simps(intvals, bvals)
     ppres=0
     if float(switch_proton_b) < float(maxb):
-        ppres = sigma02/sigmann*nbin_proton_coef * proton_interpolator(x)
+        try:
+            ppres = sigma02/sigmann*nbin_proton_coef * proton_interpolator(x)
+        except ValueError:
+            sys.stderr.write("ValueError: x=" + str(x) + "\n")
+            sys.exit(1)
     print "# pA contrib " + str(bintres) + " pp contrib " + str(ppres) +" normalization " + str(normalization)
     res = (bintres + ppres)/normalization
     print str(x) + " " + str(res)

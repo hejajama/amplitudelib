@@ -91,7 +91,7 @@ double Inthelperf_xg(double qsqr, void* p)
 struct Inthelper_ktfact{ double y1, y2, pt, qt; AmplitudeLib *N1, *N2; };
 double Inthelperf_ktfact_q(double q, void* p);
 double Inthelperf_ktfact_phi(double phi, void* p);
-const int INTPOINTS_KTFACT = 2;
+const int INTPOINTS_KTFACT = 4;	///DEBUG orig 2
 double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2 )
 {
 	double x1 = pt*std::exp(-y)/sqrts;
@@ -123,12 +123,11 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
 		N2->InitializeInterpolation(y2);
 	}
 	
-	double maxq = std::max(2.0*pt, 30.0);
-	if (maxq>50) maxq=pt;	// max momentum in ktint
+	double maxq = std::max(2.5*pt, 30.0);
 	
 	double result, abserr; 
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOINTS_KTFACT);
-	int status = gsl_integration_qag(&fun, 0.001, maxq, 0, 0.05,
+	int status = gsl_integration_qag(&fun, 0.001, maxq, 0, 0.05,		
 		INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
 	gsl_integration_workspace_free(ws);
        

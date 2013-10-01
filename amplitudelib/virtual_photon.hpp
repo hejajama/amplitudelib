@@ -4,14 +4,18 @@
 /*
  * Virtual photon-q\bar q overlap
  * Ref: Kowalski, Motyka and Watt, see arXiv: hep-ph/0606272v2
+ * 
+ * By default uses 3 light quarks (u,d,s)
  *
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2010-2011
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2010-2013
  */
 
 
 #include "wave_function.hpp"
+#include "../tools/config.hpp"
 #include <iostream>
 #include <string>
+#include <vector>
 
 // f = quark flavor, 0=u, 1=d, 2=s
 
@@ -30,11 +34,14 @@ class VirtualPhoton : public WaveFunction {
         
         std::string GetParamString();
         
+        // default value for mass: use standard value
+        void SetQuark(Parton p, double mass=-1);
+        
         
     private:
         // Parameters
-        double e_f[3];   // Quark charges
-        double m_f[3];   // Quark masses (GeV)
+        std::vector<double> e_f;   // Quark charges
+        std::vector<double> m_f;   // Quark masses (GeV)
 
         double Epsilon(double Qsqr, double z, int f);
         

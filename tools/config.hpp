@@ -53,7 +53,7 @@ inline double SQR(const double x) { return x*x; }
 enum Parton
 {
 		    UVAL,DVAL,USEA,DSEA,U,D,S,C,B,G,    // Valence quarks, sea quarks,all quarks, gluons
-            UBAR,DBAR,SBAR
+            UBAR,DBAR,SBAR, LIGHT			// LIGHT = all light quarks
 };
 
 enum Order

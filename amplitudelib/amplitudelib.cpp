@@ -358,11 +358,25 @@ double Inthelperf_totxs(double r, void* p)
     return result;
 }
 
-double AmplitudeLib::ProtonPhotonCrossSection(double Qsqr, double y, Polarization pol)
+/*
+ * Compute total gamma-p cross section
+ * by default p=LIGHT which means that we sum over light quarks (u,d,s)
+ * If p is something else, use the given quark
+ */
+
+double AmplitudeLib::ProtonPhotonCrossSection(double Qsqr, double y, Polarization pol,Parton p)
 {
     Inthelper_totxs par; par.N=this;
     par.pol=pol; par.Qsqr=Qsqr; par.y=y;
+
+    double sum=0;
+
+    
     VirtualPhoton wavef;
+
+	if (p != LIGHT)
+		wavef.SetQuark(p);
+    
     par.wf=&wavef;
 
     gsl_function fun; fun.function=Inthelperf_totxs;
@@ -386,52 +400,50 @@ double AmplitudeLib::ProtonPhotonCrossSection(double Qsqr, double y, Polarizatio
     }
 
     return 2.0*M_PI*result; //2\pi from \theta integral
+
 }
 
-double AmplitudeLib::F2(double qsqr, double y)
+double AmplitudeLib::F2(double qsqr, double y, Parton p)
 {
 	double xs_l, xs_t;
 	#pragma omp parallel sections
 	{
 		#pragma omp section
 		{
-			xs_l = ProtonPhotonCrossSection(qsqr, y, L);
+			xs_l = ProtonPhotonCrossSection(qsqr, y, L, p);
 		}
 		#pragma omp section
 		{
-			xs_t = ProtonPhotonCrossSection(qsqr, y, T);
+			xs_t = ProtonPhotonCrossSection(qsqr, y, T, p);
 		}
 	}
 	
     return qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t);
 }
 
-double AmplitudeLib::FL(double qsqr, double y)
+double AmplitudeLib::FL(double qsqr, double y, Parton p)
 {
-	return qsqr/(4.0*SQR(M_PI)*ALPHA_e) * ProtonPhotonCrossSection(qsqr, y, L);	
+	return qsqr/(4.0*SQR(M_PI)*ALPHA_e) * ProtonPhotonCrossSection(qsqr, y, L, p);	
 }
 
-double AmplitudeLib::ReducedCrossSection(double qsqr, double y, double sqrts)
+double AmplitudeLib::ReducedCrossSection(double qsqr, double y, double sqrts, Parton p)
 {
 	double bjorkx = X0()*std::exp(-y);
 	double kin_y = qsqr/(sqrts*sqrts*bjorkx);
 	
 	InitializeInterpolation(y);
 	
-	///TODO: Optimize, now computes \sigma_L twise
-	//double f2 = F2(qsqr, y);
-	//double fl = FL(qsqr, y);
 	
 	double xs_l, xs_t;
 	#pragma omp parallel sections
 	{
 		#pragma omp section
 		{
-			xs_l = ProtonPhotonCrossSection(qsqr, y, L);
+			xs_l = ProtonPhotonCrossSection(qsqr, y, L, p);
 		}
 		#pragma omp section
 		{
-			xs_t = ProtonPhotonCrossSection(qsqr, y, T);
+			xs_t = ProtonPhotonCrossSection(qsqr, y, T, p);
 		}
 	}
 	double f2 = qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t);
@@ -655,7 +667,7 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
     ss << "# Data read from file " << datafile << ", minr: " << minr
         << " maxr: " << MaxR() << " rpoints: " << rpoints << " maxy "
         << yvals[yvals.size()-1] << " x0 " << X0()
-        << " Q_{s,0}^2 = " << SQR(1.0/SaturationScale(0, 0.22)) << " GeV^2 [ N(r=1/Q_s) = 0.22]" ;
+        << " Q_{s,0}^2 = " << 2.0/SQR(SaturationScale(0, 0.393469)) << " GeV^2 [ N(r^2=2/Q_s^2) = 0.3934]" ;
     info_string = ss.str();
 }
 
