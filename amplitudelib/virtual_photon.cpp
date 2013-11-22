@@ -103,7 +103,6 @@ double  zhelperfuncL(double z, void * p){
 double VirtualPhoton::PsiSqr_T_intz(double Qsqr, double r)
 {
     double result,abserr;
-    size_t eval;
     struct zinthelper zintpar;
     zintpar.vm_p=this;
     zintpar.Qsqr=Qsqr;
@@ -112,8 +111,6 @@ double VirtualPhoton::PsiSqr_T_intz(double Qsqr, double r)
     int_helper.function=&zhelperfuncT;
     int_helper.params=&zintpar;
     
-    //int status = gsl_integration_qng(&int_helper, MINZ, MAXZ,  0, ZINTACCURACY, 
-    //    &result, &abserr, &eval);
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_ZINT);
     int status = gsl_integration_qag(&int_helper, 1e-10, 1.0-1e-10, 0, ZINTACCURACY,
         MAXITER_ZINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
@@ -129,7 +126,6 @@ double VirtualPhoton::PsiSqr_T_intz(double Qsqr, double r)
 double VirtualPhoton::PsiSqr_L_intz(double Qsqr, double r)
 {
     double result,abserr;
-    size_t eval;
     struct zinthelper zintpar;
     zintpar.vm_p=this;
     zintpar.Qsqr=Qsqr;
@@ -138,8 +134,6 @@ double VirtualPhoton::PsiSqr_L_intz(double Qsqr, double r)
     int_helper.function=&zhelperfuncL;
     int_helper.params=&zintpar;
     
-    //int status = gsl_integration_qng(&int_helper, MINZ, MAXZ, 0, ZINTACCURACY, 
-    //    &result, &abserr, &eval);
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_ZINT);
     int status = gsl_integration_qag(&int_helper, 1e-10, 1.0-1e-10, 0, ZINTACCURACY,
         MAXITER_ZINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
@@ -204,7 +198,7 @@ void VirtualPhoton::SetQuark(Parton p, double mass)
 	if (m_f.size()!=1 or e_f.size()!=1)
 		 cerr << "WTF; there should be only one quark... " << LINEINFO << endl;
 	
-	if (mass>0)	// Change default mass
+	if (mass>=0)	// Change default mass
 		m_f[0]=mass;
 
 }

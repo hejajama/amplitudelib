@@ -17,8 +17,6 @@
 #include <string>
 #include <vector>
 
-// f = quark flavor, 0=u, 1=d, 2=s
-
 class VirtualPhoton : public WaveFunction {
     public:
         VirtualPhoton();

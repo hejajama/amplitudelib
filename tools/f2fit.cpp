@@ -72,6 +72,9 @@ int main(int argc, char* argv[])
 		expvals.push_back(StrToReal(sigmar)); experrors.push_back(StrToReal(err)); 
 	}
 	file.close();
+
+    VirtualPhoton wf;
+    cout <<"# Wavefunction: " << wf << endl;
 	
 	cout << "# Q^2 [GeV^2]  x  y  HERA-\\sigma_r  HERA-err theory-\\sigma_r(light c b) " << endl;
 	// Compute reduced cross section
