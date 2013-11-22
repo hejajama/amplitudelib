@@ -1,6 +1,6 @@
 /*
  * General purpose interpolation class
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2012
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2013
  */
 
 #ifndef _INTERPOLATION_H
@@ -21,8 +21,14 @@
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_vector.h>
-#include "config.hpp"
-#include "tools.hpp"
+#include <vector>
+#include <iostream>
+
+using std::cout;
+using std::endl;
+using std::cerr;
+
+
 
 enum INTERPOLATION_METHOD {
     INTERPOLATE_SPLINE,
@@ -32,44 +38,44 @@ enum INTERPOLATION_METHOD {
 class Interpolator
 {
     public:
-        Interpolator(REAL* x, REAL* y, int p);
-        Interpolator(std::vector<REAL> &x, std::vector<REAL> &y);
+        Interpolator(double* x, double* y, int p);
+        Interpolator(std::vector<double> &x, std::vector<double> &y);
         Interpolator(Interpolator& inter);
         ~Interpolator();
         void Clear();
-        REAL Evaluate(REAL x);
-        REAL Derivative(REAL x);    // 1st derivative
-        REAL Derivative2(REAL x);   // 2nd derivative
+        double Evaluate(double x);
+        double Derivative(double x);    // 1st derivative
+        double Derivative2(double x);   // 2nd derivative
         void SetMethod(INTERPOLATION_METHOD m);
         int Initialize();
         
-        REAL MinX();
-        REAL MaxX();
+        double MinX();
+        double MaxX();
 
-        REAL* GetXData();
-        REAL* GetYData();
+        double* GetXData();
+        double* GetYData();
         gsl_spline* GetGslSpline();
         int GetNumOfPoints();
         INTERPOLATION_METHOD GetMethod();
         
         bool Freeze(); 
         void SetFreeze(bool f);
-        void SetUnderflow(REAL min);
-        void SetOverflow(REAL max);
-        REAL UnderFlow();
-        REAL OverFlow();
+        void SetUnderflow(double min);
+        void SetOverflow(double max);
+        double UnderFlow();
+        double OverFlow();
 
     private:
         INTERPOLATION_METHOD method;
-        REAL* xdata, *ydata;
+        double* xdata, *ydata;
         bool allocated_data;    // true if we allocated xdata,ydata
-        REAL minx,maxx;
+        double minx,maxx;
         int points;
         bool ready;
         
         bool freeze;		// true if return freeze_under/overflow if
-        REAL freeze_underflow;	// asked to evaluate interpolation
-		REAL freeze_overflow;	// outside the spesified range
+        double freeze_underflow;	// asked to evaluate interpolation
+		double freeze_overflow;	// outside the spesified range
         
         // spline
         gsl_interp_accel *acc;

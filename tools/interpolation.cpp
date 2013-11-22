@@ -10,6 +10,11 @@
 #include <cmath>
 #include "interpolation.hpp"
 
+// This is also defined in config.hpp, but if this class is used standalone
+// it is more safe to not to include config.hpp but define this here.
+#ifndef LINEINFO
+    #define LINEINFO __FILE__ << ":" << __LINE__
+#endif
 
 /*
  * Intialize interpolation
@@ -75,7 +80,7 @@ int Interpolator::Initialize()
             }
      
             /* do the fit */
-            REAL chisq;
+            double chisq;
             gsl_multifit_wlinear(X, w, y, c, cov, &chisq, mw);
 
             gsl_vector_free(x);
@@ -94,7 +99,7 @@ int Interpolator::Initialize()
 }
 
 
-REAL Interpolator::Evaluate(REAL x)
+double Interpolator::Evaluate(double x)
 {
     if (!ready)
     {
@@ -116,7 +121,7 @@ REAL Interpolator::Evaluate(REAL x)
         if (x>maxx) x=maxx*0.999999;
     }
     
-    REAL res, yerr; int status;
+    double res, yerr; int status;
     switch(method)
     {
         case INTERPOLATE_SPLINE:
@@ -147,9 +152,9 @@ REAL Interpolator::Evaluate(REAL x)
     return 0;   //Shoudn't end up here
 }
 
-REAL Interpolator::Derivative(REAL x)
+double Interpolator::Derivative(double x)
 {
-    REAL res=0; int status=0;
+    double res=0; int status=0;
     switch(method)
     {
         case INTERPOLATE_SPLINE:
@@ -172,9 +177,9 @@ REAL Interpolator::Derivative(REAL x)
     return res;
 }
 
-REAL Interpolator::Derivative2(REAL x)
+double Interpolator::Derivative2(double x)
 {
-    REAL res; int status=0;
+    double res; int status=0;
     switch(method)
     {
         case INTERPOLATE_SPLINE:
@@ -195,7 +200,7 @@ REAL Interpolator::Derivative2(REAL x)
 
 }
 
-Interpolator::Interpolator(REAL *x, REAL *y, int p)
+Interpolator::Interpolator(double *x, double *y, int p)
 {
     points=p;
     xdata=x;
@@ -206,6 +211,8 @@ Interpolator::Interpolator(REAL *x, REAL *y, int p)
     allocated_data=false;
     ready=false;
     freeze=false;
+    freeze_underflow = y[0];
+    freeze_overflow = y[p-1];
 
     for (int i=0; i<p; i++)
     {
@@ -222,11 +229,11 @@ Interpolator::Interpolator(REAL *x, REAL *y, int p)
     }
 }
 
-Interpolator::Interpolator(std::vector<REAL> &x, std::vector<REAL> &y)
+Interpolator::Interpolator(std::vector<double> &x, std::vector<double> &y)
 {
     points = x.size();
-    xdata = new REAL[points];
-    ydata = new REAL[points];
+    xdata = new double[points];
+    ydata = new double[points];
     allocated_data=true;
 
     for (uint i=0; i<x.size(); i++)
@@ -249,11 +256,15 @@ Interpolator::Interpolator(std::vector<REAL> &x, std::vector<REAL> &y)
     method = INTERPOLATE_SPLINE;
     ready=false;
     freeze=false;
+    freeze_overflow = y[y.size()-1];
+    freeze_underflow = y[0];
 }
 
 void Interpolator::SetMethod(INTERPOLATION_METHOD m)
 {
     method = m;
+    if (m == INTERPOLATE_BSPLINE)
+        cerr << "BSPLINE interpolation should be tested in more detail before serious usage..." << endl;
 }
 
 void Interpolator::Clear()
@@ -261,8 +272,16 @@ void Interpolator::Clear()
     switch(method)
     {
         case INTERPOLATE_SPLINE:
-            gsl_spline_free(spline);
-            gsl_interp_accel_free(acc);
+            if (spline != NULL)
+            {
+                gsl_spline_free(spline);
+                spline=NULL;
+            }
+            if (acc != NULL)
+            {
+                gsl_interp_accel_free(acc);
+                acc=NULL;
+            }
             break;
         case INTERPOLATE_BSPLINE:
             gsl_bspline_free(bw);
@@ -289,11 +308,11 @@ Interpolator::~Interpolator()
 
 }
 
-REAL* Interpolator::GetXData()
+double* Interpolator::GetXData()
 {
     return xdata;
 }
-REAL* Interpolator::GetYData()
+double* Interpolator::GetYData()
 {
     return ydata;
 }
@@ -311,8 +330,8 @@ INTERPOLATION_METHOD Interpolator::GetMethod()
 Interpolator::Interpolator(Interpolator& inter)
 {
     points=inter.GetNumOfPoints();
-    xdata = new REAL[points];
-    ydata = new REAL[points];
+    xdata = new double[points];
+    ydata = new double[points];
     allocated_data=true;
 
 
@@ -333,12 +352,12 @@ gsl_spline* Interpolator::GetGslSpline()
     return spline;
 }
 
-REAL Interpolator::MinX()
+double Interpolator::MinX()
 {
 	return minx;
 }
 
-REAL Interpolator::MaxX()
+double Interpolator::MaxX()
 {
 	return maxx;
 }
@@ -351,25 +370,20 @@ bool Interpolator::Freeze()
 void Interpolator::SetFreeze(bool f)
 {
 	freeze=f;
-	if (f==true)
-	{
-		// user is expected to set these AFTER freeze is set to true!
-		freeze_underflow=0; freeze_overflow=0;	
-	}
 }
-void Interpolator::SetUnderflow(REAL min)
+void Interpolator::SetUnderflow(double min)
 {
 	freeze_underflow=min;
 }
- void Interpolator::SetOverflow(REAL max)
+ void Interpolator::SetOverflow(double max)
  {
 	 freeze_overflow=max;
  }
-REAL Interpolator::UnderFlow()
+double Interpolator::UnderFlow()
 {
 	 return freeze_underflow;
 }
-REAL Interpolator::OverFlow()
+double Interpolator::OverFlow()
 {
 	return freeze_overflow;
 }
