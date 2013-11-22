@@ -29,7 +29,10 @@ REAL PKHFF::Evaluate(Parton p, Hadron h, REAL x, REAL qs)
     if (h == HP)
     {
         charge=1;
-        set=6;
+        if (order == LO)
+            set = 5;
+        else
+            set = 6;
     } else if (h==HM)
     {
         charge=2;
@@ -37,16 +40,25 @@ REAL PKHFF::Evaluate(Parton p, Hadron h, REAL x, REAL qs)
     } else if (h==H)
     {
         charge=3;
-        set=6;
+        if (order == LO)
+            set = 5;
+        else
+            set = 6;
     } else if (h==PIP)
     {
         charge=1;
-        set=2;
+        if (order == LO)
+            set=1;
+        else
+            set=2;
     }
     else if (h==PIM)
     {
         charge=2;
-        set=2;
+        if (order == LO)
+            set=1;
+        else
+            set=2;
     }
     else if (h==PI0)
     {
@@ -55,7 +67,10 @@ REAL PKHFF::Evaluate(Parton p, Hadron h, REAL x, REAL qs)
      else if (h==PI)
     {
         charge=3;
-        set=2;
+        if (order == LO)
+            set=1;
+        else
+            set=2;
     }
     else
     {
