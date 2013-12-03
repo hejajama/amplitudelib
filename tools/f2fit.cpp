@@ -20,6 +20,7 @@
 #include <tools/tools.hpp>
 #include <amplitudelib/amplitudelib.hpp>
 #include <amplitudelib/datafile.hpp>
+#include <amplitudelib/virtual_photon.hpp>
 #include <string>
 #include <fstream>
 #include <sstream>
