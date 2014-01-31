@@ -24,6 +24,9 @@
 #include <algorithm>
 
 
+const double ALPHAS = 0.2;    // compare with ALPHABAR_s.... ok, doesn't make sense
+
+
 extern "C"
 {
     #include "../fourier/fourier.h"

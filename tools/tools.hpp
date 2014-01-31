@@ -33,5 +33,9 @@ void SubtractMinimum(std::vector<double> &array);
 
 std::string Alpha_s_str();
 
+// Running coupling
+const double MAXALPHA = 0.7;
+
+
 #endif
 

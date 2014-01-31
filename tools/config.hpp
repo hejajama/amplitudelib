@@ -32,13 +32,7 @@ const double e = sqrt(4.0*M_PI*ALPHA_e);
 
 const double FMGEV = 5.068;
 
-// Reqularization of the running coupling
-// Berger&Stasto 1010.0671: 0.3
-// Fit to HERA: 0.7 0902.1112
-//const double MAXALPHA = 0.7;  
-const double MAXALPHA = 0.7;
-const double ALPHABAR_s = 0.2;       // \alphabar_s if RC=constant
-const double ALPHAS = 0.2;    // compare with ALPHABAR_s.... ok, doesn't make sense
+
 
 // Other constants
 

@@ -547,7 +547,7 @@ int main(int argc, char* argv[])
     }
     else if (mode==SATSCALE)
     {
-        cout <<"# Saturation scale N(r_s) = " << Ns << endl;
+        cout <<"# Saturation scale N(r^2=2/Qs^2) = " << Ns << endl;
         cout <<"# y    Q_s [GeV]    d ln Q_s/dy   x" << endl;
 
         // Solve satscale and save it to array, then interpolate=>get also derivative
@@ -560,7 +560,7 @@ int main(int argc, char* argv[])
         {
             rapidities[i]=(double)i*ystep;
             double rs = N.SaturationScale(rapidities[i], Ns);
-            lnqs[i] = std::log( 2.0 / SQR(rs) );
+            lnqs[i] = std::log( 2.0 / SQR(rs) );    // qs^2
             //lnqs[i] = std::log(1.0/N.SaturationScale(rapidities[i], Ns));
         }
         Interpolator interp(rapidities, lnqs, points);

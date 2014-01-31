@@ -387,3 +387,13 @@ double Interpolator::OverFlow()
 {
 	return freeze_overflow;
 }
+
+void Interpolator::SetMaxX(double x)
+{
+    maxx=x;
+}
+
+void Interpolator::SetMinX(double x)
+{
+    minx=x;
+}

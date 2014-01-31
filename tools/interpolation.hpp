@@ -65,6 +65,10 @@ class Interpolator
         double UnderFlow();
         double OverFlow();
 
+        // Set allowed interpolation region
+        void SetMaxX(double x);
+        void SetMinX(double x);
+
     private:
         INTERPOLATION_METHOD method;
         double* xdata, *ydata;
