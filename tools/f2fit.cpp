@@ -1,5 +1,5 @@
 /* HERA f2 fitter
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2012-2013
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2012-2014
  * 
  * Computes F2 using the AmplitudeLib at the kinematical
  * values for which combined HERA F2 values are given
@@ -31,13 +31,34 @@ int main(int argc, char* argv[])
 {
 	gsl_set_error_handler(&ErrHandler);
 	cout << "# F2 fitter" << endl;
-	if (argc != 3)
+	if (argc < 3)
 	{
-		cout << "Syntax: " << argv[0] << " bksol  heradata " << endl;
+		cout << "Syntax: " << argv[0] << " -bksol bksolfile  -hera heradatafile -lightqmass mass -charmass mass " << endl;
 		return 0;
 	}
-	string datafile = argv[1];
-	string herafile = argv[2];
+
+    string datafile;
+	string herafile;
+    double lightqmass=-1;   // If negative mass is given to AmplitudeLib,
+        // the default values for the quark masses are used
+
+    for (int i=1; i<argc; i++)
+    {
+        if (string(argv[i])=="-bksol")
+            datafile = argv[i+1];
+        else if (string(argv[i])=="-hera")
+            herafile=argv[i+1];
+        else if (string(argv[i])=="-lightqmass")
+            lightqmass=StrToReal(argv[i+1]);
+        else if (string(argv[i]).substr(0,1)=="-")
+        {
+            cerr << "Unrecoginzed parameter " << argv[i] << endl;
+            return -1;
+        }
+    }
+
+    
+	
 	
 	cout << "# Reading BK equation solution from " << datafile << " and HERA data from " << herafile << endl;
 	
@@ -74,8 +95,7 @@ int main(int argc, char* argv[])
 	}
 	file.close();
 
-    VirtualPhoton wf;
-    cout <<"# Wavefunction: " << wf << endl;
+    cout <<"# Light quark mass: " << lightqmass << endl;
 	
 	cout << "# Q^2 [GeV^2]  x  y  HERA-\\sigma_r  HERA-err theory-\\sigma_r(light c b) " << endl;
 	// Compute reduced cross section
@@ -85,7 +105,7 @@ int main(int argc, char* argv[])
 		const double mf=0.14;
 		double xredef = x * (1.0 + 4.0*SQR(mf)/qsqrvals[i]);
 		double sqrts = std::sqrt( qsqrvals[i]/(x * yvals[i]) );
-		double sigmar_light = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts, LIGHT);
+		double sigmar_light = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts, LIGHT, lightqmass);
 		double sigmar_c = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts, C);
 		double sigmar_b = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts, B);
 		

@@ -365,9 +365,12 @@ double Inthelperf_totxs(double r, void* p)
  * Compute total gamma-p cross section
  * by default p=LIGHT which means that we sum over light quarks (u,d,s)
  * If p is something else, use the given quark
+ *
+ * Default value for the mass is -1 which means that the default values
+ * for the quark masses (from VirtualPhoton class) are used
  */
 
-double AmplitudeLib::ProtonPhotonCrossSection(double Qsqr, double y, Polarization pol,Parton p)
+double AmplitudeLib::ProtonPhotonCrossSection(double Qsqr, double y, Polarization pol,Parton p, double mass)
 {
     Inthelper_totxs par; par.N=this;
     par.pol=pol; par.Qsqr=Qsqr; par.y=y;
@@ -377,8 +380,7 @@ double AmplitudeLib::ProtonPhotonCrossSection(double Qsqr, double y, Polarizatio
     
     VirtualPhoton wavef;
 
-	if (p != LIGHT)
-		wavef.SetQuark(p);
+    wavef.SetQuark(p, mass);
     
     par.wf=&wavef;
 
@@ -406,30 +408,30 @@ double AmplitudeLib::ProtonPhotonCrossSection(double Qsqr, double y, Polarizatio
 
 }
 
-double AmplitudeLib::F2(double qsqr, double y, Parton p)
+double AmplitudeLib::F2(double qsqr, double y, Parton p, double mass)
 {
 	double xs_l, xs_t;
 	#pragma omp parallel sections
 	{
 		#pragma omp section
 		{
-			xs_l = ProtonPhotonCrossSection(qsqr, y, L, p);
+			xs_l = ProtonPhotonCrossSection(qsqr, y, L, p, mass);
 		}
 		#pragma omp section
 		{
-			xs_t = ProtonPhotonCrossSection(qsqr, y, T, p);
+			xs_t = ProtonPhotonCrossSection(qsqr, y, T, p, mass);
 		}
 	}
 	
     return qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t);
 }
 
-double AmplitudeLib::FL(double qsqr, double y, Parton p)
+double AmplitudeLib::FL(double qsqr, double y, Parton p, double mass)
 {
-	return qsqr/(4.0*SQR(M_PI)*ALPHA_e) * ProtonPhotonCrossSection(qsqr, y, L, p);	
+	return qsqr/(4.0*SQR(M_PI)*ALPHA_e) * ProtonPhotonCrossSection(qsqr, y, L, p, mass);	
 }
 
-double AmplitudeLib::ReducedCrossSection(double qsqr, double y, double sqrts, Parton p)
+double AmplitudeLib::ReducedCrossSection(double qsqr, double y, double sqrts, Parton p, double mass)
 {
 	double bjorkx = X0()*std::exp(-y);
 	double kin_y = qsqr/(sqrts*sqrts*bjorkx);
@@ -442,11 +444,11 @@ double AmplitudeLib::ReducedCrossSection(double qsqr, double y, double sqrts, Pa
 	{
 		#pragma omp section
 		{
-			xs_l = ProtonPhotonCrossSection(qsqr, y, L, p);
+			xs_l = ProtonPhotonCrossSection(qsqr, y, L, p, mass);
 		}
 		#pragma omp section
 		{
-			xs_t = ProtonPhotonCrossSection(qsqr, y, T, p);
+			xs_t = ProtonPhotonCrossSection(qsqr, y, T, p, mass);
 		}
 	}
 	double f2 = qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t);

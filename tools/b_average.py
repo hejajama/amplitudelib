@@ -61,6 +61,7 @@ print "# b-average, minb " + str(minb) + " maxb " + str(maxb) + " bstep " + str(
 import os
 
 sys.path.append("/nashome2/hejajama/lib/")
+sys.path.append("/home/hejajama/lib/")
 sys.path.append("../lib/")
 import math
 from matplotlibhelper import *
@@ -132,7 +133,12 @@ if float(switch_proton_b) < float(maxb):
     except IOError:
         sys.stderr.write("ERROR: Proton file " + proton_file + " does not exist\n")
         sys.exit(-1)
-    proton_interpolator = interpolate.interp1d(xdata, ydata, kind="cubic")
+    
+    try:
+        proton_interpolator = interpolate.interp1d(xdata, ydata, kind="cubic")
+    except ValueError:
+        sys.stederr.write("ERROR: Too few proton datapoints (" + str(len(ydata)) +"), file " + proton_filename)
+        sys.exit(-1)
 
 # compute normalization \int der^2 b rho_inel(b)
 normlist = []

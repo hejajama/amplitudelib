@@ -169,37 +169,48 @@ void VirtualPhoton::SetQuark(Parton p, double mass)
 	// Clear 
 	e_f.clear();
 	m_f.clear();
-	
+	double m;
 	switch(p)
 	{
+        case LIGHT:
+            m=0.14;
+            if (mass>=0)
+                m=mass;
+            m_f.push_back(m);
+            e_f.push_back(2.0/3.0);
+            m_f.push_back(m);
+			e_f.push_back(-1.0/3.0);
+            m_f.push_back(m);
+			e_f.push_back(-1.0/3.0);
+            break;
 		case U:
 			m_f.push_back(0.14);
+            if (mass>=0) m_f[0]=mass;
 			e_f.push_back(2.0/3.0);
 			break;
 		case D:
 			m_f.push_back(0.14);
+            if (mass>=0) m_f[0]=mass;
 			e_f.push_back(-1.0/3.0);
 			break;
 		case S:
 			m_f.push_back(0.14);
+            if (mass>=0) m_f[0]=mass;
 			e_f.push_back(-1.0/3.0);
 			break;
 		case C:
 			m_f.push_back(1.27);
+            if (mass>=0) m_f[0]=mass;
 			e_f.push_back(2.0/3.0);
 			break;
 		case B:
 			m_f.push_back(4.2);
+            if (mass>=0) m_f[0]=mass;
 			e_f.push_back(-1.0/3.0);
 			break;
 		default:
 			cerr << "Unknown parton " << p << " at " << LINEINFO << endl;
 	}
-	if (m_f.size()!=1 or e_f.size()!=1)
-		 cerr << "WTF; there should be only one quark... " << LINEINFO << endl;
-	
-	if (mass>=0)	// Change default mass
-		m_f[0]=mass;
 
 }
 

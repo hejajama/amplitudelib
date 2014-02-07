@@ -67,10 +67,10 @@ class AmplitudeLib
         // Notice that these are not normalized, as we don't integrate over
         // impact parameter
         
-        double ProtonPhotonCrossSection(double Qsqr, double y, Polarization pol, Parton=LIGHT); // default: sum over u,d,s quarks
-        double F2(double Qsqr, double y, Parton=LIGHT);
-        double FL(double Qsqr, double y, Parton=LIGHT);
-        double ReducedCrossSection(double qsqr, double y, double sqrts, Parton=LIGHT);
+        double ProtonPhotonCrossSection(double Qsqr, double y, Polarization pol, Parton=LIGHT, double mass=-1); // default: sum over u,d,s quarks
+        double F2(double Qsqr, double y, Parton=LIGHT, double mass=-1);
+        double FL(double Qsqr, double y, Parton=LIGHT, double mass=-1);
+        double ReducedCrossSection(double qsqr, double y, double sqrts, Parton=LIGHT, double mass=-1);
 
 
 		//////////////// SINGLE INCLUSIVE, hybrid formalism
