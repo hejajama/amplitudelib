@@ -13,6 +13,9 @@
 #include <gsl/gsl_sf_bessel.h>
 #include "../pdf/pdf.hpp"
 #include "../pdf/cteq.hpp"
+
+using namespace Amplitude;
+
 extern "C"
 {
     #include "../fourier/fourier.h"
@@ -123,7 +126,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
 		N2->InitializeInterpolation(y2);
 	}
 	
-	double maxq = std::max(2.5*pt, 30.0);
+	double maxq = std::max(3*pt, 30.0);
 	
 	double result, abserr; 
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOINTS_KTFACT);

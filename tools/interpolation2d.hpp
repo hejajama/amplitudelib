@@ -38,9 +38,9 @@ class Interpolator2D
         Interpolator2D(Interpolator2D& inter);
         ~Interpolator2D();
         void Clear();
-        REAL Evaluate(REAL x, REAL y);
-        REAL Derivative(REAL x, REAL y);    // 1st derivative
-        REAL Derivative2(REAL x, REAL y);   // 2nd derivative
+        double Evaluate(double x, double y);
+        double Derivative(double x, double y);    // 1st derivative
+        double Derivative2(double x, double y);   // 2nd derivative
         void SetMethod(INTERPOLATION_METHOD m);
         int Initialize();
 

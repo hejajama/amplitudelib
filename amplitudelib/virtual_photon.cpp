@@ -16,6 +16,8 @@
 #include <string>
 #include <sstream>
 
+using namespace Amplitude;
+
 const double ZINTACCURACY=0.001;
 const int MAXITER_ZINT=500;
 const double MINZ=0.00001;  // Integration limits

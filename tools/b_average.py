@@ -4,6 +4,8 @@
 # \int \der^2 b f(b) / \int \der^2 b rho_inel(b)
 # CLI arguments are fileprefix, filepostfix, bmin, bmax, bstep, protonb protonfile A model
 #
+# Filepostfix "-" means no postfix
+#
 # Part of AmplitudeLib 
 # Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2013
 
@@ -20,6 +22,8 @@ if (len(sys.argv)<10):
 
 fileprefix=sys.argv[1]
 filepostfix=sys.argv[2]
+if filepostfix=="-":
+    filepostfix=""
 minb=int(sys.argv[3])
 maxb=int(sys.argv[4])
 bstep=int(sys.argv[5])
@@ -110,6 +114,8 @@ while b <= min(switch_proton_b, maxb):
     except IOError:
         sys.stderr.write("ERROR: Nukefile " + fname + " does not exist\n")
         sys.exit(-1)
+    except ValueError:
+        sys.stderr.write("ERROR: Nukefile " + fname + " is invalid\n")
     #xdata=list(reversed(xdata))
     #ydata=list(reversed(ydata))
     if (b==minb):
@@ -132,6 +138,9 @@ if float(switch_proton_b) < float(maxb):
         readfile_xy(proton_file, xdata, ydata, xcol=0, ycol=1)
     except IOError:
         sys.stderr.write("ERROR: Proton file " + proton_file + " does not exist\n")
+        sys.exit(-1)
+    except ValueError:
+        sys.stderr.write("ERROR: Proton file " + proton_file +" is invalid\n")
         sys.exit(-1)
     
     try:

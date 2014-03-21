@@ -23,7 +23,7 @@
 
 #include <algorithm>
 
-
+using namespace Amplitude;
 const double ALPHAS = 0.2;    // compare with ALPHABAR_s.... ok, doesn't make sense
 
 

@@ -23,7 +23,7 @@ int Interpolator2D::Initialize()
 }
 
 
-REAL Interpolator2D::Evaluate(REAL x, REAL y)
+double Interpolator2D::Evaluate(double x, double y)
 {
     if (!ready)
     {
@@ -31,7 +31,7 @@ REAL Interpolator2D::Evaluate(REAL x, REAL y)
         return 0;
     }
 
-    REAL maxy = ypoints[interpolators.size()-1];
+    double maxy = ypoints[interpolators.size()-1];
 
     if (x<ypoints[0] or x>maxy or y<ypoints[0]
         or y>maxy)
@@ -45,7 +45,7 @@ REAL Interpolator2D::Evaluate(REAL x, REAL y)
         if (y>maxy) x=maxy*0.999999;
     }
     
-    REAL res; int status;
+    double res; int status;
 
     // Construct one new interpolator, we already have interpolators[]
     // evaluated at each y in the grid
@@ -70,13 +70,13 @@ REAL Interpolator2D::Evaluate(REAL x, REAL y)
     return res;
 }
 
-REAL Interpolator2D::Derivative(REAL x, REAL y)
+double Interpolator2D::Derivative(double x, double y)
 {
     cerr << "2D interpolator derivative is not implemented! " << LINEINFO << endl;
     return 0;
 }
 
-REAL Interpolator2D::Derivative2(REAL x, REAL y)
+double Interpolator2D::Derivative2(double x, double y)
 {
     cerr << "2D interpolator derivative is not implemented! " << LINEINFO << endl;
     

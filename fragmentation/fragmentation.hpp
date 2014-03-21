@@ -9,6 +9,8 @@
 #include <string>
 #include "../tools/config.hpp"
 
+typedef double REAL;
+
 enum Hadron
 {
     PI,   // pi+, pi-

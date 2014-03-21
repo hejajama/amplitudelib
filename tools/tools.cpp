@@ -11,13 +11,15 @@
 #include <vector>
 #include <gsl/gsl_integration.h>
 
+using namespace Amplitude;
+
 /*
- * Str to REAL/int
+ * Str to double/int
  */
-REAL StrToReal(std::string str)
+double StrToReal(std::string str)
 {
     std::stringstream buff(str);
-    REAL tmp;
+    double tmp;
     buff >> tmp;
     return tmp;
 }
@@ -62,11 +64,11 @@ void ErrHandler(const char * reason,
  * Reqularization is set in file config.hpp
  */
 
-REAL Alpha_s(REAL Qsqr, REAL scaling)
+double Alpha_s(double Qsqr, double scaling)
 {
     if (scaling*Qsqr < LAMBDAQCD2)
         return MAXALPHA;
-    REAL alpha = 12.0*M_PI/( (33.0-2.0*Nf)*log(scaling*Qsqr/LAMBDAQCD2) );
+    double alpha = 12.0*M_PI/( (33.0-2.0*Nf)*log(scaling*Qsqr/LAMBDAQCD2) );
     if (alpha > MAXALPHA)
         return MAXALPHA;
     return alpha;
@@ -76,17 +78,17 @@ REAL Alpha_s(REAL Qsqr, REAL scaling)
  * r dependent strong coupling constant
  * Ref. e.g. 0902.1112, regularization is set in config.hpp
  */
-REAL Alpha_s_r(REAL rsqr, REAL scaling)
+double Alpha_s_r(double rsqr, double scaling)
 {
     if (rsqr/scaling > 4.0/(LAMBDAQCD2)
         *std::exp(-12.0*M_PI/(MAXALPHA*(33.0-2.0*Nf) ) ) )
         return MAXALPHA;
-    REAL alpha = 12.0*M_PI/( (33.0-2.0*Nf)*log(4.0*scaling/ (rsqr*LAMBDAQCD2) ) );
+    double alpha = 12.0*M_PI/( (33.0-2.0*Nf)*log(4.0*scaling/ (rsqr*LAMBDAQCD2) ) );
     
     return alpha;
 }
 
-REAL Alphabar_s(REAL Qsqr, REAL scaling)
+double Alphabar_s(double Qsqr, double scaling)
 {
     return Alpha_s(Qsqr, scaling)*Nc/M_PI;
 }
@@ -104,7 +106,7 @@ std::string Alpha_s_str()
  * If such index can't be found, returns -1
  */
 
-int FindIndex(REAL val, std::vector<REAL> &vec)
+int FindIndex(double val, std::vector<double> &vec)
 {
     if (val < vec[0]) return -1;
     

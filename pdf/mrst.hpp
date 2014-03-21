@@ -3,7 +3,7 @@
 
 /*
  * Wrapper class to use mrst99 PDF
- * Real code is in files mrst99.{cpp,h} downloaded from
+ * actual code is in files mrst99.{cpp,h} downloaded from
  * http://durpdg.dur.ac.uk/HEPDATA/PDF
  * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>
  */
@@ -17,7 +17,7 @@ class MRST : public PDF
 {
     public:
         ~MRST();
-        REAL xq(REAL x, REAL q, Parton p);    // return x*q(x,q)
+        double xq(double x, double q, Parton p);    // return x*q(x,q)
         void Initialize(int param=-1);
         std::string GetString();
     private:
