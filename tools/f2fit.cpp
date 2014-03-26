@@ -95,7 +95,10 @@ int main(int argc, char* argv[])
 	}
 	file.close();
 
-    cout <<"# Light quark mass: " << lightqmass << endl;
+    if (lightqmass>=0)
+        cout <<"# Light quark mass: " << lightqmass << endl;
+    else
+        cout <<"# Light quark mass: default " << endl;
 	
 	cout << "# Q^2 [GeV^2]  x  y  HERA-\\sigma_r  HERA-err theory-\\sigma_r(light c b) " << endl;
 	// Compute reduced cross section
