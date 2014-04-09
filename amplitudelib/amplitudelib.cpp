@@ -669,10 +669,11 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
 
 
 	std::stringstream ss;
-    ss << "# Data read from file " << datafile << ", minr: " << minr
+    ss << "Data read from file " << datafile << ", minr: " << minr
         << " maxr: " << MaxR() << " rpoints: " << rpoints << " maxy "
         << yvals[yvals.size()-1] << " x0 " << X0()
-        << " Q_{s,0}^2 = " << 2.0/SQR(SaturationScale(0, 0.393469)) << " GeV^2 [ N(r^2=2/Q_s^2) = 0.3934]" ;
+        << " Q_{s,0}^2 = " << 2.0/SQR(SaturationScale(0, 0.393469)) << " GeV^2 [ N(r^2=2/Q_s^2) = 0.3934]"
+        << " (AmplitudeLib v. " << AMPLITUDELIB_VERSION << ")" ;
     info_string = ss.str();
 }
 
