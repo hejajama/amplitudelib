@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
 	cout << "# F2 fitter" << endl;
 	if (argc < 3)
 	{
-		cout << "Syntax: " << argv[0] << " -bksol bksolfile  -hera heradatafile -lightqmass mass -charmass mass " << endl;
+		cout << "Syntax: " << argv[0] << " -bksol bksolfile  -hera heradatafile -lightqmass mass  " << endl;
 		return 0;
 	}
 
