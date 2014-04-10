@@ -5,8 +5,7 @@ AMPLITUDESOURCES = amplitudelib/amplitudelib.cpp \
 	amplitudelib/datafile.cpp tools/interpolation.cpp tools/tools.cpp \
 	amplitudelib/wave_function.cpp amplitudelib/virtual_photon.cpp \
 	amplitudelib/ugd.cpp \
-	tools/interpolation2d.cpp
-    # amplitudelib/xs.cpp 
+	tools/interpolation2d.cpp amplitudelib/qcd.cpp
 SOURCES = $(AMPLITUDESOURCES) $(PDF_CPPSOURCES) $(FRAG_CPPSOURCES)
 FTSOURCES = fourier/fourier.c
 OBJECTS = $(SOURCES:.cpp=.o)

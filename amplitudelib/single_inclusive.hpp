@@ -54,8 +54,7 @@ class SingleInclusive
          * Single inclusive hadron yield, kt-factorization
          *
          * Compute single inclusive hadron yield dN/(d^2 pt dy) using the
-         * kt-factorization
-         * ref e.g. hep-ph/0111362 (40)
+         * kt-factorization. Ref e.g. hep-ph/0111362 (40)
          * @param y Rapidity of the produced particle
          * @param pt Transverse momentum of the produced particle
          * @param sqrts Center-of-mass energy
@@ -77,10 +76,6 @@ class SingleInclusive
          * @param N2 Dipole amplitude for the probe (the saved dipole amplitude is for the target), default: use the same for both
          */
 		double dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2=NULL );
-
-		
-		
-		double Alphas(double scale) { return 0.2; } ////TODO!
 		
 
         /*
@@ -103,6 +98,7 @@ class SingleInclusive
 		*/
     private:
         AmplitudeLib* N;
+        QCD qcd;
 };
 
 #endif

@@ -11,16 +11,6 @@
 #include "interpolation2d.hpp"
 
 
-/*
- * Intialize interpolation
- * Returns -1 in case of error, 0 otherwise
- */
-int Interpolator2D::Initialize()
-{
-    cerr << "Interpolator2D is already intialized when its construction is called! "
-        << LINEINFO << endl;
-    return 0;
-}
 
 
 double Interpolator2D::Evaluate(double x, double y)

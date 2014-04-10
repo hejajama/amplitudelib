@@ -27,8 +27,6 @@ class DSS : public FragmentationFunction
          * @param h Hadron
          * @param x Longitudinal momentum fraction
          * @param qs Scale [GeV]
-         * @see Parton
-         * @see Hadron
          */
         double Evaluate(Amplitude::Parton p, Amplitude::Hadron h, double x, double qs);
         DSS();

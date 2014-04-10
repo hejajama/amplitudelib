@@ -25,14 +25,6 @@ typedef unsigned int uint;
 namespace Amplitude
 {
 
-    // Physical constants
-    //const double LAMBDAQCD2 = 0.21416*0.21416;   // GeV^2
-    const double LAMBDAQCD2 = 0.241*0.241;
-    const double LAMBDAQCD = 0.241;
-
-    const int Nf=3;
-    const int Nc=3;
-    const double Cf = (Nc*Nc-1.0)/(2.0*Nc);
     const double ALPHA_e = 1.0/137.035999679; 
     //const double e = sqrt(4.0*M_PI*ALPHA_e);
 

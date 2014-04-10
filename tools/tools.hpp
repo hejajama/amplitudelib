@@ -18,10 +18,11 @@ void ErrHandler(const char * reason,
                         int line,
                         int gsl_errno);
 
+/*
 double Alpha_s(double Qsqr, double scaling=1.0);
 double Alpha_s_r(double rsqr, double scaling=1.0);
 double Alphabar_s(double Qsqr, double scaling=1.0); // \alpha_s N_C / Pi
-
+*/
 double T_A(double b, int A);	// Transverse density profile of the nucleus normalized by A
 								// Unit: [b]=1/GeV!
 void InitializeWSDistribution(int A);

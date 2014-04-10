@@ -56,49 +56,6 @@ void ErrHandler(const char * reason,
             << " (code " << gsl_errno << ")." << std::endl;
 }
 
-/* 
- * Q^2 dependent strong coupling constant
- * Takes into account only u,d ands s quarks
- *
- * Reqularized to avoind infrared divergence 
- * Reqularization is set in file config.hpp
- */
-
-double Alpha_s(double Qsqr, double scaling)
-{
-    if (scaling*Qsqr < LAMBDAQCD2)
-        return MAXALPHA;
-    double alpha = 12.0*M_PI/( (33.0-2.0*Nf)*log(scaling*Qsqr/LAMBDAQCD2) );
-    if (alpha > MAXALPHA)
-        return MAXALPHA;
-    return alpha;
-}
-
-/*
- * r dependent strong coupling constant
- * Ref. e.g. 0902.1112, regularization is set in config.hpp
- */
-double Alpha_s_r(double rsqr, double scaling)
-{
-    if (rsqr/scaling > 4.0/(LAMBDAQCD2)
-        *std::exp(-12.0*M_PI/(MAXALPHA*(33.0-2.0*Nf) ) ) )
-        return MAXALPHA;
-    double alpha = 12.0*M_PI/( (33.0-2.0*Nf)*log(4.0*scaling/ (rsqr*LAMBDAQCD2) ) );
-    
-    return alpha;
-}
-
-double Alphabar_s(double Qsqr, double scaling)
-{
-    return Alpha_s(Qsqr, scaling)*Nc/M_PI;
-}
-
-std::string Alpha_s_str()
-{
-    std::stringstream stream;
-    stream << "\\alpha_s is freezed at " << MAXALPHA;
-    return stream.str();
-}
 
 /* Returns index i for which
  * vec[i]<=val

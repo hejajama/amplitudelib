@@ -39,11 +39,14 @@ extern "C"
  */
 AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
 {
-	as=RUNNING;
-    out_of_range_errors=true;
-    kspace=kspace_;
+    // Read BK solution
     DataFile data(datafile);
     data.GetData(n, yvals);
+
+    // Initialize
+    out_of_range_errors=true;
+    kspace=kspace_;
+    
     minr = data.MinR();
     rmultiplier = data.RMultiplier();
     rpoints = data.RPoints();
@@ -75,7 +78,7 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
     ss << "Data read from file " << datafile << ", minr: " << minr
         << " maxr: " << MaxR() << " rpoints: " << rpoints << " maxy "
         << yvals[yvals.size()-1] << " x0 " << X0()
-        << " Q_{s,0}^2 = " << 2.0/SQR(SaturationScale(0, 0.393469)) << " GeV^2 [ N(r^2=2/Q_s^2) = 0.3934]"
+        << " Q_{s,0}^2 = " << 2.0/SQR(SaturationScale(x0, 0.393469)) << " GeV^2 [ N(r^2=2/Q_s^2, x=x0) = 0.3934]"
         << " (AmplitudeLib v. " << AMPLITUDELIB_VERSION << ")" ;
     info_string = ss.str();
 }
@@ -222,7 +225,7 @@ struct N_k_helper
     AmplitudeLib* N;
 };
 double N_k_helperf(double r, void* p);
-double AmplitudeLib::WW_ugd(double kt, double xbj)
+double AmplitudeLib::WW_UGD(double kt, double xbj)
 {
     // Some initialisation stuff
     set_fpu_state();
@@ -232,7 +235,7 @@ double AmplitudeLib::WW_ugd(double kt, double xbj)
     N_k_helper par;
     par.xbj=xbj; par.N=this; par.kt=kt;
     double result = fourier_j0(kt,N_k_helperf,&par);
-    ///TODO: Respect FOURIER_TRANSFER parameter
+    /// \todo Respect FOURIER_TRANSFER parameter
     SetOutOfRangeErrors(tmp_range);
     return result;
 }
@@ -457,7 +460,6 @@ double AmplitudeLib::SaturationScale(double y, double Ns)
     double interval_min = MinR()*1.0001;
     double interval_max = MaxR()*0.999;
 
-    //gsl_error_handler_t* handler = gsl_set_error_handler_off();
     if (gsl_min_fminimizer_set(sm, &f, sat, interval_min, interval_max)
         == GSL_EINVAL)
     {
@@ -465,7 +467,6 @@ double AmplitudeLib::SaturationScale(double y, double Ns)
         // helper(pos) > helper(min),helper(max), but we can anyway continue
         cerr << "Endpoints do not enclose a minumum! " << LINEINFO << endl;
     }
-    //gsl_set_error_handler(handler);
 
 
     iter=0;
@@ -553,7 +554,7 @@ void AmplitudeLib::InitializeInterpolation(double xbj)
     {
         double tmpr = tmprarray[i];
         if (i==0) tmpr*=1.0001; if (i==rpoints-1) tmpr*=0.9999;
-        tmpnarray[i] = N(tmpr, y);
+        tmpnarray[i] = N(tmpr, xbj);
     }
     interpolator = new Interpolator(tmprarray, tmpnarray, rpoints);
 
@@ -678,7 +679,7 @@ std::string AmplitudeLib::Version()
  */
 
 
-/* KMR UGD C_F/(8\pi^3) S_T/\alpha_s(q) q^4 S_k(q)
+/* Dipole (KMR) UGD C_F/(8\pi^3) S_T/\alpha_s(q) q^4 S_k(q)
  * default value of S_T is 1.0, so it is left for the user to 
  * specify
  * Scale is the scale at which alpha_s is evaluated, if negative (default)
@@ -686,13 +687,12 @@ std::string AmplitudeLib::Version()
  * S_k is 2d FT of S(r) without extra 2pi factors,
  * S(k) = \int d^2 r e^(iqr) S(r), AmplitudeLib::S_
  */
-double AmplitudeLib::UGD(double q, double y, double scale_, double S_T)
+double AmplitudeLib::Dipole_UGD(double q, double xbj, double scale_, double S_T)
 {
 	double scale;
 	if (scale_<0) scale=q*q; else scale=scale_;
-	double alphas = 0.2; ///Alphas(scale);
-    cerr << "TODO! Alphas is not implemented!" << LINEINFO << endl;
-	return Cf / (8.0 * M_PI*M_PI*M_PI) * S_T/alphas * std::pow(q,4) * S_k(q, y, ADJOINT);
+	double alphas = qcd.Alphas(scale);
+	return qcd.Cf() / (8.0 * M_PI*M_PI*M_PI) * S_T/alphas * std::pow(q,4) * S_k(q, xbj, ADJOINT);
 
 }
 
@@ -704,14 +704,14 @@ double AmplitudeLib::UGD(double q, double y, double scale_, double S_T)
 double Inthelperf_xg(double qsqr, void* p);
 struct Inthelper_xg
 {
-	double y,q; AmplitudeLib* N;
+	double xbj,q; AmplitudeLib* N;
 };
 double AmplitudeLib::xg(double x, double q)
 {
 	Inthelper_xg par; 
 	par.N=this;
-	double y = std::log(X0()/x); InitializeInterpolation(y);
-	par.y=y; par.q=q;
+    InitializeInterpolation(x);
+	par.xbj=x; par.q=q;
 	
 	gsl_function fun; fun.function=Inthelperf_xg;
 	fun.params=&par;
@@ -732,53 +732,11 @@ double AmplitudeLib::xg(double x, double q)
 double Inthelperf_xg(double qsqr, void* p)
 {
 	Inthelper_xg* par = (Inthelper_xg*) p;
-	return 1.0/qsqr * par->N->UGD(std::sqrt(qsqr), par->y, SQR(par->q));
+	return 1.0/qsqr * par->N->Dipole_UGD(std::sqrt(qsqr), par->xbj, SQR(par->q));
 }
 
-
-/*
- TODO: mitä näille?
-
-void AmplitudeLib::SetSigma02(double s)
+QCD& AmplitudeLib::GetQCD()
 {
-	sigma02 = s;
+    return qcd;
 }
 
-double AmplitudeLib::Sigma02()
-{
-	return sigma02;
-}
-
-
-
-double AmplitudeLib::Alphas(double Qsqr)
-{
-	if (as == FIXED)
-		return 0.2;
-	
-	if (Qsqr <= LAMBDAQCD2)
-		return MAXALPHA;
-
-    double alpha = 12.0*M_PI/( (33.0-2.0*Nf)*log(Qsqr/LAMBDAQCD2) );
-    if (alpha > MAXALPHA)
-        return MAXALPHA;
-    if (alpha < 0)
-    {
-		cerr << "WTF, alphas = " << alpha << " " << "(Qsqr=" << Qsqr <<", lambdaqcd^2=" << LAMBDAQCD2 << ") " << LINEINFO << endl;
-		return 0;
-	}
-    return alpha;
-}
-
-void AmplitudeLib::SetRunningCoupling(RUNNING_ALPHAS as_)
-{
-	as=as_;
-}
-
-RunningAlphas AmplitudeLib::GetRunningCoupling()
-{
-	return as;
-}
-
-
-*/

@@ -83,8 +83,8 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, doubl
 		//	<< ", result " << result << " relerr " << std::abs(abserr/result) << endl;
     }
     
-    result *= 2.0/(Cf*SQR(pt));
-    double alphas=Alphas(pt*pt);
+    result *= 2.0/(qcd.Cf()*SQR(pt));
+    double alphas=qcd.Alphas(pt*pt);
     result *= alphas;
 
     
@@ -129,9 +129,9 @@ double Inthelperf_ktfact_phi(double phi, void* p)
 	if (par->N2==NULL)
 	{
 		par->N1->InitializeInterpolation(par->y1);
-		ugd1 = par->N1->UGD(par->qt, par->y1, SQR(par->pt));
+		ugd1 = par->N1->Dipole_UGD(par->qt, par->y1, SQR(par->pt));
 		par->N1->InitializeInterpolation(par->y2);
-		ugd2 = par->N1->UGD(kt_m_qt, par->y2, SQR(par->pt));
+		ugd2 = par->N1->Dipole_UGD(kt_m_qt, par->y2, SQR(par->pt));
 	} 
 	else
 	{
@@ -139,11 +139,11 @@ double Inthelperf_ktfact_phi(double phi, void* p)
 		{
 			#pragma omp section
 			{
-				ugd1 = par->N1->UGD(par->qt, par->y1, SQR(par->pt));
+				ugd1 = par->N1->Dipole_UGD(par->qt, par->y1, SQR(par->pt));
 			}
 			#pragma omp section
 			{
-				ugd2 = par->N2->UGD(kt_m_qt, par->y2, SQR(par->pt));
+				ugd2 = par->N2->Dipole_UGD(kt_m_qt, par->y2, SQR(par->pt));
 			}
 		}
 		
@@ -210,8 +210,6 @@ double Inthelperf_ktfact_fragfun(double z, void* p)
 	Inthelper_ktfact_fragfun* par = (Inthelper_ktfact_fragfun*)p;
 	double kt = par->pt/z;
 	double scale = std::max(1.0,par->pt);
-	
-	double xp = kt * std::exp(par->y) / par->sqrts;
 	
 	double dn = par->sinc->dHadronMultiplicity_dyd2pt_ktfact_parton(par->y, kt, par->sqrts, par->N2);
 

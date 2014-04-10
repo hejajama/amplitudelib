@@ -30,14 +30,7 @@ UGDPDF::UGDPDF(AmplitudeLib* N_, double sigma02_)
 std::string UGDPDF::GetString()
 {
 	std::stringstream ss;
-	ss << "UGD PDF, sigma0/2 = " << sigma02 << " GeV^(-2), alphas ";
-    ///TODO
-/*
-    if (N->GetRunningCoupling()==RUNNING)
-		ss << "running";
-	else
-		ss << "fixed";
-        */
+	ss << "UGD PDF, sigma0/2 = " << sigma02 << " GeV^(-2), alphas, running coupling ";
 	return ss.str();
 }
 

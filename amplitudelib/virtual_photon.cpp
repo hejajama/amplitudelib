@@ -50,7 +50,7 @@ double VirtualPhoton::PsiSqr_T(double Qsqr, double r, double z)
                 + SQR(m_f[f]*gsl_sf_bessel_K0(epstmp*r))
             );
     }
-    result *= Nc/(2.0*SQR(M_PI))*ALPHA_e;
+    result *= qcd.Nc()/(2.0*SQR(M_PI))*ALPHA_e;
 
     return result;
 }
@@ -67,7 +67,7 @@ double VirtualPhoton::PsiSqr_L(double Qsqr, double r, double z)
         double epstmp=Epsilon(Qsqr,z,f);
         result += SQR(e_f[f])* SQR( gsl_sf_bessel_K0(epstmp*r) );
     }
-    result *= 2.0*Nc/SQR(M_PI)*ALPHA_e*Qsqr*SQR(z)*SQR(1.0-z);
+    result *= 2.0*qcd.Nc()/SQR(M_PI)*ALPHA_e*Qsqr*SQR(z)*SQR(1.0-z);
 
     return result;
 }

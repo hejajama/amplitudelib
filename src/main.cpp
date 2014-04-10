@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
 
     Mode mode=X;
     double Ns=0.22;
-    double y=0;
+    double y=-1;
     double xbj=-1;
     double r=-1;
     double Qsqr=10;
@@ -428,7 +428,11 @@ int main(int argc, char* argv[])
     cout << "# Reading data from file " << datafile << endl;
    
     AmplitudeLib N(datafile, kspace);
+    AmplitudeLib N2(datafile);
     N.SetFTMethod(ft);
+    N2.SetFTMethod(ft);
+    if (x0>0) { N.SetX0(x0); N2.SetX0(x0); }
+    if (xbj>=0) y = std::log(N.X0()/xbj);
     
     time_t now = time(0);
     string today = ctime(&now);
@@ -457,31 +461,22 @@ int main(int argc, char* argv[])
     if ((mode==PTSPECTRUM_KTFACT or mode==PTSPECTRUM_KTFACT_PARTON) and ktfact_datafile2 != "")
 		datafile=ktfact_datafile2;
 	
-    AmplitudeLib N2(datafile);
-    ///N.SetSigma02(sigma02); N2.SetSigma02(sigma02);
-    N2.SetFTMethod(ft);
-    ///N.SetRunningCoupling(as); N2.SetRunningCoupling(as);
-    if (x0>0) { N.SetX0(x0); N2.SetX0(x0); }
-    N.InitializeInterpolation(N.X0()*std::exp(-y));
-    if (xbj>=0) y = std::log(N.X0()/xbj);
-    /*if (N.GetRunningCoupling()==FIXED)
-		cout << "# Fixed alphas = " << N.Alphas(1) << endl;
-	else
-		cout << "# Running alphas" << endl;*/
-    cout << "# y = " << y << ", x_0 = " << N.X0() << endl;
+
 
 	
     if (mode==X)
     {
-        cout <<"# Saturation scale r_s in 1/GeV / k_s in GeV (N(r_s) = " << Ns <<endl;
-        cout <<"### " << N.SaturationScale(y, Ns) << endl;
+        if (xbj<0 and y>=0)
+            xbj = N.X0()*std::exp(-y);
+        cout <<"# Saturation scale r_s in 1/GeV / k_s in GeV (N(r_s, x=" << xbj<<") = " << Ns <<endl;
+        cout <<"### " << N.SaturationScale(xbj, Ns) << endl;
         //cout << "# r [1/GeV]     Amplitude   \\partial_r   \\partial2 "
         // << " r d ln N / d ln r^2" << endl;
         cout << "# r   N" << endl;
         double minr = N.MinR()*1.1; double maxr=N.MaxR()*0.99;
         for (double r=minr; r<maxr; r*=1.03)
         {
-            cout << std::scientific << std::setprecision(9) << r << " " << N.N(r, y) << endl;/* << " "
+            cout << std::scientific << std::setprecision(9) << r << " " << N.N(r, xbj) << endl;/* << " "
              << N.N(r,y,1) << " " << N.N(r,y,2) <<
              " " << N.LogLogDerivative(r,y) << endl;*/
         }

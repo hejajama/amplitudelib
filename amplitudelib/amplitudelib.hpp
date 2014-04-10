@@ -10,6 +10,7 @@
 #include "../tools/interpolation.hpp"
 #include "../fragmentation/fragmentation.hpp"
 #include "../pdf/pdf.hpp"
+#include "qcd.hpp"
 #include <vector>
 #include <string>
 
@@ -41,7 +42,7 @@ class AmplitudeLib
         ~AmplitudeLib();
 
         /**
-         * Evaluate amplitude
+         * Dipole amplitude
          *
          * Evaluates the dipole amplitude at given dipole size r and at
          * given Bjorken x (xbj). In momentum space the first argument is
@@ -50,7 +51,7 @@ class AmplitudeLib
         double N(double r, double xbj);
 
         /**
-         * Evaluate amplitude
+         * Dipole amplitude in adjoint representation
          *
          * Evaluates the dipole amplitude in adjoint representation,
          * 2N(r)-N(r)^2, at given dipole size r and at
@@ -77,7 +78,7 @@ class AmplitudeLib
          * @param kt transverse momentum
          * @param xbj Bjorken-x
          */
-        double WW_ugd(double kt, double xbj);
+        double WW_UGD(double kt, double xbj);
 
         /**
          * Fourier transfer to coordinate space
@@ -96,6 +97,7 @@ class AmplitudeLib
          *
          * Compute (by Fourier transform) the scattering matrix in
          * momentum space
+         * 
          * S_k = \int e^(ik.r) S(r)^pow
          *
          * If representation is set to ADJOINT, computes using the
@@ -108,17 +110,19 @@ class AmplitudeLib
         
 
         /**
-         * KMR unintegrated gluon distribution
+         * Dipole unintegrated gluon distribution
          *
-         * KMR unintegrated gluon distribution (UGD), defined as
+         * Dipole unintegrated gluon distribution (UGD), defined as
+         * 
 		 * C_F/(8\pi^3) S_T/\alpha_s(q) q^4 S_k(q)
+         * 
 		 * Computes without factor S_T unless it is specified
          * @param q Scale (GeV)
          * @param as_scale scale at which the running coupling is evaluated, default: q
          * @param S_T Transverse size of the target = normalization factor
          * 
          */
-		double UGD(double q, double y, double as_scale_=-1, double S_T=1.0);
+		double Dipole_UGD(double q, double y, double as_scale_=-1, double S_T=1.0);
 
         /**
          * Gluon distribution from UGD
@@ -151,7 +155,10 @@ class AmplitudeLib
          * Saturation scale
          *
          * Solve saturation scale defined as
-         * N(r=TODO, xbj)=Ns
+         * 
+         * N(r, xbj)=Ns
+         * 
+         * @return Dipole size r that satisfies the satscale condition (momentum space: TODO)
          */
         double SaturationScale(double xbj, double Ns);
 
@@ -223,6 +230,8 @@ class AmplitudeLib
          */
         std::string Version();
 
+        QCD& GetQCD();
+
     private:
         // [yind][r/kind]
         std::vector< std::vector<double> > n;
@@ -258,8 +267,9 @@ class AmplitudeLib
         bool out_of_range_errors;  //! If true, don't print "out of range" errors
         
         std::string info_string;
+
+        QCD qcd;
         
-        Amplitude::RunningAlphas as;
         Amplitude::FT_Method ft;  // ACC SERIES: use j0_transfer from fourier/fourier.c,	
 					// it should be faster but sometimes it is much slower!!
         

@@ -9,11 +9,25 @@
 #include "../tools/config.hpp"
 #include <string>
 
+/**
+ * Parton distribution function
+ *
+ * Virtual class from which all PDF classes are inherited.
+ */
 class PDF
 {
     public:
 		PDF();
         ~PDF();
+        /**
+         * Evaluate x*pdf
+         *
+         * Return x*f(x,Q^2) for the given parton. Every PDF class
+         * must implement this.
+         * @param x Bjorken-x
+         * @param q Scale [GeV]
+         * @param p Parton type
+         */
         virtual double xq(double x, double q, Amplitude::Parton p)=0;    // return x*q(x,q), q in GeV
         // x_1*x_2*f(x_1,x_2) dpfd with kinematical constraint x_1+x_2 < 1
         double Dpdf(double x1, double x2, double q, Amplitude::Parton p1, Amplitude::Parton p2);	

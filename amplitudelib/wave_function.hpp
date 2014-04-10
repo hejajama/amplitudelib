@@ -4,10 +4,11 @@
 /*
  * General class for wave functions
  *
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2010-2011
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2010-2014
  */
 
 #include <string>
+
 
 class WaveFunction{
     public:
@@ -19,7 +20,7 @@ class WaveFunction{
         virtual std::string GetParamString()=0;
         double PsiSqr_tot(double Qsqr, double r, double z);
         double PsiSqr_tot_intz(double Qsqr, double r);
-    private:
+    protected:
         int mode;   // What to return when PsiSqr_intz
 };
 

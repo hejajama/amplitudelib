@@ -13,6 +13,7 @@
 
 #include "wave_function.hpp"
 #include "../tools/config.hpp"
+#include "qcd.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -42,6 +43,8 @@ class VirtualPhoton : public WaveFunction {
         std::vector<double> m_f;   // Quark masses (GeV)
 
         double Epsilon(double Qsqr, double z, int f);
+
+        QCD qcd;
         
         
 };
