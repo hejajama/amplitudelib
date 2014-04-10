@@ -1,6 +1,6 @@
 #include "amplitudelib.hpp"
+#include "single_inclusive.hpp"
 #include "virtual_photon.hpp"
-#include "datafile.hpp"
 #include "../tools/tools.hpp"
 #include "../tools/config.hpp"
 #include <string>
@@ -21,66 +21,9 @@ extern "C"
     #include "../fourier/fourier.h"
 }
 
-/*
- * UGD normalization here is the "KMR" normalization, see e.g. 
- * Ref. hep-ph/0101348] (eq (26) and hep-ph/0111362 (eq (41)
- */
-
-
-/* KMR UGD C_F/(8\pi^3) S_T/\alpha_s(q) q^4 S_k(q)
- * default value of S_T is 1.0, so it is left for the user to 
- * specify
- * Scale is the scale at which alpha_s is evaluated, if negative (default)
- * use q^2
- * S_k is 2d FT of S(r) without extra 2pi factors,
- * S(k) = \int d^2 r e^(iqr) S(r), AmplitudeLib::S_
- */
-double AmplitudeLib::UGD(double q, double y, double scale_, double S_T)
+SingleInclusive::SingleInclusive(AmplitudeLib* N_)
 {
-	double scale;
-	if (scale_<0) scale=q*q; else scale=scale_;
-	double alphas = Alphas(scale);
-	return Cf / (8.0 * M_PI*M_PI*M_PI) * S_T/alphas * std::pow(q,4) * S_k(q, y, true);
-
-}
-
-/*
- * Integrated GD, x*g(x), from UGD
- * The Q^2 dependence comes as a upper limit of an integral
- * xg(x,Q^2) = \int_0^Q dq^2/q^2 UGD(q)
- */
-double Inthelperf_xg(double qsqr, void* p);
-struct Inthelper_xg
-{
-	double y,q; AmplitudeLib* N;
-};
-double AmplitudeLib::xg(double x, double q)
-{
-	Inthelper_xg par; 
-	par.N=this;
-	double y = std::log(X0()/x); InitializeInterpolation(y);
-	par.y=y; par.q=q;
-	
-	gsl_function fun; fun.function=Inthelperf_xg;
-	fun.params=&par;
-	double result, abserr; 
-    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(100);
-	int status = gsl_integration_qag(&fun, 0, SQR(q), 0, 0.01,
-		100, GSL_INTEG_GAUSS51, ws, &result, &abserr);
-	gsl_integration_workspace_free(ws);
-       
-    if (status)
-    {
-		cerr << "UGD integral failed at " << LINEINFO <<", x=" << x
-			<< ", k_T=" << q << " res " << result << " relerr " << std::abs(abserr/result)  << endl;
-    }
-	return result;
-}
-
-double Inthelperf_xg(double qsqr, void* p)
-{
-	Inthelper_xg* par = (Inthelper_xg*) p;
-	return 1.0/qsqr * par->N->UGD(std::sqrt(qsqr), par->y, SQR(par->q));
+    N=N_;
 }
 
 
@@ -94,36 +37,35 @@ double Inthelperf_xg(double qsqr, void* p)
 struct Inthelper_ktfact{ double y1, y2, pt, qt; AmplitudeLib *N1, *N2; };
 double Inthelperf_ktfact_q(double q, void* p);
 double Inthelperf_ktfact_phi(double phi, void* p);
-const int INTPOINTS_KTFACT = 4;	///DEBUG orig 2
-double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2 )
+const int INTPOINTS_KTFACT = 4;	
+double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2 )
 {
 	double x1 = pt*std::exp(-y)/sqrts;
 	double x2 = pt*std::exp(y)/sqrts;
-	double y1 = std::log(X0()/x1);
+	double y1 = std::log(N->X0()/x1);
 	double y2;
 	if (N2==NULL)
-		y2 = std::log(X0()/x2);
+		y2 = std::log(N->X0()/x2);
 	else
 		y2 = std::log(N2->X0()/x2);
 	
 	if (y1<0 or y2<0)
 	{
-		#pragma omp critical
-		cerr << "y1=" << y1 <<", y2=" << y2 <<" is not possible to compute, too large x. pt=" << pt << ", y=" << y << ", sqrts=" << sqrts <<" " << LINEINFO << endl;
+		cerr << "Evolution variables y1=" << y1 <<", y2=" << y2 <<" is not possible to compute, too large x. pt=" << pt << ", y=" << y << ", sqrts=" << sqrts <<" " << LINEINFO << endl;
 		return 0;
 		if (y1<0) y1=0; if (y2<0)y2=0;
 		
 	}
 	
-	Inthelper_ktfact par; par.y1=y1; par.y2=y2; par.pt=pt; par.N1=this;
+	Inthelper_ktfact par; par.y1=y1; par.y2=y2; par.pt=pt; par.N1=N;
 	par.N2=N2;
 	gsl_function fun; fun.params=&par;
 	fun.function=Inthelperf_ktfact_q;
 	
 	if (N2!=NULL) // Initialize interpolators only once
 	{
-		InitializeInterpolation(y1);
-		N2->InitializeInterpolation(y2);
+		N->InitializeInterpolation(x1);
+		N2->InitializeInterpolation(x2);
 	}
 	
 	double maxq = std::max(3*pt, 30.0);
@@ -224,13 +166,13 @@ double Inthelperf_ktfact_phi(double phi, void* p)
  // if true, change between ktfact and hybrid formalism when x_p>X0()
 const bool HADRONPROD_TRANSITION = false;
 const int INTPOITNS_KTFACT_Z = 1;
-struct Inthelper_ktfact_fragfun{ AmplitudeLib* N1, *N2; FragmentationFunction* fragfun; double scale, pt, y, sqrts; Hadron final; PDF *pdf; };
+struct Inthelper_ktfact_fragfun{ SingleInclusive* sinc; AmplitudeLib* N2; FragmentationFunction* fragfun; double scale, pt, y, sqrts; Hadron final; PDF *pdf; };
 double Inthelperf_ktfact_fragfun(double z, void* p);
 
-double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts, FragmentationFunction* fragfun, Hadron final, AmplitudeLib* N2 )
+double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts, FragmentationFunction* fragfun, Hadron final, AmplitudeLib* N2 )
 {
 	Inthelper_ktfact_fragfun par;
-	par.N1=this; par.y=y; par.y=y; par.pt=pt; par.fragfun=fragfun; par.final=final;
+	par.sinc=this; par.y=y; par.y=y; par.pt=pt; par.fragfun=fragfun; par.final=final;
 	par.N2=N2;
 	par.sqrts=sqrts;
 	
@@ -270,32 +212,8 @@ double Inthelperf_ktfact_fragfun(double z, void* p)
 	double scale = std::max(1.0,par->pt);
 	
 	double xp = kt * std::exp(par->y) / par->sqrts;
-	if (HADRONPROD_TRANSITION and xp > par->N1->X0())
-	{
-		// Entering the region where hybrid formalism is ok,
-		// quite ugly copypaste from xs.cpp:Inthelperf_hadronprod
-		cout << "# switch to hybrid, xp=" << xp <<", xa=" << xp*std::exp(-2.0*par->y) <<" kt=" << kt << endl;
-		double hybridres=0;
-		
-		double y_A = std::log(par->N1->X0() / (kt*std::exp(-par->y)/par->sqrts));
-		if (y_A<0) return 0;	// Most likely very large pt -> tiny contribution
-		par->N1->InitializeInterpolation(y_A);
-		double nf = par->N1->S_k(kt, y_A);
-		// PDF and fragmentation
-		double xqf = par->pdf->xq(xp, scale, U)*par->fragfun->Evaluate(U, par->final, z, scale)
-			+ par->pdf->xq(xp, scale, D)*par->fragfun->Evaluate(D, par->final, z, scale)
-			+ par->pdf->xq(xp, scale, S)*par->fragfun->Evaluate(S, par->final, z, scale);
-
-		hybridres = nf*xqf;
-		
-		// Adjoint representation, gluon scatters
-		double na = par->N1->S_k(kt, y_A, true);
-		double xgf = par->pdf->xq(xp, scale, G)*par->fragfun->Evaluate(G, par->final, z, scale);
-		hybridres += na*xgf;
-		
-		return hybridres/(SQR(2.0*M_PI)*SQR(z));
-	}
-	double dn = par->N1->dHadronMultiplicity_dyd2pt_ktfact_parton(par->y, kt, par->sqrts, par->N2);
+	
+	double dn = par->sinc->dHadronMultiplicity_dyd2pt_ktfact_parton(par->y, kt, par->sqrts, par->N2);
 
 	return 1.0/SQR(z) * dn * par->fragfun->Evaluate(G, par->final, z, scale );
 }

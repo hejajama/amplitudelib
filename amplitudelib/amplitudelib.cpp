@@ -1,6 +1,6 @@
 /*
- * BK equation solver
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2013
+ * AmplitudeLib
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
 
 #include "amplitudelib.hpp"
@@ -24,7 +24,6 @@
 #include <algorithm>
 
 using namespace Amplitude;
-const double ALPHAS = 0.2;    // compare with ALPHABAR_s.... ok, doesn't make sense
 
 
 extern "C"
@@ -33,24 +32,74 @@ extern "C"
 }
 
 /*
+ * Load data from a given file
+ * Format is specified in file bk/README
+ * If kspace is true, the datafile is in kspace solved using BK code
+ * ("x axis" in kt^2 in datafile, don't limit N<=1)
+ */
+AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
+{
+	as=RUNNING;
+    out_of_range_errors=true;
+    kspace=kspace_;
+    DataFile data(datafile);
+    data.GetData(n, yvals);
+    minr = data.MinR();
+    rmultiplier = data.RMultiplier();
+    rpoints = data.RPoints();
+    x0 = data.X0();
+
+    tmprarray = new double[data.RPoints()];
+    tmpnarray = new double[data.RPoints()];
+    for (int i=0; i<rpoints; i++)
+    {
+        double tmpr = std::log(minr*std::pow(rmultiplier, i));
+        if (kspace)
+            tmpr = 0.5*tmpr;    // take square root if kspace, so k^2 -> k
+        lnrvals.push_back(tmpr);
+        rvals.push_back(std::exp(lnrvals[i]));
+        tmprarray[i] = std::exp(lnrvals[i]);
+    }
+
+    if (kspace)
+    {
+        minr=std::sqrt(minr);
+        rmultiplier = std::sqrt(rmultiplier);
+    }
+
+    interpolator_xbj=-1;  // if >=0, interpolator is initialized, must free
+    // memory (delete tmprarray and tmpnarray at the end)
+
+
+	std::stringstream ss;
+    ss << "Data read from file " << datafile << ", minr: " << minr
+        << " maxr: " << MaxR() << " rpoints: " << rpoints << " maxy "
+        << yvals[yvals.size()-1] << " x0 " << X0()
+        << " Q_{s,0}^2 = " << 2.0/SQR(SaturationScale(0, 0.393469)) << " GeV^2 [ N(r^2=2/Q_s^2) = 0.3934]"
+        << " (AmplitudeLib v. " << AMPLITUDELIB_VERSION << ")" ;
+    info_string = ss.str();
+}
+
+/*
+ * Release reserved memory
+ */
+
+AmplitudeLib::~AmplitudeLib()
+{
+    if (interpolator_xbj>=0)
+    {
+        delete interpolator;
+    }
+    delete[] tmpnarray;
+    delete[] tmprarray;
+}
+
+/*
  * Calculate amplitude interpolating data
  * Interpolate rapidity linearly and r using spline
- *
- * By default der=0, der=1 is 1st derivative w.r.t r, 2 2nd
- * By default bspline=false, it it is true use bspline interpolation
- *  (useful for noisy data), affects only if there is no previously allocated
- *  interpolator
  */
-double AmplitudeLib::N(double r, double y, int der, bool bspline)
+double AmplitudeLib::N(double r, double xbj)
 {    
-    if (bspline)
-        cerr << "AmplitudeLib::N() with bspline is not supported (may not work) " << LINEINFO << endl;
-    if (der>2 or der<0)
-    {
-        cerr << "Derivative degree " << der << " is not 0, 1 or 2! " << LINEINFO
-         << endl;
-         return 0;
-    }
     if (r < MinR() or r > MaxR() )
     {
         if (out_of_range_errors)
@@ -60,50 +109,38 @@ double AmplitudeLib::N(double r, double y, int der, bool bspline)
         if (r<MinR()) r=MinR()*1.000001; else if (r>MaxR()) r=MaxR()*0.999999;
     }
 
+    double y = std::log(X0()/xbj);
+    
     if (y<0 or y>yvals[yvals.size()-1] )
     {
-        //if (out_of_range_errors)
+        if (out_of_range_errors)
             cerr << "y must be between limits [" << 0 << ", "
                 << yvals[yvals.size()-1] << "], asked y=" << y << " "
                 << LINEINFO << endl;
         if (y < 0) y=0; else if (y>yvals[yvals.size()-1]) y=yvals[yvals.size()-1];
     }
-    //double lnr = std::log(r);
 
     
-    /// Use already initialized interpolator
-    if (std::abs(y - interpolator_y) < 0.01 and !bspline )
+    // Use already initialized interpolator
+    if (std::abs(xbj - interpolator_xbj)/xbj < 0.001 )
     {
         double result=0;
-        if (der==0)
-        { 
-            if (r >= maxr_interpolate and maxr_interpolate>0 and !kspace) { return 1.0; }
-            result = interpolator->Evaluate(r);
-        }
-        if (der==1)
-        {
-            result = interpolator->Derivative(r);
-        }
-        if (der==2)
-        {
-            result = interpolator->Derivative2(r);
-        }
-        if (!kspace and result>1 and der==0) return 1;  // in x space limit N(r)<=1
-        if (result<0 and der==0) return 0;              // limit N >= 0
+
+        // Can't interpolate (too large dipole), return 1.0
+        if (r >= maxr_interpolate and maxr_interpolate>0 and !kspace) { return 1.0; }
+
+        result = interpolator->Evaluate(r);
+        
+        if (!kspace and result>1) return 1;  // in x space limit N(r)<=1
+        if (result<0) return 0;              // limit N >= 0
         return result;
 
     }
 
-/*
-    if (interpolator_y > 0)
-        cerr << "Interpolator was initialized but can't use it at y=" << y << " "
-        << LINEINFO << endl;
-*/
     /// Initialize new interpolator and use it
     int rind = FindIndex(r, rvals);
     int yind = FindIndex(y, yvals);
     int interpolation_points = INTERPOLATION_POINTS;
-    if (bspline) interpolation_points += 10;
 
     int interpolation_start, interpolation_end;
     if (rind - interpolation_points/2 < 0)
@@ -141,21 +178,11 @@ double AmplitudeLib::N(double r, double y, int der, bool bspline)
     }
     
     Interpolator interp(tmpxarray, tmparray, interpo_points);
-    if (bspline) interp.SetMethod(INTERPOLATE_BSPLINE);
     interp.Initialize();
     double result=0;
-    if (der==0)
-        result = interp.Evaluate(r);
-    if (der==1)
-    {
-        result = interp.Derivative(r);
-        //result /= r;    // dN / d ln r = r dN/dr
-    }
-    if (der==2)
-    {
-        result = interp.Derivative2(r);
-        //result /= SQR(r);   // d^2N / d lnr^2 = r^2 d^2 N / dr^2
-    }
+
+    result = interp.Evaluate(r);
+
     
     delete[] tmparray;
     delete[] tmpxarray;
@@ -164,24 +191,24 @@ double AmplitudeLib::N(double r, double y, int der, bool bspline)
 
 }
 
-bool AmplitudeLib::InterpolatorInitialized(double y)
+bool AmplitudeLib::InterpolatorInitialized(double xbj)
 {
-    if (std::abs(y - interpolator_y) < 0.01)
+    if (std::abs(xbj - interpolator_xbj)/xbj < 0.001)
         return true;
     else
         return false;
 }
 
-double AmplitudeLib::S(double r, double y, int der)
+double AmplitudeLib::S(double r, double xbj)
 {
-    double s = 1.0 - N(r,y,der);
+    double s = 1.0 - N(r,xbj);
     if (s<=0) return 0;
-    if (s>1.0) return 1.0;
+    if (s>=1.0) return 1.0;
     return s;
 }
 
 /*
- * FT the amplitude to the k-space
+ * FT the amplitude to the k-space (WW UGD)
  * N(k) = \int d^2 r/(2\pi r^2) exp(ik.r)N(r)
  *  = \int dr/r BesselJ[0,k*r] * N(r)
  * 
@@ -190,22 +217,22 @@ double AmplitudeLib::S(double r, double y, int der)
  */
 struct N_k_helper
 {
-    double y; double kt; double power;
+    double xbj; double kt; double power;
     bool adjoint;
     AmplitudeLib* N;
 };
 double N_k_helperf(double r, void* p);
-double AmplitudeLib::N_k(double kt, double y)
+double AmplitudeLib::WW_ugd(double kt, double xbj)
 {
-    // Some initialisation stuff -
+    // Some initialisation stuff
     set_fpu_state();
     init_workspace_fourier(FOURIER_ZEROS);   // number of bessel zeroes, max 2000
     bool tmp_range = SetOutOfRangeErrors(false);
     
     N_k_helper par;
-    par.y=y; par.N=this; par.kt=kt;
+    par.xbj=xbj; par.N=this; par.kt=kt;
     double result = fourier_j0(kt,N_k_helperf,&par);
-
+    ///TODO: Respect FOURIER_TRANSFER parameter
     SetOutOfRangeErrors(tmp_range);
     return result;
 }
@@ -215,7 +242,7 @@ double N_k_helperf(double r, void* p)
     N_k_helper* par = (N_k_helper*) p;
     if (r < par->N->MinR()) return 0;
     else if (r > par->N->MaxR()) return 1.0/r;
-    return 1.0/r*par->N->N(r, par->y);
+    return 1.0/r*par->N->N(r, par->xbj);
 }
 
 /*
@@ -225,15 +252,15 @@ double N_k_helperf(double r, void* p)
  */
 struct N_k_to_x_helper
 {
-    double y; double x;
+    double xbj; double x;
     AmplitudeLib* N;
 };
 double N_k_to_x_helperf(double k, void* p)
 {
     N_k_to_x_helper* par = (N_k_to_x_helper*)p;
-    return par->N->N(k, par->y)*k;
+    return par->N->N(k, par->xbj)*k;
 }
-double AmplitudeLib::N_k_to_x(double x, double y)
+double AmplitudeLib::N_k_to_x(double r, double xbj)
 {
     // Some initialisation stuff -
     set_fpu_state();
@@ -241,9 +268,9 @@ double AmplitudeLib::N_k_to_x(double x, double y)
     bool tmp_range = SetOutOfRangeErrors(false);
     
     N_k_to_x_helper par;
-    par.y=y; par.N=this; par.x=x;
-    double result = fourier_j0(x,N_k_to_x_helperf,&par);
-    return x*x*result;
+    par.xbj=xbj; par.N=this; par.x=r;
+    double result = fourier_j0(r,N_k_to_x_helperf,&par);
+    return r*r*result;
 
     SetOutOfRangeErrors(tmp_range);
 }
@@ -265,12 +292,12 @@ double AmplitudeLib::N_k_to_x(double x, double y)
 
 
 double S_k_helperf(double r, void* p);
-double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
+double AmplitudeLib::S_k(double kt, double xbj, Representation rep, double pow)
 {
 	SetOutOfRangeErrors(false);
-	if (!InterpolatorInitialized(y))
+	if (!InterpolatorInitialized(xbj))
 		cerr << "Interpolator is not initialized and we are calculating S_k, are you sure? "
-			<< "(interpolator y: " << interpolator_y << ", asked y=" << y <<") "
+			<< "(interpolator y: " << interpolator_xbj << ", asked x=" << xbj <<") "
 			<< LINEINFO << endl;
 	
     // Some initialisation stuff -
@@ -278,7 +305,12 @@ double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
     init_workspace_fourier(FOURIER_ZEROS);   // number of bessel zeroes, max 2000
     
     N_k_helper par;
-    par.y=y; par.N=this; par.kt=kt; par.adjoint=adjoint; par.power=power;
+    par.xbj=xbj; par.N=this; par.kt=kt;  par.power=pow;
+
+    if (rep==ADJOINT)
+        par.adjoint=true;
+    else
+        par.adjoint=false;
 
     double result=0;
 
@@ -288,7 +320,7 @@ double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
         fun.params=&par;
     
 
-        double abserr; size_t eval;
+        double abserr; 
         gsl_integration_workspace* ws = gsl_integration_workspace_alloc(1000);
 		int status = gsl_integration_qag(&fun, MinR(), MaxR(), 0, 0.001,
 			1000, GSL_INTEG_GAUSS51, ws, &result, &abserr);
@@ -297,8 +329,8 @@ double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
         //    0, 0.01,  &result, &abserr, &eval);
         if (status)
         {
-            cerr << "S_k integral failed at " << LINEINFO <<", y=" << y
-            << " k_T=" << kt << ", adjoint: " << adjoint << " relerr " << std::abs(abserr/result) << endl;
+            cerr << "S_k integral failed at " << LINEINFO <<", x=" << xbj
+            << " k_T=" << kt << ", adjoint: " << par.adjoint << " relerr " << std::abs(abserr/result) << endl;
         }
     }
     else
@@ -306,9 +338,7 @@ double AmplitudeLib::S_k(double kt, double y, bool adjoint, double power)
         
         
     if (result<-0.00001){
-		return 0;
-		#pragma omp critical
-		cerr << "S_k transfer is negative=" << result*2.0*M_PI <<", kt=" << kt <<", y=" << y <<", adj: " << adjoint <<", power=" << power << " " << LINEINFO << endl;
+		cerr << "S_k transfer is negative=" << result*2.0*M_PI <<", kt=" << kt <<", x=" << xbj <<", adj: " << par.adjoint <<", power=" << pow << " " << LINEINFO << endl;
     }
     return result*2.0*M_PI; 
 }
@@ -320,11 +350,11 @@ double S_k_helperf(double r, void* p)
     if (!par->adjoint)
     {
         if (r > par->N->MaxR()) return 0;
-        result = r*std::pow(par->N->S(r, par->y), par->power);
+        result = r*std::pow(par->N->S(r, par->xbj), par->power);
     }
     else
     {
-        result = r*std::pow(1.0-par->N->N_A(r, par->y), par->power);
+        result = r*std::pow(1.0-par->N->N_A(r, par->xbj), par->power);
     }
     
     // J0 is in fourier_j0() fun
@@ -334,128 +364,8 @@ double S_k_helperf(double r, void* p)
     return result;
 }
 
-/*
- * Virtual photon-proton cross sections
- * Separately for transversially and longitudinally polarized photons
- */
-struct Inthelper_totxs
-{
-    AmplitudeLib* N;
-    Polarization pol;    // L (longitudinal) or T (transverse)
-    double Qsqr,y;
-    WaveFunction* wf;
-};
 
-double Inthelperf_totxs(double r, void* p)
-{
-    Inthelper_totxs* par = (Inthelper_totxs*)p;
 
-    double result = r*par->N->N(r,par->y);
-    if (par->pol==L)    // Longitudinal
-        result *= par->wf->PsiSqr_L_intz(par->Qsqr, r);
-    else if (par->pol==T)   // Transverse
-        result *= par->wf->PsiSqr_T_intz(par->Qsqr, r);
-    else
-        cerr << "Invalid polarization " << par->pol << " at " << LINEINFO << endl;
-
-    return result;
-}
-
-/*
- * Compute total gamma-p cross section
- * by default p=LIGHT which means that we sum over light quarks (u,d,s)
- * If p is something else, use the given quark
- *
- * Default value for the mass is -1 which means that the default values
- * for the quark masses (from VirtualPhoton class) are used
- */
-
-double AmplitudeLib::ProtonPhotonCrossSection(double Qsqr, double y, Polarization pol,Parton p, double mass)
-{
-    Inthelper_totxs par; par.N=this;
-    par.pol=pol; par.Qsqr=Qsqr; par.y=y;
-
-    double sum=0;
-
-    
-    VirtualPhoton wavef;
-
-    wavef.SetQuark(p, mass);
-    
-    par.wf=&wavef;
-
-    gsl_function fun; fun.function=Inthelperf_totxs;
-    fun.params=&par;
-
-    SetOutOfRangeErrors(false);
-    
-
-    double result,abserr; size_t eval;
-    const int MAXITER_RINT=100;
-    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_RINT);
-    int status = gsl_integration_qag(&fun, 0.1*MinR(), 10.0*MaxR(), 0, 0.01,
-        MAXITER_RINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
-    gsl_integration_workspace_free(ws);
-    //int status = gsl_integration_qng(&fun, MinR(), MaxR(),
-    //0, 0.001,  &result, &abserr, &eval);
-    
-    if(status){ std::cerr<< "r integral in ProtonPhotonCrossSection failed with code " 
-        << status << " (Qsqr=" << Qsqr << ", y=" << y << " result " << result  
-        << " relerr=" << abserr/result << ") at " << LINEINFO << std::endl;
-    }
-
-    return 2.0*M_PI*result; //2\pi from \theta integral
-
-}
-
-double AmplitudeLib::F2(double qsqr, double y, Parton p, double mass)
-{
-	double xs_l, xs_t;
-	#pragma omp parallel sections
-	{
-		#pragma omp section
-		{
-			xs_l = ProtonPhotonCrossSection(qsqr, y, L, p, mass);
-		}
-		#pragma omp section
-		{
-			xs_t = ProtonPhotonCrossSection(qsqr, y, T, p, mass);
-		}
-	}
-	
-    return qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t);
-}
-
-double AmplitudeLib::FL(double qsqr, double y, Parton p, double mass)
-{
-	return qsqr/(4.0*SQR(M_PI)*ALPHA_e) * ProtonPhotonCrossSection(qsqr, y, L, p, mass);	
-}
-
-double AmplitudeLib::ReducedCrossSection(double qsqr, double y, double sqrts, Parton p, double mass)
-{
-	double bjorkx = X0()*std::exp(-y);
-	double kin_y = qsqr/(sqrts*sqrts*bjorkx);
-	
-	InitializeInterpolation(y);
-	
-	
-	double xs_l, xs_t;
-	#pragma omp parallel sections
-	{
-		#pragma omp section
-		{
-			xs_l = ProtonPhotonCrossSection(qsqr, y, L, p, mass);
-		}
-		#pragma omp section
-		{
-			xs_t = ProtonPhotonCrossSection(qsqr, y, T, p, mass);
-		}
-	}
-	double f2 = qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t);
-	double fl = qsqr/(4.0*SQR(M_PI)*ALPHA_e)*xs_l;
-		
-	return f2 - SQR(kin_y) / ( 1.0 + SQR(1.0-kin_y) ) * fl;
-}
 
 /*
  * d ln N / d ln r^2 = 1/N * d N / d ln r^2 = 1/N d N / dr^2  dr^2 / d ln r^2
@@ -463,8 +373,10 @@ double AmplitudeLib::ReducedCrossSection(double qsqr, double y, double sqrts, Pa
  */
 double AmplitudeLib::LogLogDerivative(double r, double y)
 {
-    double dndr = N(r,y,1);
-    return r/(2.0*N(r,y))*dndr;
+    ///TODO: Requires derivative
+    /*double dndr = N(r,y,1);
+    return r/(2.0*N(r,y))*dndr;*/
+    return 0;
 }
 
 /*
@@ -586,120 +498,55 @@ double AmplitudeLib::SaturationScale(double y, double Ns)
  * Amplitude in adjoint representation
  * Coordinate space: N_A(r) = 2N(r)-N(r)^2
  */
-double AmplitudeLib::N_A(double r, double y, int der)
+double AmplitudeLib::N_A(double r, double y)
 {
     if (kspace)
     {
         cerr <<"N_A is not implemented for mome. space!" << endl;
         return 0;
     }
-    if (der<0 or der>2)
-    {
-        cerr << "Derivative order " << der << " is not valid. " << LINEINFO << endl;
-        return -1;
-    }
+
     double result=0;
 
-    if (der==0)
-    {
-        double n = N(r,y);
-        result = 2.0*n - n*n;
-        if (result>1) result=1;
-        if (result<0) result=0;
-        return result;
-    }
-    else if (der==1)
-    {
-        double n = N(r,y);
-        double dn = N(r,y,1);
-        result= 2.0*dn - 2.0*n*dn;
-    }
-    else if (der==2)
-    {
-        double n = N(r,y);
-        double dn = N(r,y,1);
-        double d2n = N(r,y,2);
-        result = 2.0*d2n - 2.0*dn*dn - 2.0*n*d2n;
-    }
+    double n = N(r,y);
+    result = 2.0*n - n*n;
+    if (result>1) result=1;
+    if (result<0) result=0;
+    return result;
+    
     
 
     return result;
 }
 
 
-/*
- * Load data from a given file
- * Format is specified in file bk/README
- * If kspace is true, the datafile is in kspace solved using BK code
- * ("x axis" in kt^2 in datafile, don't limit N<=1)
- */
-AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
-{
-	as=RUNNING;
-    out_of_range_errors=true;
-    kspace=kspace_;
-    sigma02=1.0;
-    DataFile data(datafile);
-    data.GetData(n, yvals);
-    minr = data.MinR();
-    rmultiplier = data.RMultiplier();
-    rpoints = data.RPoints();
-    x0 = data.X0();
 
-    tmprarray = new double[data.RPoints()];
-    tmpnarray = new double[data.RPoints()];
-    for (int i=0; i<rpoints; i++)
-    {
-        double tmpr = std::log(minr*std::pow(rmultiplier, i));
-        if (kspace)
-            tmpr = 0.5*tmpr;    // take square root if kspace, so k^2 -> k
-        lnrvals.push_back(tmpr);
-        rvals.push_back(std::exp(lnrvals[i]));
-        tmprarray[i] = std::exp(lnrvals[i]);
-    }
-
-    if (kspace)
-    {
-        minr=std::sqrt(minr);
-        rmultiplier = std::sqrt(rmultiplier);
-    }
-
-    interpolator_y=-1;  // if >=0, interpolator is initialized, must free
-    // memory (delete tmprarray and tmpnarray at the end)
-
-
-	std::stringstream ss;
-    ss << "Data read from file " << datafile << ", minr: " << minr
-        << " maxr: " << MaxR() << " rpoints: " << rpoints << " maxy "
-        << yvals[yvals.size()-1] << " x0 " << X0()
-        << " Q_{s,0}^2 = " << 2.0/SQR(SaturationScale(0, 0.393469)) << " GeV^2 [ N(r^2=2/Q_s^2) = 0.3934]"
-        << " (AmplitudeLib v. " << AMPLITUDELIB_VERSION << ")" ;
-    info_string = ss.str();
-}
 
 /*
  * Initializes interpolation method with all read data points at given y
  * If bspline is true, then use bspline interpolation, default is false
  */
-void AmplitudeLib::InitializeInterpolation(double y, bool bspline)
+void AmplitudeLib::InitializeInterpolation(double xbj)
 {
-	if (y<0)
+	if (xbj > X0())
 	{
-		cerr << "Asked to initialize interpolator with negative rapidity " << y <<"! "
-			<< "Dont know what to do, panicking... " << LINEINFO << endl;
+		cerr << "Asked to initialize interpolator with too large x=" << xbj
+        << " (x0=" << X0() <<")! "
+        << "Dont know what to do, panicking... " << LINEINFO << endl;
 		exit(1);
 	}
-	
+
+    double y = std::log(xbj/X0());
 	if (y>MaxY())
 	{
 		cerr << "Asked to initialize interpolator with too large y=" << y <<", maxy=" << MaxY() << endl;
 		exit(1);
 	}
 	
-    if (std::abs(interpolator_y - y) < 0.01) return;    // Already done it
-    if (interpolator_y>=0)
+    if (std::abs((interpolator_xbj - xbj)/xbj) < 0.001) return;    // Already done it
+    if (interpolator_xbj>=0)
     {
-        interpolator_y=-1;
+        interpolator_xbj=-1;
         delete interpolator;
     }
     for (int i=0; i<rpoints; i++)
@@ -709,10 +556,9 @@ void AmplitudeLib::InitializeInterpolation(double y, bool bspline)
         tmpnarray[i] = N(tmpr, y);
     }
     interpolator = new Interpolator(tmprarray, tmpnarray, rpoints);
-    if (bspline)
-        interpolator->SetMethod(INTERPOLATE_BSPLINE);
+
     interpolator->Initialize();
-    interpolator_y = y;
+    interpolator_xbj = xbj;
     
     maxr_interpolate=-1;
     int iter=0;
@@ -721,7 +567,7 @@ void AmplitudeLib::InitializeInterpolation(double y, bool bspline)
     const int MAXITER=40;
     for (double r=0.01; r<=MaxR(); r+=step)
     {
-        if (N(r,y)>=0.9999)		// check that this accuracy is the same as in rbk/src/solver.cpp
+        if (N(r,y)>=0.99999)		// check that this accuracy is the same as in rbk/src/solver.cpp
         {
             if (step<1e-2)
             {
@@ -747,12 +593,12 @@ void AmplitudeLib::InitializeInterpolation(double y, bool bspline)
 /*
  * Initializes interpolator and returns it
  */
-Interpolator* AmplitudeLib::MakeInterpolator(double y)
+Interpolator* AmplitudeLib::MakeInterpolator(double xbj)
 {
     std::vector<double> tmpnvals;
     for (int i=0; i<rpoints; i++)
     {
-        tmpnvals.push_back(N(rvals[i], y));
+        tmpnvals.push_back(N(rvals[i], xbj));
     }
     Interpolator* inter = new Interpolator(rvals, tmpnvals);
     inter->Initialize();
@@ -761,15 +607,6 @@ Interpolator* AmplitudeLib::MakeInterpolator(double y)
         
 }
 
-AmplitudeLib::~AmplitudeLib()
-{
-    if (interpolator_y>=0)
-    {
-        delete interpolator;
-    }
-    delete[] tmpnarray;
-    delete[] tmprarray;
-}
 
 int AmplitudeLib::RPoints()
 {
@@ -785,7 +622,7 @@ double AmplitudeLib::MaxR()
     return minr*std::pow(rmultiplier, rpoints-1);
 }
 
-int AmplitudeLib::YVals()
+int AmplitudeLib::YPoints()
 {
     return yvals.size();
 }
@@ -812,6 +649,96 @@ void AmplitudeLib::SetX0(double x0_)
 	x0=x0_;
 }
 
+std::string AmplitudeLib::GetString()
+{
+	return info_string;
+}
+
+void AmplitudeLib::SetFTMethod(FT_Method f)
+{
+	ft=f;	
+}
+
+
+FT_Method AmplitudeLib::GetFTMethod()
+{
+	return ft;
+}
+
+std::string AmplitudeLib::Version()
+{
+	std::stringstream s;
+	s << AMPLITUDELIB_VERSION << " (build " <<  __DATE__ << " " << __TIME__ << ")";
+	return s.str();
+}
+
+/*
+ * UGD normalization here is the "KMR" normalization, see e.g. 
+ * Ref. hep-ph/0101348] (eq (26) and hep-ph/0111362 (eq (41)
+ */
+
+
+/* KMR UGD C_F/(8\pi^3) S_T/\alpha_s(q) q^4 S_k(q)
+ * default value of S_T is 1.0, so it is left for the user to 
+ * specify
+ * Scale is the scale at which alpha_s is evaluated, if negative (default)
+ * use q^2
+ * S_k is 2d FT of S(r) without extra 2pi factors,
+ * S(k) = \int d^2 r e^(iqr) S(r), AmplitudeLib::S_
+ */
+double AmplitudeLib::UGD(double q, double y, double scale_, double S_T)
+{
+	double scale;
+	if (scale_<0) scale=q*q; else scale=scale_;
+	double alphas = 0.2; ///Alphas(scale);
+    cerr << "TODO! Alphas is not implemented!" << LINEINFO << endl;
+	return Cf / (8.0 * M_PI*M_PI*M_PI) * S_T/alphas * std::pow(q,4) * S_k(q, y, ADJOINT);
+
+}
+
+/*
+ * Integrated GD, x*g(x), from UGD
+ * The Q^2 dependence comes as a upper limit of an integral
+ * xg(x,Q^2) = \int_0^Q dq^2/q^2 UGD(q)
+ */
+double Inthelperf_xg(double qsqr, void* p);
+struct Inthelper_xg
+{
+	double y,q; AmplitudeLib* N;
+};
+double AmplitudeLib::xg(double x, double q)
+{
+	Inthelper_xg par; 
+	par.N=this;
+	double y = std::log(X0()/x); InitializeInterpolation(y);
+	par.y=y; par.q=q;
+	
+	gsl_function fun; fun.function=Inthelperf_xg;
+	fun.params=&par;
+	double result, abserr; 
+    gsl_integration_workspace* ws = gsl_integration_workspace_alloc(100);
+	int status = gsl_integration_qag(&fun, 0, SQR(q), 0, 0.01,
+		100, GSL_INTEG_GAUSS51, ws, &result, &abserr);
+	gsl_integration_workspace_free(ws);
+       
+    if (status)
+    {
+		cerr << "UGD integral failed at " << LINEINFO <<", x=" << x
+			<< ", k_T=" << q << " res " << result << " relerr " << std::abs(abserr/result)  << endl;
+    }
+	return result;
+}
+
+double Inthelperf_xg(double qsqr, void* p)
+{
+	Inthelper_xg* par = (Inthelper_xg*) p;
+	return 1.0/qsqr * par->N->UGD(std::sqrt(qsqr), par->y, SQR(par->q));
+}
+
+
+/*
+ TODO: mitä näille?
+
 void AmplitudeLib::SetSigma02(double s)
 {
 	sigma02 = s;
@@ -822,10 +749,7 @@ double AmplitudeLib::Sigma02()
 	return sigma02;
 }
 
-std::string AmplitudeLib::GetString()
-{
-	return info_string;
-}
+
 
 double AmplitudeLib::Alphas(double Qsqr)
 {
@@ -851,25 +775,10 @@ void AmplitudeLib::SetRunningCoupling(RUNNING_ALPHAS as_)
 	as=as_;
 }
 
-RUNNING_ALPHAS AmplitudeLib::GetRunningCoupling()
+RunningAlphas AmplitudeLib::GetRunningCoupling()
 {
 	return as;
 }
 
-void AmplitudeLib::SetFTMethod(FT_METHOD f)
-{
-	ft=f;	
-}
 
-
-FT_METHOD AmplitudeLib::GetFTMethod()
-{
-	return ft;
-}
-
-std::string AmplitudeLib::Version()
-{
-	std::stringstream s;
-	s << AMPLITUDELIB_VERSION << " (build " <<  __DATE__ << " " << __TIME__ << ")";
-	return s.str();
-}
+*/

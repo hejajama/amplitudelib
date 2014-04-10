@@ -7,6 +7,8 @@
 #include "mrst99.h"
 #include <string>
 
+using namespace Amplitude;
+
 /*
  * Default value of param is -1
  */

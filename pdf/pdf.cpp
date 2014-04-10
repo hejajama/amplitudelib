@@ -1,9 +1,12 @@
 /*
  * Virtual class to hide different parton distribution functions
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi> 2011-2014
  */
 
 #include "pdf.hpp"
+
+using namespace std;
+using namespace Amplitude;
 
 PDF::PDF()
 {

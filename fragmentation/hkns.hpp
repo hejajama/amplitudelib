@@ -5,7 +5,7 @@
  * HKNS fragmentation function
  * Uses fragmentation_hknsff07.f downloaded from
  * http://research.kek.jp/people/kumanos/ffs.html
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
 
 #include <string>
@@ -15,7 +15,7 @@
 class HKNS : public FragmentationFunction
 {
     public:
-        REAL Evaluate(Parton p, Hadron h, REAL x, REAL qs);
+        double Evaluate(Amplitude::Parton p, Amplitude::Hadron h, double x, double qs);
         HKNS();
         std::string GetString();
     private:

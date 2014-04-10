@@ -1,6 +1,6 @@
 /*
  * KKP Fragmentation function
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
 
 #include "hkns.hpp"
@@ -26,8 +26,10 @@ extern "C"
     void hknsff_(double &q2, double &x, int &iset, int &icharge, double partons[11], double grad[17][11]);
 }
 
+using namespace Amplitude;
+
 // D_{p->h}, x: long. mom. fraction, qs: scale (GeV)
-REAL HKNS::Evaluate(Parton p, Hadron h, REAL x, REAL qs)
+double HKNS::Evaluate(Parton p, Hadron h, double x, double qs)
 {
     if (x<0 or x>1)
     {
@@ -105,9 +107,9 @@ REAL HKNS::Evaluate(Parton p, Hadron h, REAL x, REAL qs)
     }
     double qs2 = qs*qs;
     double errors[17][11];
-    REAL partons[11];
+    double partons[11];
     hknsff_(qs2, x, set, charge, partons, errors);
-    REAL result=0;
+    double result=0;
     
     if (p==G) result = partons[5];
     else if (p==U) result = partons[6];

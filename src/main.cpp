@@ -1,6 +1,6 @@
 /*
  * AmplitudeLib, reads output of the BK equation solver 
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2013
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
 
 #include "../tools/tools.hpp"
@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 using namespace std;
+using namespace Amplitude;
 
 
 enum Mode
@@ -57,7 +58,7 @@ enum Mode
 int main(int argc, char* argv[])
 {
     std::stringstream infostr;
-    infostr << "# amplitudeLib   (c) Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2013 " << endl;
+    infostr << "# amplitudeLib   (c) Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014 " << endl;
     infostr << "# Command: ";
     for (int i=0; i<argc; i++)
         infostr << argv[i] << " ";
@@ -76,7 +77,6 @@ int main(int argc, char* argv[])
     double r=-1;
     double Qsqr=10;
     bool kspace=false;
-    bool bspline=false;
     bool deuteron=false;
     double miny=3; double maxy=4;
     double minpt=1, maxpt=8;
@@ -86,8 +86,8 @@ int main(int argc, char* argv[])
     char dps_mode='a';
     double pt1=0,pt2=0,y1=0,y2=0;
     double sigma02=1.0;
-    RUNNING_ALPHAS as = RUNNING;
-    FT_METHOD ft = ACC_SERIES;
+    RunningAlphas as = RUNNING;
+    FT_Method ft = ACC_SERIES;
     Hadron final_particle = PI0;    // final state particle in single particle
                                     // production
     Parton parton=U;
@@ -105,7 +105,6 @@ int main(int argc, char* argv[])
         cout << "-gsl_ft: use GSL numerical integral to compute FT for S_k " << endl;
         cout << "-bessel_ft: use in principle more advanced accelerated summation method to compute FT for S_k (default)" << endl;
         cout << "-kspace: data is in k (momentum) space" << endl;
-        cout << "-bspline: use bspline interpolation (for noisy data) [EXPERIMENTAL]" << endl;
         cout << "-loglogder: print d ln N / d ln x^2" << endl;
         cout << "-sqrts sqrts (in GeV)" << endl;
         
@@ -311,8 +310,6 @@ int main(int argc, char* argv[])
 			y1 = StrToReal(argv[i+1]);
 		else if (string(argv[i])=="-y2")
 			y2 = StrToReal(argv[i+1]);
-        else if (string(argv[i])=="-bspline")
-            bspline=true;
         else if (string(argv[i])=="-satscale")
         {
             mode=SATSCALE;
@@ -350,7 +347,8 @@ int main(int argc, char* argv[])
 				AmplitudeLib* ugdn = new AmplitudeLib(string(argv[i+2]));
 				pdf = new UGDPDF(ugdn, StrToReal(argv[i+3]));
 				if (string(argv[i+1])=="ugd_fixed")
-					ugdn->SetRunningCoupling(FIXED);
+                    cerr << "UGD running coupling setting is not implemented! " << LINEINFO << endl;
+                    //ugdn->SetRunningCoupling(FIXED);
 			}
 			else if (string(argv[i+1])=="eps09")
 			{
@@ -460,36 +458,35 @@ int main(int argc, char* argv[])
 		datafile=ktfact_datafile2;
 	
     AmplitudeLib N2(datafile);
-    N.SetSigma02(sigma02); N2.SetSigma02(sigma02);
+    ///N.SetSigma02(sigma02); N2.SetSigma02(sigma02);
     N2.SetFTMethod(ft);
-    N.SetRunningCoupling(as); N2.SetRunningCoupling(as);
+    ///N.SetRunningCoupling(as); N2.SetRunningCoupling(as);
     if (x0>0) { N.SetX0(x0); N2.SetX0(x0); }
-    N.InitializeInterpolation(y,bspline);
+    N.InitializeInterpolation(N.X0()*std::exp(-y));
     if (xbj>=0) y = std::log(N.X0()/xbj);
-    if (N.GetRunningCoupling()==FIXED)
+    /*if (N.GetRunningCoupling()==FIXED)
 		cout << "# Fixed alphas = " << N.Alphas(1) << endl;
 	else
-		cout << "# Running alphas" << endl;
+		cout << "# Running alphas" << endl;*/
     cout << "# y = " << y << ", x_0 = " << N.X0() << endl;
 
 	
-    
-    if (mode==X_TO_K)
+    if (mode==X)
     {
-		double qs = 1.0/N.SaturationScale(y, 0.22);
-		cout << "#FT of N(r)/r^2, Q_s = " << qs << endl;
-        double mink = 1e-5; double maxk = 1.0/N.MinR()*100;
-        int kpoints=100;
-        double kmultiplier = std::pow(maxk/mink, 1.0/(kpoints-1.0));
-        cout << "# k [GeV]     Amplitude N(k)    FT of S   k/Q_s" << endl;
-        for (int kind=0; kind<kpoints; kind++)
+        cout <<"# Saturation scale r_s in 1/GeV / k_s in GeV (N(r_s) = " << Ns <<endl;
+        cout <<"### " << N.SaturationScale(y, Ns) << endl;
+        //cout << "# r [1/GeV]     Amplitude   \\partial_r   \\partial2 "
+        // << " r d ln N / d ln r^2" << endl;
+        cout << "# r   N" << endl;
+        double minr = N.MinR()*1.1; double maxr=N.MaxR()*0.99;
+        for (double r=minr; r<maxr; r*=1.03)
         {
-            double tmpk = mink*std::pow(kmultiplier, kind);
-            double res = N.N_k(tmpk, y);
-            double ft_s=N.S_k(tmpk, y);
-            cout <<tmpk << " " << res << " " << ft_s << " " << tmpk/qs << endl;
+            cout << std::scientific << std::setprecision(9) << r << " " << N.N(r, y) << endl;/* << " "
+             << N.N(r,y,1) << " " << N.N(r,y,2) <<
+             " " << N.LogLogDerivative(r,y) << endl;*/
         }
-    }
+   }
+    /*
     else if (mode==S_X_TO_K)
     {
 		double qs = std::sqrt(2.0)/N.SaturationScale(y, 0.393469);
@@ -521,20 +518,22 @@ int main(int argc, char* argv[])
         }
     }
 
-    else if (mode==X)
+    else  if (mode==X_TO_K)
     {
-        cout <<"# Saturation scale r_s in 1/GeV / k_s in GeV (N(r_s) = " << Ns <<endl;
-        cout <<"### " << N.SaturationScale(y, Ns) << endl;
-        //cout << "# r [1/GeV]     Amplitude   \\partial_r   \\partial2 "
-        // << " r d ln N / d ln r^2" << endl;
-        cout << "# r   N" << endl;
-        double minr = N.MinR()*1.1; double maxr=N.MaxR()*0.99;
-        for (double r=minr; r<maxr; r*=1.03)
+		double qs = 1.0/N.SaturationScale(y, 0.22);
+		cout << "#FT of N(r)/r^2, Q_s = " << qs << endl;
+        double mink = 1e-5; double maxk = 1.0/N.MinR()*100;
+        int kpoints=100;
+        double kmultiplier = std::pow(maxk/mink, 1.0/(kpoints-1.0));
+        cout << "# k [GeV]     Amplitude N(k)    FT of S   k/Q_s" << endl;
+        for (int kind=0; kind<kpoints; kind++)
         {
-            cout << std::scientific << std::setprecision(9) << r << " " << N.N(r, y) << endl;/* << " "
-             << N.N(r,y,1) << " " << N.N(r,y,2) <<
-             " " << N.LogLogDerivative(r,y) << endl;*/
+            double tmpk = mink*std::pow(kmultiplier, kind);
+            double res = N.N_k(tmpk, y);
+            double ft_s=N.S_k(tmpk, y);
+            cout <<tmpk << " " << res << " " << ft_s << " " << tmpk/qs << endl;
         }
+    
     }
     else if (mode==YDEP)
     {
@@ -841,6 +840,7 @@ int main(int argc, char* argv[])
 		cout << endl << "### Fragfun: " << endl;
 		fragfun->Test();
 	}
+    */
     else
     {
         cerr << "Unkown mode " << argv[3] << endl;

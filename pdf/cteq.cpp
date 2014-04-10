@@ -12,6 +12,8 @@
 
 #define NLO_CTEQ12
 
+using namespace Amplitude;
+
 double CTEQ::xq(double x, double q, Parton p)
 {
 	if (!initialized)

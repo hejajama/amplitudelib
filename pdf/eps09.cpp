@@ -10,6 +10,7 @@
 #include <string>
 #include <cstdlib>
 
+using namespace Amplitude;
 
 double EPS09::xq(double x, double q, Parton p)
 {

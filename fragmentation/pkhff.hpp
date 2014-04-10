@@ -7,7 +7,7 @@
  * Uses pkhff.f downloaded from
  * http://www2.pv.infn.it/~radici/FFdatabase/
  * Ref Phys. Rev. D 62 (2000) 054001
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
 
 #include <string>
@@ -17,7 +17,7 @@
 class PKHFF : public FragmentationFunction
 {
     public:
-        REAL Evaluate(Parton p, Hadron h, REAL x, REAL qs);
+        double Evaluate(Amplitude::Parton p, Amplitude::Hadron h, double x, double qs);
         PKHFF();
         std::string GetString();
     private:

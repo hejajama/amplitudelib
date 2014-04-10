@@ -19,11 +19,11 @@
 class EPS09 : public PDF
 {
     public:
-        double xq(double x, double q, Parton p);    // return x*q(x,q)
+        double xq(double x, double q, Amplitude::Parton p);    // return x*q(x,q)
         void Initialize(int param=-1);
         std::string GetString();
         
-        void SetOrder(Order o);
+        void SetOrder(Amplitude::Order o);
 
         double MinQ();
         double MaxQ();

@@ -14,16 +14,16 @@ class PDF
     public:
 		PDF();
         ~PDF();
-        virtual double xq(double x, double q, Parton p)=0;    // return x*q(x,q), q in GeV
+        virtual double xq(double x, double q, Amplitude::Parton p)=0;    // return x*q(x,q), q in GeV
         // x_1*x_2*f(x_1,x_2) dpfd with kinematical constraint x_1+x_2 < 1
-        double Dpdf(double x1, double x2, double q, Parton p1, Parton p2);	
+        double Dpdf(double x1, double x2, double q, Amplitude::Parton p1, Amplitude::Parton p2);	
         virtual void Initialize(int param=-1);
         virtual std::string GetString();
         virtual double MinX();
         virtual double MinQ();   // GeV
         virtual double MaxX();
         virtual double MaxQ();
-        virtual void SetOrder(Order o);
+        virtual void SetOrder(Amplitude::Order o);
         virtual int SetA(int A_);	// set A for nuclear pdf, returns -1 if does not support other than proton
         
         virtual void Test();
@@ -31,7 +31,7 @@ class PDF
         void PlotPdf(double Q);
 	protected:
 		bool initialized;
-		Order order;
+		Amplitude::Order order;
 		int A;
 };
 

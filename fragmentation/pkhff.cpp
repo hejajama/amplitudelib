@@ -12,12 +12,14 @@ extern "C"
     // parton labels in output array:
     // output arrays are u[1] = u-quark, u[2]=ubar-quark
     
-    void pkhff_(int& set, int& charge, REAL& x, REAL &qsqr,
-        REAL u[2], REAL d[2], REAL s[2], REAL c[2], REAL b[2], REAL& g, int &ifini);
+    void pkhff_(int& set, int& charge, double& x, double &qsqr,
+        double u[2], double d[2], double s[2], double c[2], double b[2], double& g, int &ifini);
 }
 
+using namespace Amplitude;
+
 // D_{p->h}, x: long. mom. fraction, qs: scale (GeV)
-REAL PKHFF::Evaluate(Parton p, Hadron h, REAL x, REAL qs)
+double PKHFF::Evaluate(Parton p, Hadron h, double x, double qs)
 {
     if (x<0 or x>1)
     {
@@ -80,9 +82,9 @@ REAL PKHFF::Evaluate(Parton p, Hadron h, REAL x, REAL qs)
     }
         
 
-    REAL u[2], d[2], s[2], c[2], b[2];
-    REAL g=0;
-    REAL qsqr=qs*qs;
+    double u[2], d[2], s[2], c[2], b[2];
+    double g=0;
+    double qsqr=qs*qs;
     if (qsqr < 1.01 or qsqr>5.99e6)
     {
         cerr << "Q^2 out of range for PKHFF fragmentation! " << LINEINFO << endl;
@@ -90,7 +92,7 @@ REAL PKHFF::Evaluate(Parton p, Hadron h, REAL x, REAL qs)
     }
     pkhff_(set, charge, x, qsqr, u, d, s, c, b, g, ifini);
 
-    REAL result=0;
+    double result=0;
     if (p==U)
         result=u[0];
     else if (p==D)

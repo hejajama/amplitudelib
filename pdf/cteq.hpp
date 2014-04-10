@@ -6,7 +6,7 @@
  * Real code is in file CT10Pdf.f downloaded from
  * http://hep.pa.msu.edu/cteq/public/index.html
  *
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
 
 #include "../tools/config.hpp"
@@ -16,11 +16,11 @@
 class CTEQ : public PDF
 {
     public:
-        double xq(double x, double q, Parton p);    // return x*q(x,q)
+        double xq(double x, double q, Amplitude::Parton p);    // return x*q(x,q)
         void Initialize(int param=-1);
         std::string GetString();
         
-        void SetOrder(Order o);
+        void SetOrder(Amplitude::Order o);
 
         double MinQ();
         double MaxQ();

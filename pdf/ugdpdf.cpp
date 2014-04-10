@@ -13,6 +13,8 @@
 #include <string>
 #include <sstream>
 
+using namespace Amplitude;
+
 UGDPDF::UGDPDF()
 {
 	cerr << "UGDPDF requires AmplitdeLib*, panicking!" << endl;
@@ -29,10 +31,13 @@ std::string UGDPDF::GetString()
 {
 	std::stringstream ss;
 	ss << "UGD PDF, sigma0/2 = " << sigma02 << " GeV^(-2), alphas ";
-	if (N->GetRunningCoupling()==RUNNING)
+    ///TODO
+/*
+    if (N->GetRunningCoupling()==RUNNING)
 		ss << "running";
 	else
 		ss << "fixed";
+        */
 	return ss.str();
 }
 

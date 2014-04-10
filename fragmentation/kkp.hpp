@@ -5,7 +5,7 @@
  * KKP fragmentation function
  * Uses fragmentation_kkp.f downloaded from
  * http://www.desy.de/~poetter/kkp.html
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
 
 #include <string>
@@ -15,7 +15,7 @@
 class KKP : public FragmentationFunction
 {
     public:
-        REAL Evaluate(Parton p, Hadron h, REAL x, REAL qs);
+        double Evaluate(Amplitude::Parton p, Amplitude::Hadron h, double x, double qs);
         KKP();
         std::string GetString();
         

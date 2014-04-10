@@ -33,7 +33,7 @@ class VirtualPhoton : public WaveFunction {
         std::string GetParamString();
         
         // default value for mass: use standard value
-        void SetQuark(Parton p, double mass=-1);
+        void SetQuark(Amplitude::Parton p, double mass=-1);
         
         
     private:
@@ -47,5 +47,7 @@ class VirtualPhoton : public WaveFunction {
 };
 
 std::ostream& operator<<(std::ostream& os, VirtualPhoton& ic);
+
+
 
 #endif

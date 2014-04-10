@@ -1,5 +1,5 @@
 /*
- * AmplitudeLib for the dipole amplitude
+ * AmplitudeLib2 for the dipole amplitude
  * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2013
  */
 
@@ -13,135 +13,272 @@
 #include <vector>
 #include <string>
 
-enum Polarization
-{
-	L,
-	T
-};
 
-// Running/fixed coupling
-enum RUNNING_ALPHAS
-{
-	RUNNING,
-	FIXED
-};
 
-enum FT_METHOD
-{
-	GSL,
-	ACC_SERIES   // fourier/fourier.c
-};
 
+
+/**
+ * Amplitude class
+ *
+ * Stores the loaded dipole amplitude (loaded by DataFile class), and
+ * evaluates the amplitude at given r,xbj.
+ * Also computes Fourier transfers between transverse coordinate and
+ * momentum spaces.
+ */
 class AmplitudeLib
 {
     public:
+        /**
+         * Loader.
+         * 
+         * Constructor, loads the solution for the BK equation from
+         * the given file and stores the result in memory.
+         * If the second optional argument is true, then it is
+         * assumed that the dipole amplitude is solved in momentum
+         * space
+         */
         AmplitudeLib(std::string datafile, bool kspace_=false);
         ~AmplitudeLib();
 
-        // der w.r.t r der times.
-        double N(double r, double y, int der=0, bool bspline=false);
+        /**
+         * Evaluate amplitude
+         *
+         * Evaluates the dipole amplitude at given dipole size r and at
+         * given Bjorken x (xbj). In momentum space the first argument is
+         * transverse momentum.
+         */
+        double N(double r, double xbj);
 
-        // S = 1-N
-        double S(double r, double y, int der=0);
+        /**
+         * Evaluate amplitude
+         *
+         * Evaluates the dipole amplitude in adjoint representation,
+         * 2N(r)-N(r)^2, at given dipole size r and at
+         * given Bjorken x (xbj). In momentum space the first argument is
+         * transverse momentum.
+         */
+        double N_A(double r, double xbj);
+
+        /**
+         * Scattering matrix
+         *
+         * Evaluate the scattering matrix 1-N (forced between 0 and 1)
+         * at given dipole size and Bjorken-x.
+         */
+         double S(double r, double xbj);
         
-        // Amplitude in k-space, ft with 1/r^2 prefactor
-        double N_k(double kt, double y);
+        /**
+         * Weizsäcker-Williams (WW) gluon distribution
+         *
+         * Computes the Weizsäcker-Williams (WW) gluon distribution
+         * (in momentum space), defiend as
+         *   WW_ugd = \int d^2 r/(2\pi r^2) exp(ik.r)N(r)
+         *       = \int dr/r BesselJ[0,k*r] * N(r)
+         * @param kt transverse momentum
+         * @param xbj Bjorken-x
+         */
+        double WW_ugd(double kt, double xbj);
 
-        // Amplitude from k space to x space
-        double N_k_to_x(double x, double y);
+        /**
+         * Fourier transfer to coordinate space
+         *
+         * Computes the dipole amplitude in coordinate space, defiend as
+         *  N(r) = r^2 \int d^2 k/(2\pi) exp(-ik.r) N(k)
+         *       = r^2 \int dk k BesselJ[0,k*r] * N(k)
+         * Arguments are transverse size and Bjorken-x'
+         *
+         * Note: requires that the loaded bk solution is in momentum space
+         */
+        double N_k_to_x(double r, double xbj);
 
-        // Regular ft to k-space for S^p=(1-N)^p, NO normalization factor
-        // \int e^(ik.r) S(r)
-        // if adjoint=true, then N is in adjoint representation
-        double S_k(double kt, double y, bool adjoint=false, double pow=1.0);
+        /**
+         * Scattering matrix in momentum space
+         *
+         * Compute (by Fourier transform) the scattering matrix in
+         * momentum space
+         * S_k = \int e^(ik.r) S(r)^pow
+         *
+         * If representation is set to ADJOINT, computes using the
+         * adjoint representation dipole amplitude.
+         *
+         * By default p=1, but user can set different pow, in which
+         * case fourier transfer of (1-N(r))^pow is computed. 
+         */
+        double S_k(double kt, double xbj, Amplitude::Representation=Amplitude::FUNDAMENTAL, double pow=1.0);
         
-        
 
-        // Amplitude in adjoint representation
-        double N_A(double r, double y, int der=0);
-        
-        void SetX0(double x0_);	// override x0
+        /**
+         * KMR unintegrated gluon distribution
+         *
+         * KMR unintegrated gluon distribution (UGD), defined as
+		 * C_F/(8\pi^3) S_T/\alpha_s(q) q^4 S_k(q)
+		 * Computes without factor S_T unless it is specified
+         * @param q Scale (GeV)
+         * @param as_scale scale at which the running coupling is evaluated, default: q
+         * @param S_T Transverse size of the target = normalization factor
+         * 
+         */
+		double UGD(double q, double y, double as_scale_=-1, double S_T=1.0);
 
-
-        // Virtual photon-proton cross sections, longitudinal and transverse
-        // Notice that these are not normalized, as we don't integrate over
-        // impact parameter
-        
-        double ProtonPhotonCrossSection(double Qsqr, double y, Polarization pol, Parton=LIGHT, double mass=-1); // default: sum over u,d,s quarks
-        double F2(double Qsqr, double y, Parton=LIGHT, double mass=-1);
-        double FL(double Qsqr, double y, Parton=LIGHT, double mass=-1);
-        double ReducedCrossSection(double qsqr, double y, double sqrts, Parton=LIGHT, double mass=-1);
-
-
-		//////////////// SINGLE INCLUSIVE, hybrid formalism
-		//////// File xs.cpp
-
-        // Differential forward hadron production multiplicity
-        // dN_h / (dy_h d^2 p_T)
-        double dHadronMultiplicity_dyd2pt(double y, double pt, double sqrts,
-            FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0, double scale=-1 );
-        // Parton level
-        double dHadronMultiplicity_dyd2pt_parton(double y, double pt, double sqrts,
-			PDF* pdf, bool deuteron, double scale=-1);
-        // Integrated over rapidity and pt range
-        double HadronMultiplicity(double miny, double maxy, double minpt, double maxpt, double sqrts,
-            FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0 );
-        // Average hadron multiplicity in rapidity range
-        double AverageHadronMultiplicity(double miny, double maxy, double pt, double sqrts, 
-            FragmentationFunction *fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0 );
-        // Douple parton scattering at fixed pt, y
-        double DPS(double y1, double y2, double pt1, double pt2, double sqrts,
-              FragmentationFunction* fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0, char dps_mode='c');
-        // Parton level DPS, includes PDF and sum over quarks/gluons, doesn't include fragmentation
-        double DPS_partonlevel(double y1, double y2, double pt1, double pt2, double sqrts,
-              PDF* pdf, bool deuteron=false, char dps_mode='c', double scale=-1);
-        double DPSMultiplicity(double miny, double maxy, double minpt, double maxpt, double sqrts,
-			FragmentationFunction* fragfun, PDF* pdf, bool deuteron=false, Hadron final=PI0, char dps_mode='c');
-
-		
-		/////////////// UGD  (file ugd.cpp)
-		
-		// KMR UGD C_F/(8\pi^3) S_T/\alpha_s(q) q^4 S_k(q)
-		// returns without factor S_T unless it is specified
-		double UGD(double q, double y, double scale_=-1, double S_T=1.0);
-		// Integrated GD from UGD
+        /**
+         * Gluon distribution from UGD
+         *
+         * Integrated gluon distribution computed from the unintegrated gluon distribution
+         * @param x Bjorken-x
+         * @param q Scale
+         */
 		double xg(double x, double q);
-		
-		// k_T factorization dN/d^2pt dy, ref e.g. hep-ph/0111362 (40)
-		double dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts, FragmentationFunction* fragfun, Hadron final, AmplitudeLib* N2=NULL );
-		double dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2=NULL );
-		
-		
-		///////
 
+        /**
+         * Initialize interpolation for certain Bjorken-x
+         */
+        void InitializeInterpolation(double xbj);
+
+        /**
+         * Test if interpolator is initialized at given Bjorken-x
+         */
+        bool InterpolatorInitialized(double xbj);
+
+        /**
+         * Create interpolator at given Bjorken-x and return it
+         */
+        Interpolator* MakeInterpolator(double xbj);
 
         // d ln N / d ln r^2
         double LogLogDerivative(double r, double y);
 
-        // Saturation scale N(r, y) = Ns
-        // Returns r
-        double SaturationScale(double y, double Ns);
+        /**
+         * Saturation scale
+         *
+         * Solve saturation scale defined as
+         * N(r=TODO, xbj)=Ns
+         */
+        double SaturationScale(double xbj, double Ns);
 
-        void InitializeInterpolation(double y, bool bspline=false);
-        bool InterpolatorInitialized(double y); // Returns whether or not the interpolator
-                                    // is initialized
-        Interpolator* MakeInterpolator(double y);
-    
-        int YVals();
+        
+        /**
+         * Number or rapidity values in the BK solution
+         */
+        int YPoints();
+
+        /**
+         * Number of dipole sizes in the BK solution
+         */
         int RPoints();
+
+        /**
+         * Minimum dipole size
+         */
         double MinR();
+
+        /**
+         * Maximum dipole size
+         */
         double MaxR();
         double MaxY();
         
-        double Sigma02();
-        void SetSigma02(double s_);
-
+        /**
+         * Initial Bjorken-x in the BK solution
+         *
+         * Can we owerwritten using SetX0() method
+         * @see SetX0
+         */
         double X0();
 
+        /**
+         * Set initial Bjorken-x
+         *
+         * Override the Bjoken-x at initial condition for the BK solution
+         * (x0).
+         */
+        void SetX0(double x0_);
+
+        /**
+         * Specify whether an error message to stderr is printed for too
+         * small/alrge dipoles or small/large xbj values
+         *
+         * @return previous setting
+         */
+
         bool SetOutOfRangeErrors(bool er);
-        
+
+        /**
+         * Returns an info string describing the BK solution and AmplitudeLib version
+         */
         std::string GetString();
+
+        /**
+         * Return the Fourier transfer method used
+         */
+        Amplitude::FT_Method GetFTMethod();
+
+        /**
+         * Set Fourier transfer method
+         * @see FT_Method
+         */
+        void SetFTMethod(Amplitude::FT_Method f);
+
+        /**
+         * Return version string
+         */
+        std::string Version();
+
+    private:
+        // [yind][r/kind]
+        std::vector< std::vector<double> > n;
+        std::vector<double> yvals;
+        std::vector<double> lnrvals;
+        std::vector<double> rvals;
+        Interpolator *interpolator;
+
+        bool kspace;    //! true if data is in kspace
+
+        double interpolator_xbj;  //! xbj at which the interpolator is initialized
+        double* tmprarray;
+        double* tmpnarray;
+
+        double minr;
+        double rmultiplier;
+
+        /**
+         * Max dipole size for interpolation
+         *
+         * When interpolating in coordinate space,
+         * force N(r>maxr_interpolate)=1 (avoid osciallatory 
+         * artifacts from interpolation code)
+         */
+        double maxr_interpolate;
         
+        int rpoints;    //! Number of dipole sizes
+
+        double x0;      //! Initial Bjorken-x
+        
+        
+
+        bool out_of_range_errors;  //! If true, don't print "out of range" errors
+        
+        std::string info_string;
+        
+        Amplitude::RunningAlphas as;
+        Amplitude::FT_Method ft;  // ACC SERIES: use j0_transfer from fourier/fourier.c,	
+					// it should be faster but sometimes it is much slower!!
+        
+        
+};
+
+
+
+
+		
+		///////
+
+/*
+ * TODO
+ *
+    double sigma02;		//! sigma_0 / 2,  ktfactorization hadronprod results are multiplied by this
+        
+        double Sigma02();
+        void SetSigma02(double s_);
         
         double Alphas(double qsqr);
         
@@ -151,46 +288,13 @@ class AmplitudeLib
         std::string Version();
         
         void SetFTMethod(FT_METHOD f);
-        FT_METHOD GetFTMethod();		
+        		
 
-        
-        
     private:
-        // [yind][r/kind]
-        std::vector< std::vector<double> > n;
-        std::vector<double> yvals;
-        std::vector<double> lnrvals;
-        std::vector<double> rvals;
-        Interpolator *interpolator;
-
-        bool kspace;    // true if data is in kspace
-
-        double interpolator_y;
-        double* tmprarray;
-        double* tmpnarray;
-
-        double minr;
-        double rmultiplier;
-        
-        double maxr_interpolate;  // When interpolating in coordinate space,
-                    // force N(r>maxr_interpolate)=1 (avoid osciallatory 
-                    // artifacts from interpolation code)
-        int rpoints;
-
-        double x0;
-        
-        double sigma02;		// sigma_0 / 2,  ktfactorization hadronprod results are multiplied by this
-
-        bool out_of_range_errors;  // don't print "out of range" errors
-        
-        std::string info_string;
-        
-        RUNNING_ALPHAS as;
-        FT_METHOD ft;  // ACC SERIES: use j0_transfer from fourier/fourier.c,	
-					// it should be faster but sometimes it is much slower!!
-        
-        
+        AmplitudeLib* N;
 };
+        
+*/
 
 const int INTERPOLATION_POINTS = 12;
 const double UGD_IR_CUTOFF=0.3;   // ugd(k<UGD_IR_CUTOFF)=0     BAD?????
@@ -200,5 +304,5 @@ const int FOURIER_ZEROS=2000;   // How many zeros of the Bessel functions is
 
 
 
-const std::string AMPLITUDELIB_VERSION = "1.1 2014-04-09";
+const std::string AMPLITUDELIB_VERSION = "2.0-dev 2014-xx-xx";
 #endif

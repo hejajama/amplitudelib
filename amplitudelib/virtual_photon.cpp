@@ -1,7 +1,7 @@
 /*
  * Virtual photon wave function
  *
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2010-2013
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2010-2014
  */
  
 #include "virtual_photon.hpp"
@@ -22,7 +22,6 @@ const double ZINTACCURACY=0.001;
 const int MAXITER_ZINT=500;
 const double MINZ=0.00001;  // Integration limits
 const double MAXZ=0.9999;
-
 
 VirtualPhoton::VirtualPhoton()
 {

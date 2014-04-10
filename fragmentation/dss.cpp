@@ -1,6 +1,6 @@
 /*
  * DSS Fragmentation function
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
 
 #include "dss.hpp"
@@ -29,6 +29,8 @@ extern "C"
         double fini;
     } fragini_;
 }
+
+using namespace Amplitude;
 
 // D_{p->h}, x: long. mom. fraction, qs: scale (GeV)
 double DSS::Evaluate(Parton p, Hadron h, double x, double qs)

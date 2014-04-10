@@ -11,19 +11,20 @@
 
 extern "C"
 {
-    REAL dlib_(REAL &z, REAL &Q2, REAL partons[11], int &ffset, int &fforder,
+    double dlib_(double &z, double &Q2, double partons[11], int &ffset, int &fforder,
         int &ihadron, int &icharge, int &icp, int &ipi);
         // parton = 5,4,3,2,1,0,-1,...,-5 means b,c,s,d,u,g,ubar,...,bbar
 }
 
+using namespace Amplitude;
 
 // D_{p->h}, x: long. mom. fraction, qs: scale (GeV)
-double FragmentationFunction::Evaluate(Parton p, Hadron h, REAL x, REAL q)
+double FragmentationFunction::Evaluate(Parton p, Hadron h, double x, double q)
 {
     cout <<" FragFun class is not tested, most likely doesn't work... " << LINEINFO << endl;
     return 0;
     /*
-    REAL partons[11];
+    double partons[11];
 
     int ihadron=0;
     int icharge=0;  // 0,1,2,3: 0 + - +&-
@@ -44,7 +45,7 @@ double FragmentationFunction::Evaluate(Parton p, Hadron h, REAL x, REAL q)
     int fset = 1;   // 1: K, 2: KKP, 3: BFGW
     int ipi = 1;    // best fit flag for BFGW
 
-    REAL q2 = q*q;
+    double q2 = q*q;
     dlib_(x, q2, partons, fset, forder, ihadron, icharge, icp, ipi);
 
     if (p==U)
