@@ -342,7 +342,16 @@ int main(int argc, char* argv[])
         {
 			if (string(argv[i+1])=="cteq")
 				pdf = new CTEQ();
-			else if (string(argv[i+1])=="ugd" or string(argv[i+1])=="ugd_fixed")
+			else
+				pdf = new EPS09();
+				pdf->SetA(StrToInt(argv[i+2]));
+			}
+			else
+			{
+				cerr << "Unknown PDF type " << argv[i+1] << endl;
+				return -1;
+			}
+		} if (string(argv[i+1])=="ugd" or string(argv[i+1])=="ugd_fixed")
 			{
 				AmplitudeLib* ugdn = new AmplitudeLib(string(argv[i+2]));
 				pdf = new UGDPDF(ugdn, StrToReal(argv[i+3]));

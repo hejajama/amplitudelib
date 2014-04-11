@@ -34,7 +34,7 @@ SingleInclusive::SingleInclusive(AmplitudeLib* N_)
  * 
  * If N2!=NULL, it is used to compute \phi_2
  */
-struct Inthelper_ktfact{ double y1, y2, pt, qt; AmplitudeLib *N1, *N2; };
+struct Inthelper_ktfact{ double x1, x2, pt, qt; AmplitudeLib *N1, *N2; };
 double Inthelperf_ktfact_q(double q, void* p);
 double Inthelperf_ktfact_phi(double phi, void* p);
 const int INTPOINTS_KTFACT = 4;	
@@ -57,7 +57,8 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, doubl
 		
 	}
 	
-	Inthelper_ktfact par; par.y1=y1; par.y2=y2; par.pt=pt; par.N1=N;
+	Inthelper_ktfact par; par.pt=pt; par.N1=N;
+    par.x1=x1; par.x2=x2;
 	par.N2=N2;
 	gsl_function fun; fun.params=&par;
 	fun.function=Inthelperf_ktfact_q;
@@ -128,10 +129,10 @@ double Inthelperf_ktfact_phi(double phi, void* p)
 	double ugd1,ugd2;
 	if (par->N2==NULL)
 	{
-		par->N1->InitializeInterpolation(par->y1);
-		ugd1 = par->N1->Dipole_UGD(par->qt, par->y1, SQR(par->pt));
-		par->N1->InitializeInterpolation(par->y2);
-		ugd2 = par->N1->Dipole_UGD(kt_m_qt, par->y2, SQR(par->pt));
+		par->N1->InitializeInterpolation(par->x1);
+		ugd1 = par->N1->Dipole_UGD(par->qt, par->x1, SQR(par->pt));
+		par->N1->InitializeInterpolation(par->x2);
+		ugd2 = par->N1->Dipole_UGD(kt_m_qt, par->x2, SQR(par->pt));
 	} 
 	else
 	{
@@ -139,11 +140,11 @@ double Inthelperf_ktfact_phi(double phi, void* p)
 		{
 			#pragma omp section
 			{
-				ugd1 = par->N1->Dipole_UGD(par->qt, par->y1, SQR(par->pt));
+				ugd1 = par->N1->Dipole_UGD(par->qt, par->x1, SQR(par->pt));
 			}
 			#pragma omp section
 			{
-				ugd2 = par->N2->Dipole_UGD(kt_m_qt, par->y2, SQR(par->pt));
+				ugd2 = par->N2->Dipole_UGD(kt_m_qt, par->x2, SQR(par->pt));
 			}
 		}
 		

@@ -29,7 +29,6 @@ class MRST : public PDF
          * the default set is used. Sets are defined in file
          * mrst99.h
          */
-         *
         void Initialize(int param=-1);
         std::string GetString();
     private:

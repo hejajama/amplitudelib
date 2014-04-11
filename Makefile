@@ -6,10 +6,11 @@ include filelist.m
 
 all: amplitude
 
-amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp src/amplitude.cpp
+amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp src/amplitude.cpp src/cross_section.cpp
 	#g++ $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp -lgfortran -o amplitude
 	ar cru libamplitude.a $(OBJECTS) $(FTOBJECTS) $(FOBJECTS)
 	g++ $(CXXFLAGS) $(LDFLAGS) src/amplitude.cpp libamplitude.a -o amplitude
+	g++ $(CXXFLAGS) $(LDFLAGS) src/cross_section.cpp libamplitude.a -o cross_section
 
 interpolator: tools/interpolator.o tools/interpolation.o
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/interpolator.o tools/interpolation.o -o interpolator

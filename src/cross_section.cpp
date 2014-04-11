@@ -8,10 +8,19 @@
 #include "../amplitudelib/amplitudelib.hpp"
 #include "../tools/config.hpp"
 #include "../tools/tools.hpp"
+#include "../pdf/cteq.hpp"
+#include "../fragmentation/dss.hpp"
+#include "../fragmentation/kkp.hpp"
+#include "../fragmentation/hkns.hpp"
+#include "../fragmentation/pkhff.hpp"
+#include "../pdf/eps09.hpp"
+#include "../amplitudelib/single_inclusive.hpp"
 #include <string>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <ctime>
+#include <unistd.h>
 
 using namespace Amplitude;
 using namespace std;
@@ -55,6 +64,7 @@ int main(int argc, char* argv[])
         cout << "-fixed_alphas: use fixed coupling in kt-factorization" << endl;
         cout << endl;
         cout << "====== General ======" << endl;
+        cout << "-data bksolutionfile"<<endl;
         cout << "-y rapidity";
         cout << "-sqrts center-of-mass energy [GeV]" << endl;
         cout << "-minpt, -maxpt, -miny, -maxy" << endl;
@@ -71,18 +81,32 @@ int main(int argc, char* argv[])
     double x0=-1;
     double y=-1;
     double sqrts=0;
-    Order o;
+    Order o=LO;
     PDF* pdf;
-    FragmentationFunction* ff;
+    FragmentationFunction* fragfun;
     std::string datafile="";
     std::string datafile_probe="";
-    Mode mode;
-    Hadron final_particle;
+    Mode mode=HYBRID_PT;
+    Hadron final_particle=PI0;
+    bool deuteron=false;
+    double ptstep=0.1;
+    double minpt=1, maxpt=2;
+    double miny=0; double maxy=1;
 
     for (int i=1; i<argc; i++)
     {
         if (string(argv[i])=="-x0")
             x0 = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-data")
+            datafile=argv[i+1];
+        else if (string(argv[i])=="-y")
+            y = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-sqrts")
+            sqrts = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-maxpt")
+            maxpt = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-minpt")
+            minpt = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-pt_spectrum" or string(argv[i])=="-pt_spectrum_avg")
         {
             if (string(argv[i])=="-pt_spectrum")
@@ -135,7 +159,7 @@ int main(int argc, char* argv[])
         
         else if (string(argv[i])=="-ktfact_probe")
         {
-			ktfact_datafile2=argv[i+1];
+			datafile_probe=argv[i+1];
 		}
 			
         else if (string(argv[i])=="-hadronprod_int")
@@ -163,6 +187,39 @@ int main(int argc, char* argv[])
                 exit(1);
             }
         }
+        else if (string(argv[i])=="-ptstep")
+            ptstep = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-fragfun")
+        {
+            if (string(argv[i+1])=="kkp")
+                fragfun = new KKP();
+            else if (string(argv[i+1])=="pkh")
+                fragfun = new PKHFF();
+            else if (string(argv[i+1])=="hkns")
+                fragfun = new HKNS();
+            else if (string(argv[i+1])=="dss")
+                fragfun = new DSS(); 
+            else
+            {
+                cerr << "Fragmentation function type " << argv[i+1] << " is not valid!" << endl;
+                return -1;
+            }
+        }
+        else if (string(argv[i])=="-pdf")
+        {
+			if (string(argv[i+1])=="cteq")
+				pdf = new CTEQ();
+			else if (string(argv[i+1])=="eps09")
+            {
+				pdf = new EPS09();
+				pdf->SetA(StrToInt(argv[i+2]));
+			}
+			else
+			{
+				cerr << "Unknown PDF type " << argv[i+1] << endl;
+				return -1;
+			}
+		}
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -173,18 +230,165 @@ int main(int argc, char* argv[])
     
     // Read data
     AmplitudeLib N(datafile);
-    if (x0>0)
-        N.SetX0(x0);
-    if (y>=0)   // User set rapidity
-        xbj=N.X0()*std::exp(-y);
-    else // User set xbj
-        y = std::log(N.X0()/xbj);
+    SingleInclusive xs(&N);
 
-    N.InitializeInterpolation(xbj);
+    
+    if (datafile_probe != "")
+        datafile_probe = datafile;
+    AmplitudeLib N2(datafile);
+    if (x0>0)
+    {
+        N.SetX0(x0); N2.SetX0(x0);
+    }
+
+    pdf->SetOrder(o);
+    fragfun->SetOrder(o);
+
+    time_t now = time(0);
+    string today = ctime(&now);
+    
+    char *hostname = new char[500];
+    gethostname(hostname, 500);
+    
+    cout <<"#"<<endl<<"# AmplitudeLib v. " << N.Version()  << " running on " << hostname << endl;
+    cout <<"# Now is " << today ;
+    cout <<"#"<<endl;
+	delete[] hostname;
+
     cout << "# " << N.GetString() << endl;
+    cout << "# Fragfun: " << fragfun->GetString() << endl;
+    cout << "# PDF: " << pdf->GetString() << endl;
 
     //**************** Different operation modes
 
+    if (mode==HYBRID_PT)
+    {
+        pdf->Initialize();
+        if (fragfun==NULL)
+        {
+            cerr << "Fragfun not spesified!" << endl;
+            return -1;
+        }
+        cout << "# Single inclusive yield, sqrt(s) = " << sqrts << "GeV" << endl;
+        
+        cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << " Producing particle " << ParticleStr(final_particle) <<  endl;
+        cout << "# p_T   dN/(d^2 p_T dy) " << endl;
+        //cout << "# pt   cteq-partonlevel   ugd-partonlevel " << endl;
+        for (double pt=minpt; pt<=maxpt*1.01; pt+=ptstep)
+        {
+            double result = xs.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, pdf, final_particle, deuteron);
+            cout << pt << " " << result << endl;
+
+        }
+    }
+    
+    else if (mode==HYBRID_PARTON)
+    {
+		cout <<"# Parton level hybrid formalism" << endl;
+		cout <<"# sqrt(s)=" << sqrts << " GeV" << endl;
+		cout <<"# pdf: " << pdf->GetString() << endl;
+		cout <<"# p_T   dN/(d^2 p_T dy)-gluon uquark  dquark  squark  " << endl;
+		pdf->Initialize();
+        
+        for (double pt=minpt; pt<=maxpt; pt+=ptstep)
+        {
+			double xa = pt*std::exp(-y)/sqrts;
+			double ya = std::log(N.X0()/xa);
+			double xp =  pt*std::exp(y)/sqrts;
+			N.InitializeInterpolation(ya);
+				
+
+			double scale = pt;
+			double sk = N.S_k(pt, xa, FUNDAMENTAL);
+			double sk_adj = N.S_k(pt, xa, ADJOINT);
+
+		
+			double partonlevel_u = 1.0/SQR(2.0*M_PI)  * sk * pdf->xq(xp, scale, U);
+			double partonlevel_d = 1.0/SQR(2.0*M_PI)  * sk * pdf->xq(xp, scale, D);
+			double partonlevel_s = 1.0/SQR(2.0*M_PI)  * sk * pdf->xq(xp, scale, S);
+			double partonlevel_g = 1.0/SQR(2.0*M_PI)  * sk_adj * pdf->xq(xp, scale, G);
+       
+            cout << pt << " " << partonlevel_g << " " << partonlevel_u << " " << partonlevel_d << " " << partonlevel_s  << endl;
+        }
+		
+	}
+    
+    else if (mode==HYBRID_PT_AVG)
+    {
+        pdf->Initialize();
+        if (fragfun==NULL)
+        {
+            cerr << "Fragfun not spesified!" << endl;
+            return -1;
+        }
+        cout << "# <dN / d^2p_T>, sqrt(s) = " << sqrts << "GeV, average over y: " << miny << " - " << maxy  << endl;
+        cout << "# Fragfun: " << fragfun->GetString() << endl;
+        cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
+        cout << "# p_T   dN" << endl;
+        for (double pt=minpt; pt<=maxpt; pt+=ptstep)
+        {
+            double result = 0;
+            cerr << "AverageHadronMultiplicity is unimplemented!" << endl;
+            //xs.AverageHadronMultiplicity(miny, maxy, pt, sqrts, fragfun, pdf,
+            //   deuteron, final_particle);
+            cout << pt << " " << result << endl;
+        }
+    }
+    else if (mode==HYBRID_MULTIPLICITY)
+    {
+        if (fragfun==NULL)
+        {
+            cerr << "Fragfun not spesified!" << endl;
+            return -1;
+        }
+        pdf->Initialize();
+        cout << "# Hadron production integrated over pt: " << minpt << " - " << maxpt << endl;
+        cout << "# y: " << miny << " - " << maxy << endl;
+        cout << "# Probe: "; if (deuteron) cout <<"deuteron"; else cout <<"proton"; cout << endl;
+        cout << "# sqrt(s)=" << sqrts << " GeV" << endl;
+        cout << "# Fragfun: " << fragfun->GetString() << endl;
+        cerr << "HadronMultiplicity is not implemented in v2!" << endl;
+        //cout << xs.HadronMultiplicity(miny, maxy, minpt, maxpt, sqrts, fragfun, pdf,
+        //    deuteron, final_particle) << endl;
+    }
+	else if (mode==KTFACT_PT)
+    {
+		if (fragfun==NULL)
+        {
+            cerr << "Fragfun not spesified!" << endl;
+            return -1;
+        }
+        cout << "# dN/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
+		cout << "# Using k_T factorization (gluon production); sigma02 = 1, S_T=1" << endl;
+		cout << "# Producing particle " << ParticleStr(final_particle) << endl;
+		cout << "# Probe: " << N2.GetString() << endl << "# Target: " << N.GetString() << endl;
+		cout << "# NOTICE: results must be multiplied by (\\sigma_0/2)^2/S_T" << endl;
+        cout << "# p_T   dN/(d^2 p_T dy) hadronlevel   " << endl;
+        
+        for (double pt=minpt; pt<=maxpt; pt+=ptstep)
+        {
+            
+            double hadronresult = xs.dHadronMultiplicity_dyd2pt_ktfact(y, pt, sqrts, fragfun, final_particle, &N2);
+            cout << pt << " " << hadronresult << endl;// << " " << partonresult << endl;
+            
+        }
+    }
+    
+    else if (mode==KTFACT_PARTON)
+    {
+        cout << "# d\\sigma/dy d^2p_T, sqrt(s) = " << sqrts << "GeV" << endl;
+		cout << "# Using k_T factorization (gluon production); sigma02 = 1, S_T=1" << endl;
+		cout << "# Gluon production (parton level)" << endl;
+		cout << "# Probe: " << N2.GetString() << endl << "# Target: " << N.GetString() << endl;
+		cout << "# NOTICE: results must be multiplied by (\\sigma_0/2)^2/S_T" << endl;
+        cout << "# p_T   dN/(d^2 p_T dy) partonlevel   " << endl;
+        
+        for (double pt=minpt; pt<=maxpt; pt+=ptstep)
+        {
+			double partonresult = xs.dHadronMultiplicity_dyd2pt_ktfact_parton(y, pt, sqrts, &N2);
+            cout << pt << " " << partonresult << endl;            
+        }
+    }
     
 
     return 0;

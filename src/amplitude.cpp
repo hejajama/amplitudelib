@@ -13,6 +13,8 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <ctime>
+#include <unistd.h>
 
 using namespace Amplitude;
 using namespace std;
@@ -58,13 +60,15 @@ int main(int argc, char* argv[])
         
     }
 
+
+
     double y=-1;
     double xbj=-1;
     double x0=-1;
     double Ns=0.2;
     bool kspace=false;
     std::string datafile="";
-    Mode mode;
+    Mode mode=X;
 
     for (int i=1; i<argc; i++)
     {
@@ -97,7 +101,7 @@ int main(int argc, char* argv[])
     }
     
     // Read data
-    AmplitudeLib N(datafile);
+    AmplitudeLib N(datafile, kspace);
     if (x0>0)
         N.SetX0(x0);
     if (y>=0)   // User set rapidity
@@ -105,8 +109,22 @@ int main(int argc, char* argv[])
     else // User set xbj
         y = std::log(N.X0()/xbj);
 
+
+    time_t now = time(0);
+    string today = ctime(&now);
+    
+    char *hostname = new char[500];
+    gethostname(hostname, 500);
+    
+    cout <<"#"<<endl<<"# AmplitudeLib v. " << N.Version()  << " running on " << hostname << endl;
+    cout <<"# Now is " << today ;
+    cout <<"#"<<endl;
+	delete[] hostname;
+
     N.InitializeInterpolation(xbj);
     cout << "# " << N.GetString() << endl;
+
+
 
     //**************** Different operation modes
     if (mode==X)

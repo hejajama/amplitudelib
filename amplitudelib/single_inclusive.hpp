@@ -35,19 +35,6 @@ class SingleInclusive
             FragmentationFunction *fragfun, PDF* pdf, Amplitude::Hadron final=Amplitude::PI0,
             bool deuteron=false,  double scale=-1 );
 
-        /**
-         * Single inclusive parton yield
-         *
-         * Compute single inclusive parton (quark or gluon) production
-         * @param y Rapidity of the parton
-         * @param pt Transverse momentum of the parton
-         * @param sqrts Center-of-mass energy
-         * @param pdf Pointer to the PDF class
-         * @param scale Scale at which PDF is evaluated, default: pt
-         */
-        double dHadronMultiplicity_dyd2pt_parton(double y, double pt, double sqrts,
-			PDF* pdf, Amplitude::Parton p, double scale=-1);
-
         
 
         /**
