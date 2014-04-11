@@ -2,10 +2,7 @@
 #define _CTEQ_H
 
 /*
- * Wrapper calss for CTEQ-TEA parton distribution functions CT10
- * Real code is in file CT10Pdf.f downloaded from
- * http://hep.pa.msu.edu/cteq/public/index.html
- *
+ * AmplitudeLib
  * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
 
@@ -13,13 +10,25 @@
 #include "pdf.hpp"
 #include <string>
 
+/**
+ * Wrapper calss for CTEQ-TEA parton distribution functions CT12
+ * Real code is in file CT12Pdf.f downloaded from
+ *
+ * For LO distributions Cteq6pdf.f is used.
+ * 
+ * http://hep.pa.msu.edu/cteq/public/index.html
+ *
+ */
 class CTEQ : public PDF
 {
     public:
         double xq(double x, double q, Amplitude::Parton p);    // return x*q(x,q)
-        void Initialize(int param=-1);
+
         std::string GetString();
-        
+
+        /**
+         * Select between NLO and LO set
+         */
         void SetOrder(Amplitude::Order o);
 
         double MinQ();
@@ -32,11 +41,8 @@ class CTEQ : public PDF
 
 };
 
-// The following functions are implemented in CT10Pdf.f file
 extern "C"
 {
-    //void setct10_(int& iset_);
-    //double ct10pdf_(int& iparton, double& x, double& q);
     
     void setctq6_(int& iset_);
     double ctq6pdf_(int& iparton, double& x, double& q);

@@ -2,14 +2,18 @@
 #define WAVE_FUNCTION_H
 
 /*
- * General class for wave functions
+ * AmplitudeLib
  *
  * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2010-2014
  */
 
 #include <string>
 
-
+/**
+ * Virtual class from which different wave functions are inherited
+ *
+ * @see VirtualPhoton
+ */
 class WaveFunction{
     public:
         WaveFunction();

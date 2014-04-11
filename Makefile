@@ -6,9 +6,10 @@ include filelist.m
 
 all: amplitude
 
-amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp
-	g++ $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp -lgfortran -o amplitude
+amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp src/amplitude.cpp
+	#g++ $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp -lgfortran -o amplitude
 	ar cru libamplitude.a $(OBJECTS) $(FTOBJECTS) $(FOBJECTS)
+	g++ $(CXXFLAGS) $(LDFLAGS) src/amplitude.cpp libamplitude.a -o amplitude
 
 interpolator: tools/interpolator.o tools/interpolation.o
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/interpolator.o tools/interpolation.o -o interpolator
@@ -29,6 +30,6 @@ fit: tools/f2fit.o tools/lhcfit.o
 
 
 clean:
-	rm -f $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.o
+	rm -f $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.o src/amplitude.o
 	rm -f amplitude	
 	rm libamplitude.a

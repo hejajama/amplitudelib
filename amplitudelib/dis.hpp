@@ -58,6 +58,7 @@ class DIS
          * Compute reduced cross section
          *
          * Computes the reduced photon-proton cross section
+         * 
          * sigma_r = F2 - y^2 / ( 1.0 + (1.0-y)^2 ) * FL;
          * @param qsqr Photon virtuality (GeV^2)
          * @param xbj Bjorken-x

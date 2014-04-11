@@ -118,7 +118,7 @@ double AmplitudeLib::N(double r, double xbj)
     {
         if (out_of_range_errors)
             cerr << "y must be between limits [" << 0 << ", "
-                << yvals[yvals.size()-1] << "], asked y=" << y << " "
+                << yvals[yvals.size()-1] << "], asked y=" << y << ", x=" << xbj << " (x0=" << X0() << ") "
                 << LINEINFO << endl;
         if (y < 0) y=0; else if (y>yvals[yvals.size()-1]) y=yvals[yvals.size()-1];
     }
@@ -391,7 +391,7 @@ double AmplitudeLib::LogLogDerivative(double r, double y)
  */
 struct SatscaleSolverHelper
 {
-    double y;
+    double xbj;
     double Ns;
     double gammac;
     AmplitudeLib* N;
@@ -399,7 +399,7 @@ struct SatscaleSolverHelper
 double SatscaleSolverHelperf(double r, void* p)
 {
     SatscaleSolverHelper* par = (SatscaleSolverHelper*)p;
-    return par->N->N(r, par->y) - par->Ns;
+    return par->N->N(r, par->xbj) - par->Ns;
 }
 
 double SatscaleSolverHelperf_k(double kt, void* p)
@@ -407,17 +407,17 @@ double SatscaleSolverHelperf_k(double kt, void* p)
    
     SatscaleSolverHelper* par = (SatscaleSolverHelper*)p;
     double val = -std::pow(kt, 2.0*par->gammac)
-        *par->N->N(kt, par->y);
+        *par->N->N(kt, par->xbj);
     return val;
     
 }
 
 
-double AmplitudeLib::SaturationScale(double y, double Ns)
+double AmplitudeLib::SaturationScale(double xbj, double Ns)
 {
     
     SatscaleSolverHelper helper;
-    helper.y=y; helper.Ns=Ns; helper.N=this; helper.gammac=0.5;
+    helper.xbj=xbj; helper.Ns=Ns; helper.N=this; helper.gammac=0.5;
     const int MAX_ITER = 1000;
     const double ROOTFINDACCURACY = 0.00001;
     gsl_function f;
@@ -440,7 +440,7 @@ double AmplitudeLib::SaturationScale(double y, double Ns)
     } while (status == GSL_CONTINUE and iter < MAX_ITER);
 
     if (iter>=MAX_ITER)
-        cerr << "Solving failed at y=" << y << " " << LINEINFO << endl;
+        cerr << "Solving failed at x=" << xbj << " " << LINEINFO << endl;
 
 
     double sat = gsl_root_fsolver_root(s);
@@ -484,13 +484,11 @@ double AmplitudeLib::SaturationScale(double y, double Ns)
 
     if (status == GSL_CONTINUE)
     {
-        cerr << "Didn't find saturation scale when y=" << y  << ", iterated "
+        cerr << "Didn't find saturation scale when x=" << xbj  << ", iterated "
             << iter << "/" << MAX_ITER << " times at " << LINEINFO << endl;
     }
 
     gsl_min_fminimizer_free(sm);
-    //cout << "start: " << std::exp(0.4*y) << " min: " << Ktsqrval(1) << " max: " << Ktsqrval(KtsqrPoints()-2)
-    //    << " minimumsqr: " << pos << " iterations: " << iter << endl;
 
     return sat;
 }
@@ -568,7 +566,7 @@ void AmplitudeLib::InitializeInterpolation(double xbj)
     const int MAXITER=40;
     for (double r=0.01; r<=MaxR(); r+=step)
     {
-        if (N(r,y)>=0.99999)		// check that this accuracy is the same as in rbk/src/solver.cpp
+        if (N(r,xbj)>=0.99999)		// check that this accuracy is the same as in rbk/src/solver.cpp
         {
             if (step<1e-2)
             {

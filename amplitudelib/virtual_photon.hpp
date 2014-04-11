@@ -1,13 +1,9 @@
 #ifndef VirtualPhoton_H
 #define VirtualPhoton_H
 
-/*
- * Virtual photon-q\bar q overlap
- * Ref: Kowalski, Motyka and Watt, see arXiv: hep-ph/0606272v2
- * 
- * By default uses 3 light quarks (u,d,s)
+/* AmplitudeLib
  *
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2010-2013
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2010-2014
  */
 
 
@@ -18,17 +14,52 @@
 #include <string>
 #include <vector>
 
+/**
+ * Virtual photon-q\bar q overlap
+ * 
+ * Ref: Kowalski, Motyka and Watt, see arXiv: hep-ph/0606272v2
+ * 
+ * By default uses 3 light quarks (u,d,s)
+ */
 class VirtualPhoton : public WaveFunction {
     public:
         VirtualPhoton();
         
-        // Overlap wave functions
+        /**
+         * Overlap between q\barq and transverse photon
+         *
+         * @param Qsqr photon virtuality [GeV^2]
+         * @param r dipole size
+         * @param z longitudinal momentum fraction of the quark
+         */
         double PsiSqr_T(double Qsqr, double r, double z);
+
+        /**
+         * Overlap between q\barq and longitudinal photon
+         *
+         * @param Qsqr photon virtuality [GeV^2]
+         * @param r dipole size
+         * @param z longitudinal momentum fraction of the quark
+         */
         double PsiSqr_L(double Qsqr, double r, double z);
         
         // Overlap wave functions integrated over z=[0,1]
+        /**
+         * Overlap between q\bar q and transverse photon integrated over z
+         *
+         * @param Qsqr photon virtuality [GeV^2]
+         * @param r dipole size
+         */
         double PsiSqr_T_intz(double Qsqr, double r);
+
+        /**
+         * Overlap between q\barq and longitudinal photon integrated over z
+         *
+         * @param Qsqr photon virtuality [GeV^2]
+         * @param r dipole size
+         */
         double PsiSqr_L_intz(double Qsqr, double r);
+        
         
         
         std::string GetParamString();

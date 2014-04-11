@@ -96,12 +96,6 @@ double CTEQ::xq(double x, double q, Parton p)
     return x*result;
 }
 
-// Default value of param is -1
-void CTEQ::Initialize(int param)
-{
-	// Useless...
-}
-
 void CTEQ::SetOrder(Order o)
 {
 	order=o;

@@ -112,7 +112,7 @@ class AmplitudeLib
         /**
          * Dipole unintegrated gluon distribution
          *
-         * Dipole unintegrated gluon distribution (UGD), defined as
+         * Defined as
          * 
 		 * C_F/(8\pi^3) S_T/\alpha_s(q) q^4 S_k(q)
          * 

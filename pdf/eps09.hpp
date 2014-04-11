@@ -20,6 +20,10 @@ class EPS09 : public PDF
 {
     public:
         double xq(double x, double q, Amplitude::Parton p);    // return x*q(x,q)
+
+        /**
+         * Initialize, param is not used
+         */
         void Initialize(int param=-1);
         std::string GetString();
         
