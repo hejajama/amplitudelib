@@ -8,7 +8,7 @@
 #include "amplitudelib.hpp"
 #include "../tools/tools.hpp"
 #include "../pdf/pdf.hpp"
-#include "../fragmentation -sqr/fragmentation.hpp"
+#include "../fragmentation/fragmentation.hpp"
 #include "single_inclusive.hpp"
 #include <gsl/gsl_integration.h>
 #include <cmath>

@@ -23,27 +23,39 @@ int main()
 	cout << "This is a tester program for AmplitudeLib" << endl;
 	cout << "=========================================" << endl;
 	
-	string dataf = "mv1_noevolution_qs02.dat";
-	cout << "Loading data from " << dataf << endl << "assuming that at all "
-		<<"rapidities it is just MV-model with Qs0^2=0.2GeV^2" << endl;
+	string dataf = "mv_tester.dat";
+	cout << "Loading data from " << dataf << endl ;
 		
 	AmplitudeLib N(dataf, false);
     N.GetQCD().SetRunningCoupling(FIXED);
 	double y=0.1;
+    double x0 = N.X0();
     double xbj = N.X0()*std::exp(-y);
 	double res,correct;
 	N.InitializeInterpolation(xbj);
 	
-	cout << "===== TEST: evaluation of N(r) ===== " << endl;
-	correct=0.091845; res=N.N(1,xbj);
-	cout << "N(r=1) = " << res; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED! Correct: " << correct; else cout << " OK!";
+	cout << "===== TEST: evaluation of N(r,x) ===== " << endl;
+	correct=0.091845; res=N.N(1,x0);
+	cout << "N(r=1, x=x0) = " << res << " (correct " << correct << ")"; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED!"; else cout << " OK!";
 	cout << endl;
-	
-	cout << "===== TEST: 2d FT of S(r)=1-N(r) ===== " << endl;
-	correct=1.17962; res=N.S_k(1.0, xbj);
-	cout << "FT S(k=1) = " << res; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
+
+    correct=0.141605; res=N.N(1,0.001);
+	cout << "N(r=1, x=0.001) = " << res << " (correct " << correct << ")"; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED!"; else cout << " OK!";
 	cout << endl;
+
+    
 	
+	cout << "===== TEST: Scattering matrix in momentum space = 2D FT of S ===== " << endl;
+    N.InitializeInterpolation(0.002);
+	correct=0.0715372; res=N.S_k(2.0, 0.002);
+	cout << "Fundamental FT S(k=2, x=0.002) = " << res << " (correct " << correct << ")"; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED!";else cout << " OK!";
+	cout << endl;
+
+    correct=0.216821; res=N.S_k(2.0, 0.002, ADJOINT);
+	cout << "Adjoint FT S(k=2, x=0.002) = " << res << " (correct " << correct << ")"; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED!";else cout << " OK!";
+	cout << endl;
+
+    /*
 	cout << "===== TEST: 2d FT of S^2(r)=(1-N(r))^2 ===== " << endl;
 	correct=3.31528; res=N.S_k(1, xbj, FUNDAMENTAL, 2.0);
 	cout << "FT S(k=1)^2 = " << res; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
@@ -58,16 +70,18 @@ int main()
 	correct=0.733868; res=N.LogLogDerivative(2, xbj);
 	cout << "d ln N(r=2)/d ln r = " << res; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
 	cout << endl;
+    */
 	
 	cout << "===== TEST Dipole UGD  ===== " << endl;
-	//N.SetRunningCoupling(FIXED);
-	correct=0.0891024; res=N.Dipole_UGD(1, xbj);
-	cout << "UGD(x=x0, Q^2=1 GeV^2)=" << res; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
+	N.GetQCD().SetRunningCoupling(FIXED);
+    N.InitializeInterpolation(0.001);
+	correct=0.152535; res=N.Dipole_UGD(sqrt(2), 0.001);
+	cout << "UGD(x=0.002, Q^2=2 GeV^2)=" << res<< " (correct " << correct << ")"; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED!";else cout << " OK!";
 	cout << endl;
 	
 	cout << "===== TEST UGD -> xg ===== " << endl;
-	correct=0.266333; res=N.xg(xbj, 4);
-	cout << "xg(x=x0, Q^2=16 GeV^2)=" << res; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
+	correct=0.412606; res=N.xg(0.001, std::sqrt(16));
+	cout << "xg(x=0.001, Q^2=16 GeV^2)=" << res << " (correct " << correct << ")"; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED! ";else cout << " OK!";
 	cout << endl;
 	
 	

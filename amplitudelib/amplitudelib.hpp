@@ -114,12 +114,15 @@ class AmplitudeLib
          *
          * Defined as
          * 
-		 * C_F/(8\pi^3) S_T/\alpha_s(q) q^4 S_k(q)
+		 * C_F/(8 pi^3) S_T/alpha_s(q) q^4 S_k(q)
+         *
+         * S_k is computed in adjoint representation
          * 
 		 * Computes without factor S_T unless it is specified
          * @param q Scale (GeV)
          * @param as_scale scale at which the running coupling is evaluated, default: q
          * @param S_T Transverse size of the target = normalization factor
+         * @see S_k
          * 
          */
 		double Dipole_UGD(double q, double y, double as_scale_=-1, double S_T=1.0);
@@ -128,6 +131,9 @@ class AmplitudeLib
          * Gluon distribution from UGD
          *
          * Integrated gluon distribution computed from the unintegrated gluon distribution
+         * Computed as
+         *
+         * int_0^Q dq^2/q^2 UGD(q)
          * @param x Bjorken-x
          * @param q Scale
          */
