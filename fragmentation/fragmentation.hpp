@@ -33,6 +33,12 @@ class FragmentationFunction
         FragmentationFunction();
         virtual std::string GetString();
         Amplitude::Order GetOrder();
+
+        /**
+         * Select between LO and NLO distributions.
+         *
+         * Check that the FF you use actually supports both NLO and LO!
+         */
         virtual void SetOrder(Amplitude::Order order_);
         
         virtual void Test();

@@ -81,9 +81,9 @@ int main(int argc, char* argv[])
     double x0=-1;
     double y=-1;
     double sqrts=0;
-    Order o=LO;
-    PDF* pdf;
-    FragmentationFunction* fragfun;
+    Order order=LO;
+    PDF* pdf=NULL;
+    FragmentationFunction* fragfun=NULL;
     std::string datafile="";
     std::string datafile_probe="";
     Mode mode=HYBRID_PT;
@@ -107,6 +107,10 @@ int main(int argc, char* argv[])
             maxpt = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-minpt")
             minpt = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-lo")
+            order=LO;
+        else if (string(argv[i])=="-nlo")
+            order=NLO;
         else if (string(argv[i])=="-pt_spectrum" or string(argv[i])=="-pt_spectrum_avg")
         {
             if (string(argv[i])=="-pt_spectrum")
@@ -227,6 +231,11 @@ int main(int argc, char* argv[])
         }
     }
 
+    // Default PDF and FF
+    if (pdf==NULL)
+        pdf = new CTEQ();
+    if (fragfun==NULL)
+        fragfun = new DSS();
     
     // Read data
     AmplitudeLib N(datafile);
@@ -241,8 +250,8 @@ int main(int argc, char* argv[])
         N.SetX0(x0); N2.SetX0(x0);
     }
 
-    pdf->SetOrder(o);
-    fragfun->SetOrder(o);
+    pdf->SetOrder(order);
+    fragfun->SetOrder(order);
 
     time_t now = time(0);
     string today = ctime(&now);

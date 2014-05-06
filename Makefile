@@ -15,7 +15,7 @@ amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp src/amplitude.cpp sr
 interpolator: tools/interpolator.o tools/interpolation.o
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/interpolator.o tools/interpolation.o -o interpolator
 
-tester: tools/tester.cpp
+tester: tools/tester.cpp libamplitude.a
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/tester.cpp libamplitude.a -o tester 
 
 fit: tools/f2fit.o tools/lhcfit.o

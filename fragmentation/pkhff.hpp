@@ -2,11 +2,6 @@
 #define _PKHFF_H
 
 /*
- * PKHFF fragmentation function
- * Supports only charged hadrons
- * Uses pkhff.f downloaded from
- * http://www2.pv.infn.it/~radici/FFdatabase/
- * Ref Phys. Rev. D 62 (2000) 054001
  * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
 
@@ -14,6 +9,13 @@
 #include "../tools/config.hpp"
 #include "fragmentation.hpp"
 
+/**
+ * PKHFF fragmentation function
+ * Supports only charged hadrons
+ * Uses pkhff.f downloaded from
+ * http://www2.pv.infn.it/~radici/FFdatabase/
+ * Ref Phys. Rev. D 62 (2000) 054001
+ */
 class PKHFF : public FragmentationFunction
 {
     public:

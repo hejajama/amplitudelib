@@ -1,6 +1,6 @@
 /*
- * BK equation solver
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * AmplitudeLib tools
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
 
 #include <gsl/gsl_bspline.h>
@@ -25,9 +25,35 @@ int Interpolator::Initialize()
     int status=0;
     if (ready)
     {
-        cerr << "Interpolator is already initialized, clear it before re-initializing! "
-            << LINEINFO << endl;
-        return -1;
+        // Interpolator is already initialized: clear it (GSL part)
+        // and re-initialize
+        switch(method)
+        {
+            case INTERPOLATE_SPLINE:
+                if (spline != NULL)
+                {
+                    gsl_spline_free(spline);
+                    spline=NULL;
+                }
+                if (acc != NULL)
+                {
+                    gsl_interp_accel_free(acc);
+                    acc=NULL;
+                }
+                break;
+            case INTERPOLATE_BSPLINE:
+                gsl_bspline_free(bw);
+                gsl_bspline_deriv_free(derbw);
+                gsl_vector_free(B);
+                gsl_matrix_free(X);
+                gsl_vector_free(c);
+                
+                gsl_matrix_free(cov);
+                gsl_multifit_linear_free(mw);
+                break;
+        }
+        ready=false;
+        
     }
     switch(method)
     {
@@ -227,6 +253,8 @@ Interpolator::Interpolator(double *x, double *y, int p)
             }
         }
     }
+
+    Initialize();
 }
 
 Interpolator::Interpolator(std::vector<double> &x, std::vector<double> &y)
@@ -258,6 +286,8 @@ Interpolator::Interpolator(std::vector<double> &x, std::vector<double> &y)
     freeze=false;
     freeze_overflow = y[y.size()-1];
     freeze_underflow = y[0];
+
+    Initialize();
 }
 
 void Interpolator::SetMethod(INTERPOLATION_METHOD m)
@@ -299,6 +329,7 @@ void Interpolator::Clear()
     {
         delete[] xdata;
         delete[] ydata;
+        allocated_data=false;
     }
 }
 

@@ -69,7 +69,7 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, doubl
 		N2->InitializeInterpolation(x2);
 	}
 	
-	double maxq = std::max(3*pt, 30.0);
+	double maxq = 100; //std::max(4.5*pt, 40.0);
 	
 	double result, abserr; 
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOINTS_KTFACT);
@@ -189,7 +189,8 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, d
 	
 	double result, abserr; 
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOITNS_KTFACT_Z);
-	int status = gsl_integration_qag(&fun, std::max(0.1,pt*std::exp(y)/sqrts), 1.0, 0, 0.05,
+    double minz = std::max(0.05, pt*std::exp(y)/sqrts);
+	int status = gsl_integration_qag(&fun, minz, 1.0, 0, 0.05,
 		INTPOITNS_KTFACT_Z, GSL_INTEG_GAUSS15, ws, &result, &abserr);
 	gsl_integration_workspace_free(ws);
        

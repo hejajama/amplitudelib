@@ -2,15 +2,6 @@
 #define _UGDPDF_H
 
 /*
- * PDF from UGD
- * Computes UGD from dipole amplitude and integrates it over k_T
- * to get PDF
- * 
- * Note: requires pointer to AmplitudeLib* and the scaling
- * factor \sigma_0/2
- * 
- * NOTE: Deletes the AmplitudeLib object in destructor! So assumes
- * that AmplitudeLib* N is not used outside this class!
  *
  * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2012
  */
@@ -20,6 +11,17 @@
 #include "../amplitudelib/amplitudelib.hpp"
 #include <string>
 
+/**
+ * PDF from UGD
+ * Computes UGD from dipole amplitude and integrates it over k_T
+ * to get PDF
+ * 
+ * Note: requires pointer to AmplitudeLib* and the scaling
+ * factor \sigma_0/2
+ * 
+ * NOTE: Deletes the AmplitudeLib object in destructor! So assumes
+ * that AmplitudeLib* N is not used outside this class!
+ */
 class UGDPDF : public PDF
 {
     public:

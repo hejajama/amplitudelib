@@ -32,7 +32,7 @@ enum Mode
 int main(int argc, char* argv[])
 {
     std::stringstream infostr;
-    infostr << "# Dipole amplitude analyser   (c) Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014 " << endl;
+    infostr << "# Dipole amplitude analyser " << endl << "# Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014 " << endl;
     infostr << "# Command: ";
     for (int i=0; i<argc; i++)
         infostr << argv[i] << " ";
@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (xbj<0 and y<0)
+    if (xbj<0 and y<0 and mode != SATSCALE)
     {
         cerr << "Set xbj or y! " << LINEINFO << endl;
         return -1;

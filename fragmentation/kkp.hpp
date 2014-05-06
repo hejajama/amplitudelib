@@ -2,9 +2,7 @@
 #define _KKP_H
 
 /*
- * KKP fragmentation function
- * Uses fragmentation_kkp.f downloaded from
- * http://www.desy.de/~poetter/kkp.html
+ * AmplitudeLib PDF
  * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
 
@@ -12,6 +10,11 @@
 #include "../tools/config.hpp"
 #include "fragmentation.hpp"
 
+/**
+ * KKP fragmentation function.
+ * Uses fragmentation_kkp.f downloaded from
+ * http://www.desy.de/~poetter/kkp.html
+ */
 class KKP : public FragmentationFunction
 {
     public:

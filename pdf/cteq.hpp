@@ -22,6 +22,15 @@
 class CTEQ : public PDF
 {
     public:
+        /**
+         * Evaluate x*pdf
+         *
+         * Return x*f(x,Q^2) for the given parton. 
+         * @param x Bjorken-x
+         * @param q Scale [GeV]
+         * @param p Parton type
+         * @see Amplitude::Parton
+         */
         double xq(double x, double q, Amplitude::Parton p);    // return x*q(x,q)
 
         std::string GetString();

@@ -2,9 +2,6 @@
 #define _HKNS_H
 
 /*
- * HKNS fragmentation function
- * Uses fragmentation_hknsff07.f downloaded from
- * http://research.kek.jp/people/kumanos/ffs.html
  * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
 
@@ -12,6 +9,11 @@
 #include "../tools/config.hpp"
 #include "fragmentation.hpp"
 
+/**
+ * HKNS fragmentation function.
+ * Uses fragmentation_hknsff07.f downloaded from
+ * http://research.kek.jp/people/kumanos/ffs.html
+ */
 class HKNS : public FragmentationFunction
 {
     public:

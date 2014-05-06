@@ -90,7 +90,7 @@ int main()
 	{
 	std::vector<double> y; y.push_back(0); y.push_back(1); y.push_back(4);  y.push_back(9); y.push_back(16);
 	std::vector<double> x; x.push_back(0); x.push_back(1); x.push_back(2);  x.push_back(3); x.push_back(4);
-	Interpolator interp(x,y); interp.Initialize();
+	Interpolator interp(x,y); //interp.Initialize();
 	correct=6.25; res = interp.Evaluate(2.5);	// 2.5^2=6.25
 	cout << "2.5^2 = " << res << " (correct: " << correct << ") "; if (abs(res-correct)/correct>0.01) cout << " TEST FAILED!" ;else cout << " OK!";
 	cout << endl;

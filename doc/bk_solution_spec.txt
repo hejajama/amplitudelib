@@ -1,0 +1,20 @@
+BK equation solution is stored in the following format:
+# Comment lines
+###minr (smallest dipole size)
+###rstep (every r value is minr*rstep^number
+###rvals (number of different r values)
+###x0
+###y_1
+N(r=minr, y_1)
+N(r=minr*rstep, y_1)
+N(r=minr*rstep^2, y_1)
+.
+.
+.
+###y_2
+N(r=minr, y_2)
+N(r=minr*restep, y_2)
+.
+.
+.
+

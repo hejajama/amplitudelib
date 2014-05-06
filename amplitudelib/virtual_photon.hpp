@@ -15,7 +15,8 @@
 #include <vector>
 
 /**
- * Virtual photon-q\bar q overlap
+ * \class VirtualPhoton virtual_photon.hpp amplitudelib/virtual_photon.hpp
+ * Virtual photon-q bar q overlap
  * 
  * Ref: Kowalski, Motyka and Watt, see arXiv: hep-ph/0606272v2
  * 
@@ -26,7 +27,8 @@ class VirtualPhoton : public WaveFunction {
         VirtualPhoton();
         
         /**
-         * Overlap between q\barq and transverse photon
+         * Overlap between q bar
+         * q and transverse photon
          *
          * @param Qsqr photon virtuality [GeV^2]
          * @param r dipole size
@@ -35,7 +37,7 @@ class VirtualPhoton : public WaveFunction {
         double PsiSqr_T(double Qsqr, double r, double z);
 
         /**
-         * Overlap between q\barq and longitudinal photon
+         * Overlap between q bar q and longitudinal photon
          *
          * @param Qsqr photon virtuality [GeV^2]
          * @param r dipole size
@@ -45,7 +47,7 @@ class VirtualPhoton : public WaveFunction {
         
         // Overlap wave functions integrated over z=[0,1]
         /**
-         * Overlap between q\bar q and transverse photon integrated over z
+         * Overlap between q bar q and transverse photon integrated over z
          *
          * @param Qsqr photon virtuality [GeV^2]
          * @param r dipole size
@@ -53,7 +55,7 @@ class VirtualPhoton : public WaveFunction {
         double PsiSqr_T_intz(double Qsqr, double r);
 
         /**
-         * Overlap between q\barq and longitudinal photon integrated over z
+         * Overlap between q bar q and longitudinal photon integrated over z
          *
          * @param Qsqr photon virtuality [GeV^2]
          * @param r dipole size
@@ -64,7 +66,14 @@ class VirtualPhoton : public WaveFunction {
         
         std::string GetParamString();
         
-        // default value for mass: use standard value
+        /**
+         * Select quar flavor
+         *
+         * If not set, sums over light quarks (u,d,s) with default mass 0.14 GeV.
+         *
+         * @param p quark flavor
+         * @param mass quark mass, optional, default values used if not given
+         */
         void SetQuark(Amplitude::Parton p, double mass=-1);
         
         

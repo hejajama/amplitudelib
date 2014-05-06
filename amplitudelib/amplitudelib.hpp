@@ -1,6 +1,6 @@
 /*
  * AmplitudeLib2 for the dipole amplitude
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2013
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
 
 #ifndef _AMPLITUDELIB_H
@@ -84,11 +84,13 @@ class AmplitudeLib
          * Fourier transfer to coordinate space
          *
          * Computes the dipole amplitude in coordinate space, defiend as
+         * 
          *  N(r) = r^2 \int d^2 k/(2\pi) exp(-ik.r) N(k)
          *       = r^2 \int dk k BesselJ[0,k*r] * N(k)
-         * Arguments are transverse size and Bjorken-x'
          *
          * Note: requires that the loaded bk solution is in momentum space
+         * @param r dipole size
+         * @param xbj Bjorken-x
          */
         double N_k_to_x(double r, double xbj);
 
@@ -98,7 +100,7 @@ class AmplitudeLib
          * Compute (by Fourier transform) the scattering matrix in
          * momentum space
          * 
-         * S_k = \int e^(ik.r) S(r)^pow
+         *  S_k = \int e^(ik.r) S(r)^pow
          *
          * If representation is set to ADJOINT, computes using the
          * adjoint representation dipole amplitude.
@@ -116,8 +118,7 @@ class AmplitudeLib
          * 
 		 * C_F/(8 pi^3) S_T/alpha_s(q) q^4 S_k(q)
          *
-         * S_k is computed in adjoint representation
-         * 
+         * S_k is computed in adjoint representation. 
 		 * Computes without factor S_T unless it is specified
          * @param q Scale (GeV)
          * @param as_scale scale at which the running coupling is evaluated, default: q
@@ -284,33 +285,6 @@ class AmplitudeLib
 
 
 
-
-		
-		///////
-
-/*
- * TODO
- *
-    double sigma02;		//! sigma_0 / 2,  ktfactorization hadronprod results are multiplied by this
-        
-        double Sigma02();
-        void SetSigma02(double s_);
-        
-        double Alphas(double qsqr);
-        
-        void SetRunningCoupling(RUNNING_ALPHAS as_);
-        RUNNING_ALPHAS GetRunningCoupling();
-        
-        std::string Version();
-        
-        void SetFTMethod(FT_METHOD f);
-        		
-
-    private:
-        AmplitudeLib* N;
-};
-        
-*/
 
 const int INTERPOLATION_POINTS = 12;
 const double UGD_IR_CUTOFF=0.3;   // ugd(k<UGD_IR_CUTOFF)=0     BAD?????
