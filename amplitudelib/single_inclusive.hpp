@@ -61,8 +61,9 @@ class SingleInclusive
          * @param pt Transverse momentum of the produced particle
          * @param sqrts Center-of-mass energy
          * @param N2 Dipole amplitude for the probe (the saved dipole amplitude is for the target), default: use the same for both
+         * @param scale Momentum scale [GeV^2] at which the strong coupling constant is evaluated, default: parton pt^2
          */
-		double dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2=NULL );
+		double dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2=NULL, double scale=-1 );
 		
 
         /*

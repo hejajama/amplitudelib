@@ -14,6 +14,7 @@
 #include "../fragmentation/hkns.hpp"
 #include "../fragmentation/pkhff.hpp"
 #include "../pdf/eps09.hpp"
+#include "../pdf/ugdpdf.hpp"
 #include "../amplitudelib/single_inclusive.hpp"
 #include <string>
 #include <iostream>
@@ -69,10 +70,11 @@ int main(int argc, char* argv[])
         cout << "-sqrts center-of-mass energy [GeV]" << endl;
         cout << "-minpt, -maxpt, -miny, -maxy" << endl;
         cout << "-ptstep stepsize" << endl;
-        cout << "-pdf pdf" << endl;
+        cout << "-pdf pdf: possible pdfs: cteq ugd [bkfile sigma0]" << endl;
         cout << "-fragfun ff" << endl;
         cout << "-nlo/-lo: use NLO/LO distributions" << endl;
         cout << "-x0 val: set x0 value for the BK solutions (overrides the value in BK file)" << endl;
+        cout << "-gsl_ft: use GSL to directly calculate Fourier transform" << endl;
         return 0;
         
     }
@@ -85,6 +87,7 @@ int main(int argc, char* argv[])
     PDF* pdf=NULL;
     FragmentationFunction* fragfun=NULL;
     std::string datafile="";
+    FT_Method ft_method = ACC_SERIES;
     std::string datafile_probe="";
     Mode mode=HYBRID_PT;
     Hadron final_particle=PI0;
@@ -218,12 +221,19 @@ int main(int argc, char* argv[])
 				pdf = new EPS09();
 				pdf->SetA(StrToInt(argv[i+2]));
 			}
+            else if (string(argv[i+1])=="ugd")
+			{
+				AmplitudeLib* ugdn = new AmplitudeLib(string(argv[i+2]));
+				pdf = new UGDPDF(ugdn, StrToReal(argv[i+3]));
+			}
 			else
 			{
 				cerr << "Unknown PDF type " << argv[i+1] << endl;
 				return -1;
 			}
 		}
+        else if (string(argv[i])=="-gsl_ft")
+            ft_method = GSL;
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -239,6 +249,8 @@ int main(int argc, char* argv[])
     
     // Read data
     AmplitudeLib N(datafile);
+
+    N.SetFTMethod(ft_method);
     SingleInclusive xs(&N);
 
     
@@ -249,6 +261,7 @@ int main(int argc, char* argv[])
     {
         N.SetX0(x0); N2.SetX0(x0);
     }
+    N2.SetFTMethod(ft_method);
 
     pdf->SetOrder(order);
     fragfun->SetOrder(order);

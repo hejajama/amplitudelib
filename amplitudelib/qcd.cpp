@@ -25,7 +25,7 @@ QCD::QCD()
 double QCD::Alphas(double Qsqr)
 {
 	if (rc == FIXED)
-		return 0.2;
+        return 0.2;
 	
 	if (Qsqr <= lqcd*lqcd)
 		return maxalpha;

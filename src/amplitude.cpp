@@ -87,6 +87,8 @@ int main(int argc, char* argv[])
             Ns=StrToReal(argv[i+1]);
             mode=SATSCALE;
         }
+        else if (string(argv[i])=="-s_x_to_k")
+            mode=S_X_TO_K;
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;

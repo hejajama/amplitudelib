@@ -287,9 +287,8 @@ class AmplitudeLib
 
 
 const int INTERPOLATION_POINTS = 12;
-const double UGD_IR_CUTOFF=0.3;   // ugd(k<UGD_IR_CUTOFF)=0     BAD?????
 
-const int FOURIER_ZEROS=2000;   // How many zeros of the Bessel functions is
+const int FOURIER_ZEROS=1000;   // How many zeros of the Bessel functions is
                     // used when Fourier transforming
 
 

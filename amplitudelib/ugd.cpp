@@ -5,6 +5,7 @@
 #include "../tools/config.hpp"
 #include <string>
 #include <cmath>
+#include <algorithm>
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_monte.h>
@@ -34,11 +35,11 @@ SingleInclusive::SingleInclusive(AmplitudeLib* N_)
  * 
  * If N2!=NULL, it is used to compute \phi_2
  */
-struct Inthelper_ktfact{ double x1, x2, pt, qt; AmplitudeLib *N1, *N2; };
+struct Inthelper_ktfact{ double x1, x2, pt, qt, scale; AmplitudeLib *N1, *N2; };
 double Inthelperf_ktfact_q(double q, void* p);
 double Inthelperf_ktfact_phi(double phi, void* p);
-const int INTPOINTS_KTFACT = 4;	
-double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2 )
+const int INTPOINTS_KTFACT = 3;	
+double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2, double scale )
 {
 	double x1 = pt*std::exp(-y)/sqrts;
 	double x2 = pt*std::exp(y)/sqrts;
@@ -60,6 +61,10 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, doubl
 	Inthelper_ktfact par; par.pt=pt; par.N1=N;
     par.x1=x1; par.x2=x2;
 	par.N2=N2;
+    if (scale<0)
+        par.scale=pt*pt;
+    else
+        par.scale=scale;
 	gsl_function fun; fun.params=&par;
 	fun.function=Inthelperf_ktfact_q;
 	
@@ -69,8 +74,11 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, doubl
 		N2->InitializeInterpolation(x2);
 	}
 	
-	double maxq = 100; //std::max(4.5*pt, 40.0);
-	
+	double maxq = std::max(4*pt, 40.0);
+    if (maxq>60)
+        maxq=60;
+
+    
 	double result, abserr; 
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOINTS_KTFACT);
 	int status = gsl_integration_qag(&fun, 0.001, maxq, 0, 0.05,		
@@ -130,9 +138,9 @@ double Inthelperf_ktfact_phi(double phi, void* p)
 	if (par->N2==NULL)
 	{
 		par->N1->InitializeInterpolation(par->x1);
-		ugd1 = par->N1->Dipole_UGD(par->qt, par->x1, SQR(par->pt));
+		ugd1 = par->N1->Dipole_UGD(par->qt, par->x1, par->scale);
 		par->N1->InitializeInterpolation(par->x2);
-		ugd2 = par->N1->Dipole_UGD(kt_m_qt, par->x2, SQR(par->pt));
+		ugd2 = par->N1->Dipole_UGD(kt_m_qt, par->x2, par->scale);
 	} 
 	else
 	{
@@ -140,11 +148,11 @@ double Inthelperf_ktfact_phi(double phi, void* p)
 		{
 			#pragma omp section
 			{
-				ugd1 = par->N1->Dipole_UGD(par->qt, par->x1, SQR(par->pt));
+				ugd1 = par->N1->Dipole_UGD(par->qt, par->x1, par->scale);
 			}
 			#pragma omp section
 			{
-				ugd2 = par->N2->Dipole_UGD(kt_m_qt, par->x2, SQR(par->pt));
+				ugd2 = par->N2->Dipole_UGD(kt_m_qt, par->x2, par->scale);
 			}
 		}
 		
@@ -164,8 +172,6 @@ double Inthelperf_ktfact_phi(double phi, void* p)
  * little effect in the final result as p_T specturm is steeply falling
  */
  
- // if true, change between ktfact and hybrid formalism when x_p>X0()
-const bool HADRONPROD_TRANSITION = false;
 const int INTPOITNS_KTFACT_Z = 1;
 struct Inthelper_ktfact_fragfun{ SingleInclusive* sinc; AmplitudeLib* N2; FragmentationFunction* fragfun; double scale, pt, y, sqrts; Hadron final; PDF *pdf; };
 double Inthelperf_ktfact_fragfun(double z, void* p);
@@ -176,13 +182,7 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, d
 	par.sinc=this; par.y=y; par.y=y; par.pt=pt; par.fragfun=fragfun; par.final=final;
 	par.N2=N2;
 	par.sqrts=sqrts;
-	
-	PDF* pdf;
-	if (HADRONPROD_TRANSITION)
-	{
-		pdf = new CTEQ(); pdf->SetOrder(LO); pdf->Initialize();
-		par.pdf=pdf;
-	}
+    par.scale=pt*pt;
 	
 	gsl_function fun; fun.function=Inthelperf_ktfact_fragfun;
 	fun.params=&par;
@@ -201,8 +201,6 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, d
 			<< " result " << result << " relerr " << std::abs(abserr/result) << endl;
     }
     
-    if (HADRONPROD_TRANSITION) delete pdf;
-    
     return result;
 }
 
@@ -213,7 +211,7 @@ double Inthelperf_ktfact_fragfun(double z, void* p)
 	double kt = par->pt/z;
 	double scale = std::max(1.0,par->pt);
 	
-	double dn = par->sinc->dHadronMultiplicity_dyd2pt_ktfact_parton(par->y, kt, par->sqrts, par->N2);
+	double dn = par->sinc->dHadronMultiplicity_dyd2pt_ktfact_parton(par->y, kt, par->sqrts, par->N2, par->scale);
 
 	return 1.0/SQR(z) * dn * par->fragfun->Evaluate(G, par->final, z, scale );
 }

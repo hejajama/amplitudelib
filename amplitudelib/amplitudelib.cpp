@@ -325,7 +325,7 @@ double AmplitudeLib::S_k(double kt, double xbj, Representation rep, double pow)
 
         double abserr; 
         gsl_integration_workspace* ws = gsl_integration_workspace_alloc(1000);
-		int status = gsl_integration_qag(&fun, MinR(), MaxR(), 0, 0.001,
+		int status = gsl_integration_qag(&fun, MinR(), MaxR(), 0, 0.0001,
 			1000, GSL_INTEG_GAUSS51, ws, &result, &abserr);
 		gsl_integration_workspace_free(ws);
         //int status = gsl_integration_qng(&fun, MinR(), MaxR(),
@@ -357,7 +357,10 @@ double S_k_helperf(double r, void* p)
     }
     else
     {
-        result = r*std::pow(1.0-par->N->N_A(r, par->xbj), par->power);
+        double s_a = 1.0 - par->N->N_A(r, par->xbj); // S in adjoint rep
+        if (s_a < 0 ) s_a=0;
+        if (s_a >1.0) s_a=1.0;
+        result = r*std::pow(s_a, par->power);
     }
     
     // J0 is in fourier_j0() fun
