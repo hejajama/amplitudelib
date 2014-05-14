@@ -701,6 +701,7 @@ double AmplitudeLib::Dipole_UGD(double q, double xbj, double scale_, double S_T)
  * Integrated GD, x*g(x), from UGD
  * The Q^2 dependence comes as a upper limit of an integral
  * xg(x,Q^2) = \int_0^Q dq^2/q^2 UGD(q)
+ * TODO: Scale choise
  */
 double Inthelperf_xg(double qsqr, void* p);
 struct Inthelper_xg

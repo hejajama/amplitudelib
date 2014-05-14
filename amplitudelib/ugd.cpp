@@ -209,9 +209,8 @@ double Inthelperf_ktfact_fragfun(double z, void* p)
 {
 	Inthelper_ktfact_fragfun* par = (Inthelper_ktfact_fragfun*)p;
 	double kt = par->pt/z;
-	double scale = std::max(1.0,par->pt);
 	
 	double dn = par->sinc->dHadronMultiplicity_dyd2pt_ktfact_parton(par->y, kt, par->sqrts, par->N2, par->scale);
 
-	return 1.0/SQR(z) * dn * par->fragfun->Evaluate(G, par->final, z, scale );
+	return 1.0/SQR(z) * dn * par->fragfun->Evaluate(G, par->final, z, std::sqrt(par->scale) );
 }
