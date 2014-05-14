@@ -90,12 +90,14 @@ double Inthelperf_xg(double qsqr, void* p)
  * UGD is AmplitudeLib::UGD()
  * 
  * If N2!=NULL, it is used to compute \phi_2
+ *
+ * If scale<0 (default), use parton pt as a alphas scale, otherwise use given scale
  */
-struct Inthelper_ktfact{ double y1, y2, pt, qt; AmplitudeLib *N1, *N2; };
+struct Inthelper_ktfact{ double y1, y2, pt, qt, scale; AmplitudeLib *N1, *N2; };
 double Inthelperf_ktfact_q(double q, void* p);
 double Inthelperf_ktfact_phi(double phi, void* p);
-const int INTPOINTS_KTFACT = 4;	///DEBUG orig 2
-double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2 )
+const int INTPOINTS_KTFACT = 3;	///DEBUG orig 2
+double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2, double scale )
 {
 	double x1 = pt*std::exp(-y)/sqrts;
 	double x2 = pt*std::exp(y)/sqrts;
@@ -117,6 +119,10 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
 	
 	Inthelper_ktfact par; par.y1=y1; par.y2=y2; par.pt=pt; par.N1=this;
 	par.N2=N2;
+    if (scale<0)
+        par.scale = pt*pt;
+    else
+        par.scale=scale;
 	gsl_function fun; fun.params=&par;
 	fun.function=Inthelperf_ktfact_q;
 	
@@ -126,7 +132,9 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
 		N2->InitializeInterpolation(y2);
 	}
 	
-	double maxq = std::max(3*pt, 30.0);
+	double maxq = std::max(4*pt, 40.0);
+    if (maxq>60)
+        maxq=60;
 	
 	double result, abserr; 
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOINTS_KTFACT);
@@ -142,7 +150,7 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
     }
     
     result *= 2.0/(Cf*SQR(pt));
-    double alphas=Alphas(pt*pt);
+    double alphas=Alphas(scale);
     result *= alphas;
 
     
@@ -187,9 +195,9 @@ double Inthelperf_ktfact_phi(double phi, void* p)
 	if (par->N2==NULL)
 	{
 		par->N1->InitializeInterpolation(par->y1);
-		ugd1 = par->N1->UGD(par->qt, par->y1, SQR(par->pt));
+		ugd1 = par->N1->UGD(par->qt, par->y1, par->scale);
 		par->N1->InitializeInterpolation(par->y2);
-		ugd2 = par->N1->UGD(kt_m_qt, par->y2, SQR(par->pt));
+		ugd2 = par->N1->UGD(kt_m_qt, par->y2, par->scale);
 	} 
 	else
 	{
@@ -197,11 +205,11 @@ double Inthelperf_ktfact_phi(double phi, void* p)
 		{
 			#pragma omp section
 			{
-				ugd1 = par->N1->UGD(par->qt, par->y1, SQR(par->pt));
+				ugd1 = par->N1->UGD(par->qt, par->y1, par->pt);
 			}
 			#pragma omp section
 			{
-				ugd2 = par->N2->UGD(kt_m_qt, par->y2, SQR(par->pt));
+				ugd2 = par->N2->UGD(kt_m_qt, par->y2, par->pt);
 			}
 		}
 		
@@ -227,11 +235,12 @@ const int INTPOITNS_KTFACT_Z = 1;
 struct Inthelper_ktfact_fragfun{ AmplitudeLib* N1, *N2; FragmentationFunction* fragfun; double scale, pt, y, sqrts; Hadron final; PDF *pdf; };
 double Inthelperf_ktfact_fragfun(double z, void* p);
 
-double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts, FragmentationFunction* fragfun, Hadron final, AmplitudeLib* N2 )
+double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts, FragmentationFunction* fragfun, Hadron final, AmplitudeLib* N2)
 {
 	Inthelper_ktfact_fragfun par;
 	par.N1=this; par.y=y; par.y=y; par.pt=pt; par.fragfun=fragfun; par.final=final;
 	par.N2=N2;
+    par.scale=pt*pt;
 	par.sqrts=sqrts;
 	
 	PDF* pdf;
@@ -295,7 +304,7 @@ double Inthelperf_ktfact_fragfun(double z, void* p)
 		
 		return hybridres/(SQR(2.0*M_PI)*SQR(z));
 	}
-	double dn = par->N1->dHadronMultiplicity_dyd2pt_ktfact_parton(par->y, kt, par->sqrts, par->N2);
+	double dn = par->N1->dHadronMultiplicity_dyd2pt_ktfact_parton(par->y, kt, par->sqrts, par->N2, par->scale);
 
 	return 1.0/SQR(z) * dn * par->fragfun->Evaluate(G, par->final, z, scale );
 }

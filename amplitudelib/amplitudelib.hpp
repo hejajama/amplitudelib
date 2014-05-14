@@ -109,7 +109,7 @@ class AmplitudeLib
 		
 		// k_T factorization dN/d^2pt dy, ref e.g. hep-ph/0111362 (40)
 		double dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts, FragmentationFunction* fragfun, Hadron final, AmplitudeLib* N2=NULL );
-		double dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2=NULL );
+		double dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2=NULL, double scale=-1 );
 		
 		
 		///////
@@ -195,7 +195,7 @@ class AmplitudeLib
 const int INTERPOLATION_POINTS = 12;
 const double UGD_IR_CUTOFF=0.3;   // ugd(k<UGD_IR_CUTOFF)=0     BAD?????
 
-const int FOURIER_ZEROS=2000;   // How many zeros of the Bessel functions is
+const int FOURIER_ZEROS=1000;   // How many zeros of the Bessel functions is
                     // used when Fourier transforming
 
 
