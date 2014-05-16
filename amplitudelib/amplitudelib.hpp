@@ -126,7 +126,7 @@ class AmplitudeLib
          * @see S_k
          * 
          */
-		double Dipole_UGD(double q, double y, double as_scale_=-1, double S_T=1.0);
+		double Dipole_UGD(double q, double xbj, double as_scale_=-1, double S_T=1.0);
 
         /**
          * Gluon distribution from UGD
