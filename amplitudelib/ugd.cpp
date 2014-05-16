@@ -133,8 +133,8 @@ double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double p
 	}
 	
 	double maxq = std::max(4*pt, 40.0);
-    if (maxq>60)
-        maxq=60;
+    if (maxq>80)
+        maxq=80;
 	
 	double result, abserr; 
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOINTS_KTFACT);

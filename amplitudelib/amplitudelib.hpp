@@ -200,5 +200,5 @@ const int FOURIER_ZEROS=1000;   // How many zeros of the Bessel functions is
 
 
 
-const std::string AMPLITUDELIB_VERSION = "1.1 2014-04-09";
+const std::string AMPLITUDELIB_VERSION = "1.2 2014-05-16";
 #endif
