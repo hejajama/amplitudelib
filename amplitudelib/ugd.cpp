@@ -205,11 +205,11 @@ double Inthelperf_ktfact_phi(double phi, void* p)
 		{
 			#pragma omp section
 			{
-				ugd1 = par->N1->UGD(par->qt, par->y1, par->pt);
+				ugd1 = par->N1->UGD(par->qt, par->y1, par->scale);
 			}
 			#pragma omp section
 			{
-				ugd2 = par->N2->UGD(kt_m_qt, par->y2, par->pt);
+				ugd2 = par->N2->UGD(kt_m_qt, par->y2, par->scale);
 			}
 		}
 		
@@ -237,10 +237,11 @@ double Inthelperf_ktfact_fragfun(double z, void* p);
 
 double AmplitudeLib::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, double sqrts, FragmentationFunction* fragfun, Hadron final, AmplitudeLib* N2)
 {
+    
 	Inthelper_ktfact_fragfun par;
 	par.N1=this; par.y=y; par.y=y; par.pt=pt; par.fragfun=fragfun; par.final=final;
 	par.N2=N2;
-    par.scale=pt*pt;
+    par.scale=std::max(1.0,pt*pt);
 	par.sqrts=sqrts;
 	
 	PDF* pdf;
@@ -276,8 +277,7 @@ double Inthelperf_ktfact_fragfun(double z, void* p)
 {
 	Inthelper_ktfact_fragfun* par = (Inthelper_ktfact_fragfun*)p;
 	double kt = par->pt/z;
-	double scale = std::max(1.0,par->pt);
-	
+	double scale = std::sqrt(par->scale);	
 	double xp = kt * std::exp(par->y) / par->sqrts;
 	if (HADRONPROD_TRANSITION and xp > par->N1->X0())
 	{
