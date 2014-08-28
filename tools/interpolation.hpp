@@ -132,6 +132,12 @@ class Interpolator
          */
         void SetMinX(double x);
 
+        /**
+         * Choose wether an error will be printed to stderr if interpolator
+         * is evaluated outside the interpolation range.
+         */
+        void SetOutOfRangeErrors(bool set);
+
     private:
         INTERPOLATION_METHOD method;
         double* xdata, *ydata;
@@ -160,6 +166,8 @@ class Interpolator
         static const int k=4;
         static const int ncoeffs = 12;
         static const int nbreak = ncoeffs-k+2;
+
+        bool out_of_range_errors;
 
 
 };

@@ -23,6 +23,7 @@
 int Interpolator::Initialize()
 {
     int status=0;
+    out_of_range_errors = true;
     if (ready)
     {
         // Interpolator is already initialized: clear it (GSL part)
@@ -141,8 +142,11 @@ double Interpolator::Evaluate(double x)
 			else return freeze_overflow;
 		}
 		if (x < 0.9999*minx or x > 1.00001*maxx)	// if not true, no need to display error
-			cerr << "x=" << x << " is not within limits [" << minx << ", " << maxx << "], forcing "
-				<< "it in that interval! " << LINEINFO << endl;
+        {
+            if (out_of_range_errors)
+                cerr << "x=" << x << " is not within limits [" << minx << ", " << maxx << "], forcing "
+                    << "it in that interval! " << LINEINFO << endl;
+        }
         if (x<minx) x=minx*1.00001;
         if (x>maxx) x=maxx*0.999999;
     }
@@ -427,4 +431,9 @@ void Interpolator::SetMaxX(double x)
 void Interpolator::SetMinX(double x)
 {
     minx=x;
+}
+
+void Interpolator::SetOutOfRangeErrors(bool er)
+{
+    out_of_range_errors=er;
 }
