@@ -1,34 +1,36 @@
 CXXFLAGS = `gsl-config --cflags` -O2 -Wall -pedantic -fopenmp# -I ./libbci-1.1.0/ 
-LDFLAGS = `gsl-config --libs` -lm 
-FORTRANFLAGS = -O2 -nofor_main
+LDFLAGS = `gsl-config --libs` -lifcoremt -lm 
+FORTRANFLAGS = -O2 
 
 include filelist.m
 
 all: amplitude
 
-CC = icc
-CXX = icpc
-FORT = ifort
-
-amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp
-	$(CC) $(CXXFLAGS) $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp $(LDFLAGS) -lifcoremt -o amplitude
+amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp src/amplitude.cpp src/cross_section.cpp
+	#icpc $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp -lgfortran -o amplitude
 	ar cru libamplitude.a $(OBJECTS) $(FTOBJECTS) $(FOBJECTS)
+	icpc $(CXXFLAGS) $(LDFLAGS) src/amplitude.cpp libamplitude.a -o amplitude
+	icpc $(CXXFLAGS) $(LDFLAGS) src/cross_section.cpp libamplitude.a -o cross_section
 
 interpolator: tools/interpolator.o tools/interpolation.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) tools/interpolator.o tools/interpolation.o -o interpolator
+	icpc $(CXXFLAGS) $(LDFLAGS) tools/interpolator.o tools/interpolation.o -o interpolator
 
-tester: tools/tester.cpp
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) tools/tester.cpp libamplitude.a -o tester -lifcoremt
+tester: tools/tester.cpp libamplitude.a
+	icpc $(CXXFLAGS) $(LDFLAGS) tools/tester.cpp libamplitude.a -o tester 
+
+fit: tools/f2fit.o tools/lhcfit.o
+	icpc $(CXXFLAGS) $(LDFLAGS) tools/f2fit.o libamplitude.a -o f2fit
+	icpc $(CXXFLAGS) $(LDFLAGS) tools/lhcfit.o libamplitude.a -o lhcfit
 
 .cpp.o:
-	 $(CXX) $(CXXFLAGS) $< -c -o $@
+	 icpc $(CXXFLAGS) $< -c -o $@ -I .
 .c.o:
-	$(CC) $(CXXFLAGS) $< -c -o $@
+	icc $(CXXFLAGS) $< -c -o $@
 .f.o:
-	$(FORT) $(FORTRANFLAGS) -c $< -c -o $@
+	ifort $(FORTRANFLAGS) -c $< -c -o $@
 
 
 clean:
-	rm -f $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.o
+	rm -f $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.o src/amplitude.o
 	rm -f amplitude	
-	rm -f libamplitude.a
+	rm libamplitude.a
