@@ -188,7 +188,7 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact(double y, double pt, d
 	
 	double result, abserr; 
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOITNS_KTFACT_Z);
-    double minz = std::max(0.1, pt*std::exp(y)/sqrts);
+    double minz = std::max(0.05, pt*std::exp(y)/sqrts);
 	int status = gsl_integration_qag(&fun, minz, 1.0, 0, 0.05,
 		INTPOITNS_KTFACT_Z, GSL_INTEG_GAUSS15, ws, &result, &abserr);
 	gsl_integration_workspace_free(ws);

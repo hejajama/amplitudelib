@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
 	cout << "# F2 fitter" << endl;
 	if (argc < 3)
 	{
-		cout << "Syntax: " << argv[0] << " -bksol bksolfile  -hera heradatafile -lightqmass mass  " << endl;
+		cout << "Syntax: " << argv[0] << " -bksol bksolfile  -hera heradatafile -lightqmass mass  -charmmass mass" << endl;
 		return 0;
 	}
 
@@ -41,6 +41,7 @@ int main(int argc, char* argv[])
 	string herafile;
     double lightqmass=-1;   // If negative mass is given to AmplitudeLib,
         // the default values for the quark masses are used
+    double charmmass=-1;
 
     for (int i=1; i<argc; i++)
     {
@@ -50,6 +51,8 @@ int main(int argc, char* argv[])
             herafile=argv[i+1];
         else if (string(argv[i])=="-lightqmass")
             lightqmass=StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-charmmass")
+            charmmass=StrToReal(argv[i+1]);
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -99,6 +102,11 @@ int main(int argc, char* argv[])
         cout <<"# Light quark mass: " << lightqmass << endl;
     else
         cout <<"# Light quark mass: default " << endl;
+
+    if (charmmass>=0)
+        cout <<"# Charm quark mass: " << charmmass << endl;
+    else
+        cout <<"# Charm quark mass: default " << endl;
 	
 	cout << "# Q^2 [GeV^2]  x  y  HERA-\\sigma_r  HERA-err theory-\\sigma_r(light c b) " << endl;
 	// Compute reduced cross section
@@ -109,7 +117,7 @@ int main(int argc, char* argv[])
 		double xredef = x * (1.0 + 4.0*SQR(mf)/qsqrvals[i]);
 		double sqrts = std::sqrt( qsqrvals[i]/(x * yvals[i]) );
 		double sigmar_light = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts, LIGHT, lightqmass);
-		double sigmar_c = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts, C);
+		double sigmar_c = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts, C, charmmass);
 		double sigmar_b = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts, B);
 		
 		cout << qsqrvals[i] << " " << xvals[i] << " " << yvals[i] << " " << expvals[i] << " " << experrors[i] << " " << sigmar_light << " " << sigmar_c << " " << sigmar_b << endl;

@@ -22,6 +22,9 @@ fit: tools/f2fit.o tools/lhcfit.o
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/f2fit.o libamplitude.a -o f2fit
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/lhcfit.o libamplitude.a -o lhcfit
 
+conformal: tools/nonconformal_to_conformal.o
+	g++ $(CXXFLAGS) $(LDFLAGS) tools/conformal_to_nonconformal.o libamplitude.a -o conformal_to_nonconformal
+
 .cpp.o:
 	 g++ $(CXXFLAGS) $< -c -o $@ -I .
 .c.o:
