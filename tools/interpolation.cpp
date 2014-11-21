@@ -281,6 +281,7 @@ Interpolator::Interpolator(std::vector<double> &x, std::vector<double> &y)
                 cerr << "Grid points are not monotonically increasing! grid["
                     << i-1 <<"]=" << xdata[i-1] <<", grid["<<i<<"]="<< xdata[i]
                     << " " << LINEINFO << endl;
+                exit(1);
             }
         }
     }

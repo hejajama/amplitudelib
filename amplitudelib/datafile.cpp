@@ -21,8 +21,8 @@ DataFile::DataFile(string fname)
     ifstream file(fname.c_str());
     if (!file.is_open())
     {
-        cerr << "ERROR! Coudn't read BK solution file " << fname << " " << LINEINFO << endl ;
-        return;
+        cerr <<  "ERROR! Coudn't read BK solution file " << fname << " " << LINEINFO << endl ;
+        exit(1);
     }
     int confid=0;
     while(!file.eof() and confid < 4)
