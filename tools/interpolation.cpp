@@ -163,7 +163,6 @@ double Interpolator::Evaluate(double x)
                  << ", maxx=" << xdata[points-1] << ", result=" << res << endl;
                  exit(1);
             }
-            return res;
             break;
         case INTERPOLATE_BSPLINE:
             gsl_bspline_eval(x, B, bw);
@@ -174,12 +173,20 @@ double Interpolator::Evaluate(double x)
                 cerr << "Interpolation failed at " << LINEINFO << ": bspline result "
                 << res << " pm " << yerr << " relerr " << std::abs(yerr/res) << endl;
             }*/
-            return res;
             break;
+        default:
+            cerr << "Interpolation method is invalid! " << LINEINFO << endl;
+            exit(1);
     }
 
-    cerr << "Interpolation method is invalid! " << LINEINFO << endl;
-    return 0;   //Shoudn't end up here
+    if (isnan(res) or isinf(res))
+    {
+        cerr << "Interpolation at x=" << x << " gives " << res << endl;
+        exit(1);
+    }
+
+    
+    return res;   
 }
 
 double Interpolator::Derivative(double x)
