@@ -194,15 +194,16 @@ int main(int argc, char* argv[])
         cout <<"# y    Q_s [GeV]    d ln Q_s^2/dy   x" << endl;
 
         // Solve satscale and save it to array, then interpolate=>get also derivative
-        double ystep=0.1;
-        int points = (int)(N.MaxY()/ystep);
+        // Evaluate satscale only at rapidities found from the bk solution file
+        // to minimize numerical uncertainty from interpolation
 
         std::vector<double> rapidities;
         std::vector<double> lnqsqr;
 
-        for (int i=0; i<points; i++)
+        for (int i=0; i<N.YPoints(); i++)
         {
-            rapidities.push_back((double)i*ystep);
+            double rapidity = N.YValue(i);
+            rapidities.push_back(rapidity);
             double x = N.X0()*std::exp(-rapidities[i]);
             double rs = N.SaturationScale(x, Ns);
             lnqsqr.push_back(std::log( 2.0 / SQR(rs) ));    // qs^2
@@ -210,8 +211,9 @@ int main(int argc, char* argv[])
         Interpolator interp(rapidities, lnqsqr);
         interp.Initialize();
 
-        for (double y=0; y < rapidities[points-1]; y+=ystep)
+        for (int i=0; i < N.YPoints(); i++)
         {
+            double y = N.YValue(i);
             cout << y << " " << std::exp(0.5*interp.Evaluate(y)) << " "
                 << interp.Derivative(y) <<  " " << N.X0()*std::exp(-y) << endl;
             

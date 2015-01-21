@@ -15,7 +15,7 @@ fmgev=5.0677
 lambdaqcd=0.241
 
 ws_delta = 0.54*fmgev
-nukeA=208
+nukeA=197
 
 #mvgamma
 #qsqr=0.165
@@ -28,16 +28,16 @@ nukeA=208
 #sigma0=82.97
 
 #mv
-qsqr=0.104
-gamma=1.0
-ec=1
-sigma0=96.586       # sigma_0 in [GeV^{-2}]
+#qsqr=0.104
+#gamma=1.0
+#ec=1
+#sigma0=96.586       # sigma_0 in [GeV^{-2}]
 
 #mve
-#qsqr=0.060
-#ec=18.9
-#gamma=1
-#sigma0=83.985
+qsqr=0.060
+ec=18.9
+gamma=1
+sigma0=83.985
 
 def RA(A):
     return fmgev*(1.12*pow(A, 1.0/3.0) - 0.86*pow(A, -1.0/3.0))

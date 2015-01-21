@@ -176,6 +176,14 @@ class AmplitudeLib
         int YPoints();
 
         /**
+         * Return ith rapidity value
+         *
+         * Can be used to avoid interpolation uncertainties 
+         */
+        double YValue(int yind);
+         
+
+        /**
          * Number of dipole sizes in the BK solution
          */
         int RPoints();
@@ -275,6 +283,8 @@ class AmplitudeLib
         
         std::string info_string;
 
+        std::string datafilename;   //! Name of the file where the amplitude is read, for error messages
+
         QCD qcd;
         
         Amplitude::FT_Method ft;  // ACC SERIES: use j0_transfer from fourier/fourier.c,	
@@ -293,5 +303,5 @@ const int FOURIER_ZEROS=1000;   // How many zeros of the Bessel functions is
 
 
 
-const std::string AMPLITUDELIB_VERSION = "2.0 2014-09-03";
+const std::string AMPLITUDELIB_VERSION = "2.1-dev 2015-01-xx";
 #endif

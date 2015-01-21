@@ -40,6 +40,7 @@ extern "C"
 AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
 {
     // Read BK solution
+    datafilename = datafile;
     DataFile data(datafile);
     data.GetData(n, yvals);
 
@@ -116,11 +117,12 @@ double AmplitudeLib::N(double r, double xbj)
     
     if (y<0 or y>yvals[yvals.size()-1] )
     {
-        if (out_of_range_errors)
+        //if (out_of_range_errors)
             cerr << "y must be between limits [" << 0 << ", "
-                << yvals[yvals.size()-1] << "], asked y=" << y << ", x=" << xbj << " (x0=" << X0() << ") "
+                << yvals[yvals.size()-1] << "], asked y=" << y << ", x=" << xbj << " (x0=" << X0() << ") datafile " << datafilename << " "
                 << LINEINFO << endl;
-        if (y < 0) y=0; else if (y>yvals[yvals.size()-1]) y=yvals[yvals.size()-1];
+            exit(1);
+        //if (y < 0) y=0; else if (y>yvals[yvals.size()-1]) y=yvals[yvals.size()-1];
     }
 
     
@@ -742,3 +744,17 @@ QCD& AmplitudeLib::GetQCD()
     return qcd;
 }
 
+
+
+/*
+ * Return ith rapidity value
+ */
+double AmplitudeLib::YValue(int yind)
+{
+    if (yind >= YPoints() or yind<0)
+    {
+        cerr << "Asked rapidity of index " << yind <<", but the maximum index is " << YPoints()-1 << " " << LINEINFO << endl;
+        exit(1);
+    }
+    return yvals[yind];
+}
