@@ -73,7 +73,7 @@ class AmplitudeLib
          *
          * Computes the Weizsäcker-Williams (WW) gluon distribution
          * (in momentum space), defiend as
-         *   WW_ugd = \int d^2 r/(2\pi r^2) exp(ik.r)N(r)
+         *   WW_ugd = \int d^2 r/(2 pi r^2) exp(ik.r)N(r)
          *       = \int dr/r BesselJ[0,k*r] * N(r)
          * @param kt transverse momentum
          * @param xbj Bjorken-x
@@ -85,7 +85,7 @@ class AmplitudeLib
          *
          * Computes the dipole amplitude in coordinate space, defiend as
          * 
-         *  N(r) = r^2 \int d^2 k/(2\pi) exp(-ik.r) N(k)
+         *  N(r) = r^2 \int d^2 k/(2 pi) exp(-ik.r) N(k)
          *       = r^2 \int dk k BesselJ[0,k*r] * N(k)
          *
          * Note: requires that the loaded bk solution is in momentum space

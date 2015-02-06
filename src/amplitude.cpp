@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
         cout << endl;
         cout << "-x: print amplitude as a function of r or k" << endl;
         cout << "-loglogder: print d ln N / d ln x^2" << endl;
-        cout << "-x_to_k: FT N(r)/r^2 from x to k space" << endl;
+        cout << "-x_to_k: FT N(r)/r^2 from x to k space, compute WW UGD (without prefactors)" << endl;
         cout << "-k_to_x: FT amplitude from k to x space" << endl;
         cout << "-s_x_to_k: FT S(r)" << endl;
         cout << "-satscale Ns, print satscale r_s defined as N(r_s)=Ns" << endl;
@@ -89,6 +89,10 @@ int main(int argc, char* argv[])
         }
         else if (string(argv[i])=="-s_x_to_k")
             mode=S_X_TO_K;
+        else if (string(argv[i])=="-x_to_k")
+            mode=X_TO_K;
+        else if (string(argv[i])=="-loglogder")
+            mode=LOGLOGDER;
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -172,17 +176,18 @@ int main(int argc, char* argv[])
 
     else  if (mode==X_TO_K)
     {
-		double qs = 1.0/N.SaturationScale(y, 0.22);
+        double sat_n = 0.39346;
+		double qs = 1.0/N.SaturationScale(xbj, sat_n);
 		cout << "#FT of N(r)/r^2 = WW_UGD" <<  endl;
         double mink = 1e-5; double maxk = 1.0/N.MinR()*100;
-        int kpoints=100;
+        int kpoints=500;
         double kmultiplier = std::pow(maxk/mink, 1.0/(kpoints-1.0));
-        cout << "# k [GeV]     Amplitude N(k)    FT of S   k/Q_s" << endl;
+        cout << "# k [GeV]     WW UGD    FT of S (adjoint)   k/Q_s" << endl;
         for (int kind=0; kind<kpoints; kind++)
         {
             double tmpk = mink*std::pow(kmultiplier, kind);
-            double res = N.WW_UGD(tmpk, y);
-            double ft_s=N.S_k(tmpk, y);
+            double res = N.WW_UGD(tmpk, xbj);
+            double ft_s=N.S_k(tmpk, xbj, ADJOINT);
             cout <<tmpk << " " << res << " " << ft_s << " " << tmpk/qs << endl;
         }
     
