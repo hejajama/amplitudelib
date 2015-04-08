@@ -18,8 +18,8 @@ tester: tools/tester.cpp libamplitude.a
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/tester.cpp libamplitude.a -o tester 
 
 fit: tools/f2fit.o tools/lhcfit.o
-	g++ $(CXXFLAGS) $(LDFLAGS) tools/f2fit.o libamplitude.a -o f2fit
-	g++ $(CXXFLAGS) $(LDFLAGS) tools/lhcfit.o libamplitude.a -o lhcfit
+	g++ $(CXXFLAGS) $(LDFLAGS) tools/fit/f2fit.o libamplitude.a -o f2fit
+	g++ $(CXXFLAGS) $(LDFLAGS) tools/fit/lhcfit.o libamplitude.a -o lhcfit
 
 conformal: tools/nonconformal_to_conformal.o
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/conformal_to_nonconformal.o libamplitude.a -o conformal_to_nonconformal
