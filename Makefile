@@ -17,9 +17,8 @@ interpolator: tools/interpolator.o tools/interpolation.o
 tester: tools/tester.cpp libamplitude.a
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/tester.cpp libamplitude.a -o tester 
 
-fit: tools/f2fit.o tools/lhcfit.o
+fit: tools/fit/f2fit.o 
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/fit/f2fit.o libamplitude.a -o f2fit
-	g++ $(CXXFLAGS) $(LDFLAGS) tools/fit/lhcfit.o libamplitude.a -o lhcfit
 
 conformal: tools/nonconformal_to_conformal.o
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/conformal_to_nonconformal.o libamplitude.a -o conformal_to_nonconformal
@@ -35,4 +34,8 @@ conformal: tools/nonconformal_to_conformal.o
 clean:
 	rm -f $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.o src/amplitude.o
 	rm -f amplitude	
-	rm libamplitude.a
+	rm -f libamplitude.a
+	rm -f f2fit
+	rm -f tester
+	rm -f interpolator
+	rm -f conformal_to_nonconformal

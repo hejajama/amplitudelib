@@ -1,4 +1,7 @@
 #include "dis.hpp"
+#include "wave_function.hpp"
+#include "virtual_photon.hpp"
+#include <gsl/gsl_integration.h>
 
 using namespace Amplitude;
 
@@ -23,7 +26,7 @@ double Inthelperf_totxs(double r, void* p)
 {
     Inthelper_totxs* par = (Inthelper_totxs*)p;
 
-    double result = r*par->N->N(r,par->y);
+    double result = r*par->N->N(r,par->xbj);
     if (par->pol==L)    // Longitudinal
         result *= par->wf->PsiSqr_L_intz(par->Qsqr, r);
     else if (par->pol==T)   // Transverse
@@ -45,10 +48,8 @@ double Inthelperf_totxs(double r, void* p)
 
 double DIS::ProtonPhotonCrossSection(double Qsqr, double xbj, Polarization pol,Parton p, double mass)
 {
-    Inthelper_totxs par; par.N=this;
+    Inthelper_totxs par; par.N=N;
     par.pol=pol; par.Qsqr=Qsqr; par.xbj=xbj;
-
-    double sum=0;
 
     
     VirtualPhoton wavef;
@@ -60,20 +61,20 @@ double DIS::ProtonPhotonCrossSection(double Qsqr, double xbj, Polarization pol,P
     gsl_function fun; fun.function=Inthelperf_totxs;
     fun.params=&par;
 
-    SetOutOfRangeErrors(false);
+    N->SetOutOfRangeErrors(false);
     
 
-    double result,abserr; size_t eval;
+    double result,abserr; 
     const int MAXITER_RINT=100;
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_RINT);
-    int status = gsl_integration_qag(&fun, 0.1*MinR(), 10.0*MaxR(), 0, 0.01,
+    int status = gsl_integration_qag(&fun, 0.1*N->MinR(), 10.0*N->MaxR(), 0, 0.01,
         MAXITER_RINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
     gsl_integration_workspace_free(ws);
     //int status = gsl_integration_qng(&fun, MinR(), MaxR(),
     //0, 0.001,  &result, &abserr, &eval);
     
     if(status){ std::cerr<< "r integral in ProtonPhotonCrossSection failed with code " 
-        << status << " (Qsqr=" << Qsqr << ", y=" << y << " result " << result  
+        << status << " (Qsqr=" << Qsqr << ", xbj=" << xbj << " result " << result  
         << " relerr=" << abserr/result << ") at " << LINEINFO << std::endl;
     }
 
@@ -106,10 +107,9 @@ double DIS::FL(double qsqr, double xbj, Parton p, double mass)
 
 double DIS::ReducedCrossSection(double qsqr, double xbj, double sqrts, Parton p, double mass)
 {
-	double bjorkx = xbj;
-	double kin_y = qsqr/(sqrts*sqrts*bjorkx);   // inelasticity, not rapidity
+	double kin_y = qsqr/(sqrts*sqrts*xbj);   // inelasticity, not rapidity
 	
-	InitializeInterpolation(y);
+	N->InitializeInterpolation(xbj);
 	
 	
 	double xs_l, xs_t;
@@ -117,11 +117,11 @@ double DIS::ReducedCrossSection(double qsqr, double xbj, double sqrts, Parton p,
 	{
 		#pragma omp section
 		{
-			xs_l = ProtonPhotonCrossSection(qsqr, y, L, p, mass);
+			xs_l = ProtonPhotonCrossSection(qsqr, xbj, L, p, mass);
 		}
 		#pragma omp section
 		{
-			xs_t = ProtonPhotonCrossSection(qsqr, y, T, p, mass);
+			xs_t = ProtonPhotonCrossSection(qsqr, xbj, T, p, mass);
 		}
 	}
 	double f2 = qsqr/(4.0*SQR(M_PI)*ALPHA_e)*(xs_l+xs_t);

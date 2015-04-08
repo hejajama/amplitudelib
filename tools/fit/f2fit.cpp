@@ -1,5 +1,5 @@
 /* HERA f2 fitter
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2012-2014
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2012-2015
  * 
  * Computes F2 using the AmplitudeLib at the kinematical
  * values for which combined HERA F2 values are given
@@ -10,8 +10,8 @@
  * Lines starting with # are ignored
  * inelasticity is the DIS y variable y=Q^2/(sx)
  * 
- * Prints the computed F2 values in the standard output, and the format is
- * Q^2 x y experimental_f2 f2_error theoryf2 (without normalization)
+ * Prints the computed reduced cross section values in the standard output, and the format is
+ * Q^2 x y experimental_sigmar exp_error theory_sigmar(light b c)
  */
  
 
@@ -21,11 +21,13 @@
 #include <amplitudelib/amplitudelib.hpp>
 #include <amplitudelib/datafile.hpp>
 #include <amplitudelib/virtual_photon.hpp>
+#include <amplitudelib/dis.hpp>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <gsl/gsl_errno.h>
 using namespace std;
+using namespace Amplitude;
 
 int main(int argc, char* argv[])
 {
@@ -66,6 +68,7 @@ int main(int argc, char* argv[])
 	cout << "# Reading BK equation solution from " << datafile << " and HERA data from " << herafile << endl;
 	
 	AmplitudeLib N(datafile);
+    DIS dis(&N);
 	//N.SetX0(0.002);
 	
 	cout << "# " << N.GetString() << endl;
@@ -116,9 +119,9 @@ int main(int argc, char* argv[])
 		const double mf=0.14;
 		double xredef = x * (1.0 + 4.0*SQR(mf)/qsqrvals[i]);
 		double sqrts = std::sqrt( qsqrvals[i]/(x * yvals[i]) );
-		double sigmar_light = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts, LIGHT, lightqmass);
-		double sigmar_c = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts, C, charmmass);
-		double sigmar_b = N.ReducedCrossSection(qsqrvals[i], std::log(N.X0()/x), sqrts, B);
+		double sigmar_light = dis.ReducedCrossSection(qsqrvals[i], x, sqrts, LIGHT, lightqmass);
+		double sigmar_c = dis.ReducedCrossSection(qsqrvals[i], x, sqrts, C, charmmass);
+		double sigmar_b = dis.ReducedCrossSection(qsqrvals[i], x, sqrts, B);
 		
 		cout << qsqrvals[i] << " " << xvals[i] << " " << yvals[i] << " " << expvals[i] << " " << experrors[i] << " " << sigmar_light << " " << sigmar_c << " " << sigmar_b << endl;
 	}

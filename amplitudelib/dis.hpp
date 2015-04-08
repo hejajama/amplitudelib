@@ -33,7 +33,7 @@ class DIS
          * @param mass Quark mass, if not specified, default value from VirtualPhoton class is used
          * @see VirtualPhoton
          */ 
-        double ProtonPhotonCrossSection(double qsqr, double xbj, Amplitude::Polarization pol, Amplitude::Parton=LIGHT, double mass=-1);
+        double ProtonPhotonCrossSection(double qsqr, double xbj, Amplitude::Polarization pol, Amplitude::Parton=Amplitude::LIGHT, double mass=-1);
 
         /**
          * Structure function F2
@@ -44,7 +44,7 @@ class DIS
          * @param Parton quark flavor(s) taken into account (default: U,D,S)
          * @param mass Quark mass, if not specified, default value from VirtualPhoton class is used
          */
-        double F2(double qsqr, double xbj, Parton=LIGHT, double mass=-1);
+        double F2(double qsqr, double xbj, Amplitude::Parton=Amplitude::LIGHT, double mass=-1);
 
         /**
          * Structure function FL
@@ -52,7 +52,7 @@ class DIS
          * Compute structure function FL. Same parameters as in F2()
          * @see F2
          */
-        double FL(double qsqr, double xbj, Parton=LIGHT, double mass=-1);
+        double FL(double qsqr, double xbj, Amplitude::Parton=Amplitude::LIGHT, double mass=-1);
 
         /**
          * Compute reduced cross section
@@ -68,7 +68,7 @@ class DIS
          * @see F2
          * @see FL
          */
-        double ReducedCrossSection(double qsqr, double xbj, double sqrts, Parton=LIGHT, double mass=-1);
+        double ReducedCrossSection(double qsqr, double xbj, double sqrts, Amplitude::Parton=Amplitude::LIGHT, double mass=-1);
 
     private:
         AmplitudeLib* N;
