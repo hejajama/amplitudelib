@@ -1,13 +1,23 @@
 #ifndef _SINGLE_INCLUSIVE_HPP
 #define _SINGLE_INCLUSIVE_HPP
 
+/*
+ * Single inclusive cross section
+ *
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2010-2015
+ */
+ 
+
 #include "amplitudelib.hpp"
+#include "../tools/config.hpp"
+#include <vector>
 
 /**
  * Calculate single inclusive yields
  *
  * Calculate single particle production using the hybrid formalism
  * or the kt factorization.
+ *
  */
 class SingleInclusive
 {
@@ -64,7 +74,18 @@ class SingleInclusive
          * @param scale Momentum scale [GeV^2] at which the strong coupling constant is evaluated, default: parton pt^2
          */
 		double dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2=NULL, double scale=-1 );
-		
+
+        /**
+         * Set partons included in hybrid formalism calclulation
+         *
+         * @param p: List of partons. Possible values: LIGHT, C, B, G. Default: LIGHT and G
+         */
+        void SetPartons(std::vector<Amplitude::Parton> p);
+
+        /**
+         * Get list of partons taken into account in hybrid formalism
+         */
+        std::vector<Amplitude::Parton> &Partons();
 
         /*
          * TODO:
@@ -87,6 +108,8 @@ class SingleInclusive
     private:
         AmplitudeLib* N;
         QCD qcd;
+        std::vector<Amplitude::Parton> partons;            //! Partons included in hybrid formalism
+
 };
 
 #endif

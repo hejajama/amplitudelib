@@ -187,3 +187,26 @@ void SubtractMinimum(std::vector<double> &array)
 	for (uint i=0; i<array.size(); i++)
 		array[i]=array[i]-min;
 }
+
+std::string PartonToString(Amplitude::Parton p)
+{
+    switch(p)
+    {
+        case U:
+            return "u";
+        case D:
+            return "d";
+        case S:
+            return "s";
+        case LIGHT:
+            return "Light (u+d+s)";
+        case C:
+            return "c";
+        case B:
+            return "b";
+        case G:
+            return "g";        
+        default:
+            return "Unknown";
+    }
+}

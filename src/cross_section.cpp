@@ -254,6 +254,7 @@ int main(int argc, char* argv[])
     SingleInclusive xs(&N);
 
     
+    
     if (datafile_probe != "")
         datafile_probe = datafile;
     AmplitudeLib N2(datafile);
@@ -280,6 +281,18 @@ int main(int argc, char* argv[])
     cout << "# " << N.GetString() << endl;
     cout << "# Fragfun: " << fragfun->GetString() << endl;
     cout << "# PDF: " << pdf->GetString() << endl;
+    // Print quarks
+    std::vector<Parton> ps;
+    ps.push_back(LIGHT);
+    //ps.push_back(C);
+    ps.push_back(G);
+    xs.SetPartons(ps);
+    cout <<"# Partons: " ;
+    for (unsigned int i=0; i<xs.Partons().size(); i++)
+    {
+        cout << PartonToString(xs.Partons()[i]) << " ";
+    }
+    cout << endl;
 
     //**************** Different operation modes
 

@@ -7,6 +7,7 @@
 #include "../tools/config.hpp"
 #include "fragmentation.hpp"
 #include <cstdlib>
+#include "../tools/tools.hpp"
 
 extern "C"
 {
@@ -131,12 +132,17 @@ double DSS::Evaluate(Parton p, Hadron h, double x, double qs)
             parton=6;
             //result = sbar/x;
             break;
+        case C:
+            parton = 7;
+            break;
+        case B:
+            parton = 9;
+            break;
         case G:
 			parton=0;
-            //result = g/x;
             break;
         default:
-            cerr << "Parton " << p << " is not supported! " << LINEINFO << endl;
+            cerr << "Parton " << PartonToString(p) << " is not supported! " << LINEINFO << endl;
             return 0;
     }
 

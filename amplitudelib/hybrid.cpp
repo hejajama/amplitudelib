@@ -28,6 +28,7 @@ struct Inthelper_hadronprod
     double minpt,maxpt;
     PDF* pdf;
     FragmentationFunction* frag;
+    SingleInclusive* xs;
     bool deuteron;
     Hadron final;
     bool ptint;     // if false, don't integrate over pt
@@ -65,34 +66,56 @@ double Inthelperf_hadronprod(double z, void *p)
 
     bool deuteron = par->deuteron;
     par->N->InitializeInterpolation(x2);
-
-    double result = 0;
     
     // Quark from proton:
     // UGD in fundamental representation
     double nf = par->N->S_k(par->pt/z, x2);
-    // PDF and fragmentation
-    double xqf = par->pdf->xq(x1, scale, U)*par->frag->Evaluate(U, par->final, z, scale)
-        + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(D, par->final, z, scale)
-        + par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
-        //+ par->pdf->xq(x1, scale, C)*par->frag->Evaluate(C, par->final, z, scale)
-
-    if (deuteron)
-    {
-        // isospin symmetry, u in p -> d in n
-        xqf += par->pdf->xq(x1, scale, U)*par->frag->Evaluate(D, par->final, z, scale)
-        + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(U, par->final, z, scale)
-        + par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
-        //+ par->pdf->xq(x1, scale, C)*par->frag->Evaluate(C, par->final, z, scale);
-    }
-        
-    result = nf*xqf;
-	
     // Adjoint representation, gluon scatters
     double na = par->N->S_k(par->pt/z, x2, ADJOINT);
-    double xgf = par->pdf->xq(x1, scale, G)*par->frag->Evaluate(G, par->final, z, scale);
-    if (deuteron) xgf *= 2.0;   // gluon pdf gets multiplied by 2
-    result += na*xgf;
+
+    double result=0;
+
+    // Partons
+    for (unsigned int i=0; i<par->xs->Partons().size(); i++)
+    {
+        if (par->xs->Partons()[i]==LIGHT)
+        {
+            result =  nf *
+                (par->pdf->xq(x1, scale, U)*par->frag->Evaluate(U, par->final, z, scale)
+                + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(D, par->final, z, scale)
+                + par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale)
+                );
+            if (deuteron)
+            {
+                    result += nf * (
+                        par->pdf->xq(x1, scale, U)*par->frag->Evaluate(D, par->final, z, scale)
+                        + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(U, par->final, z, scale)
+                        + par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale)
+                        );
+            }
+        }
+        else if (par->xs->Partons()[i]==C or par->xs->Partons()[i]==B)
+        {
+            double contrib = nf * par->pdf->xq(x1, scale, par->xs->Partons()[i])*par->frag->Evaluate(par->xs->Partons()[i], par->final, z, scale);
+            //cout << "C contrib: " << contrib << " pdf " <<  par->pdf->xq(x1, scale, par->xs->Partons()[i]) << " frag " << par->frag->Evaluate(par->xs->Partons()[i], par->final, z, scale) << endl;
+            if (deuteron)
+                contrib *= 2.0;
+            result += contrib;
+        }
+
+        else if (par->xs->Partons()[i]==G)
+        {
+            double contrib = na*par->pdf->xq(x1, scale, G)*par->frag->Evaluate(G, par->final, z, scale);
+            if (deuteron)
+                contrib *= 2.0;
+            result += contrib;
+        }
+        else
+        {
+            cerr << "Unknown parton " << par->xs->Partons()[i] << " at " << LINEINFO << endl;
+            exit(1);
+        }
+    }
 
     return result/SQR(z);
 }
@@ -123,6 +146,7 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt(double y, double pt, double s
     helper.y=y; helper.pt=pt; helper.xf=xf;
     helper.deuteron=deuteron;
     helper.final=final;
+    helper.xs = this;
     helper.sqrts=sqrts;
     helper.pdf=pdf; helper.frag=fragfun;
     helper.y=y; helper.scale=scale;
@@ -155,3 +179,19 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt(double y, double pt, double s
     return result;
 }
 
+/*
+ * Set partons included in single inclusive calculations
+ */
+void SingleInclusive::SetPartons(std::vector<Parton> p)
+{
+    partons.clear();
+    for (unsigned int i=0; i<p.size(); i++)
+    {
+        partons.push_back(p[i]);
+    }
+}
+
+std::vector<Amplitude::Parton> & SingleInclusive::Partons()
+{
+    return partons;
+}

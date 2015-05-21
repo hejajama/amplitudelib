@@ -34,6 +34,11 @@ void SubtractMinimum(std::vector<double> &array);
 
 std::string Alpha_s_str();
 
+/**
+ * Convert parton type to std::string
+ */
+std::string PartonToString(Amplitude::Parton p);
+
 // Running coupling
 const double MAXALPHA = 0.7;
 

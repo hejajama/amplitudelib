@@ -25,6 +25,10 @@ extern "C"
 SingleInclusive::SingleInclusive(AmplitudeLib* N_)
 {
     N=N_;
+
+    // BY default hybrid formalism takes into accoung light quarks and gluons
+    partons.push_back(LIGHT);
+    partons.push_back(G);
 }
 
 
@@ -38,7 +42,7 @@ SingleInclusive::SingleInclusive(AmplitudeLib* N_)
 struct Inthelper_ktfact{ double x1, x2, pt, qt, scale; AmplitudeLib *N1, *N2; };
 double Inthelperf_ktfact_q(double q, void* p);
 double Inthelperf_ktfact_phi(double phi, void* p);
-const int INTPOINTS_KTFACT = 3;	
+const int INTPOINTS_KTFACT = 4;	
 double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, double pt, double sqrts, AmplitudeLib* N2, double scale )
 {
 	double x1 = pt*std::exp(-y)/sqrts;
@@ -61,7 +65,7 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, doubl
 	Inthelper_ktfact par; par.pt=pt; par.N1=N;
     par.x1=x1; par.x2=x2;
 	par.N2=N2;
-    if (scale<0)
+    if (scale<0)  
         par.scale=pt*pt;
     else
         par.scale=scale;
@@ -74,7 +78,7 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, doubl
 		N2->InitializeInterpolation(x2);
 	}
 	
-	double maxq = std::max(4*pt, 40.0);
+	double maxq = std::max(3.5*pt, 35.0);
     if (maxq>80)
         maxq=80;
 
