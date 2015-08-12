@@ -282,7 +282,7 @@ class AmplitudeLib
         bool out_of_range_errors;  //! If true, don't print "out of range" errors
         
         std::string info_string;
-
+ 
         std::string datafilename;   //! Name of the file where the amplitude is read, for error messages
 
         QCD qcd;
@@ -304,4 +304,6 @@ const int FOURIER_ZEROS=1000;   // How many zeros of the Bessel functions is
 
 
 const std::string AMPLITUDELIB_VERSION = "2.1-dev 2015-01-xx";
+
+const Amplitude::FT_Method DEFAULT_FT_METHOD = Amplitude::ACC_SERIES;
 #endif

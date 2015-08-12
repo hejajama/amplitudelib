@@ -61,7 +61,6 @@ double Inthelperf_hadronprod(double z, void *p)
             << " y " << par->y << " sqrts " 
             << par->sqrts << " pt " << par->pt << endl ;
         return 0;
-        y_A=0;
     }
 
     bool deuteron = par->deuteron;

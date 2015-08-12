@@ -6,8 +6,7 @@ include filelist.m
 
 all: amplitude
 
-amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp src/amplitude.cpp src/cross_section.cpp
-	#icpc $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/main.cpp -lgfortran -o amplitude
+amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/amplitude.cpp src/cross_section.cpp
 	ar cru libamplitude.a $(OBJECTS) $(FTOBJECTS) $(FOBJECTS)
 	icpc $(CXXFLAGS) $(LDFLAGS) src/amplitude.cpp libamplitude.a -o amplitude
 	icpc $(CXXFLAGS) $(LDFLAGS) src/cross_section.cpp libamplitude.a -o cross_section
@@ -18,9 +17,8 @@ interpolator: tools/interpolator.o tools/interpolation.o
 tester: tools/tester.cpp libamplitude.a
 	icpc $(CXXFLAGS) $(LDFLAGS) tools/tester.cpp libamplitude.a -o tester 
 
-fit: tools/f2fit.o tools/lhcfit.o
+fit: tools/f2fit.o 
 	icpc $(CXXFLAGS) $(LDFLAGS) tools/f2fit.o libamplitude.a -o f2fit
-	icpc $(CXXFLAGS) $(LDFLAGS) tools/lhcfit.o libamplitude.a -o lhcfit
 
 .cpp.o:
 	 icpc $(CXXFLAGS) $< -c -o $@ -I .

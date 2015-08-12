@@ -47,6 +47,9 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
     // Initialize
     out_of_range_errors=true;
     kspace=kspace_;
+
+    // Set default FT Method
+    ft = DEFAULT_FT_METHOD;
     
     minr = data.MinR();
     rmultiplier = data.RMultiplier();
