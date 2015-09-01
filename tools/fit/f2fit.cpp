@@ -45,6 +45,7 @@ int main(int argc, char* argv[])
         // the default values for the quark masses are used
     double charmmass=-1;
     double bmass = -1;
+    bool scale_x = false;   // scale bjorken x to take into account the quark mass
 
     for (int i=1; i<argc; i++)
     {
@@ -58,6 +59,8 @@ int main(int argc, char* argv[])
             charmmass=StrToReal(argv[i+1]);
         else if (string(argv[i])=="-bottommass")
             bmass = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-scale_x")
+            scale_x=true;
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -72,10 +75,11 @@ int main(int argc, char* argv[])
 	
 	AmplitudeLib N(datafile);
     DIS dis(&N);
-	//N.SetX0(0.002);
 	
 	cout << "# " << N.GetString() << endl;
 	cout <<"# x0 = " << N.X0() << endl;
+    if (scale_x)
+        cout <<"# Shifting Bjorken-x to x*(1 + 4mf^2/Q^2)" << endl;
 	
 	// Rear HERA data
 	vector<double> xvals, yvals, qsqrvals, expvals, experrors;
@@ -141,8 +145,19 @@ int main(int argc, char* argv[])
 	{
 		double x = xvals[i];
 		double sqrts = std::sqrt( qsqrvals[i]/(x * yvals[i]) );
+        double x_light = x * (1.0 + 4.0*SQR(lightqmass)/qsqrvals[i]);
+        if (scale_x)
+            x = x_light;
 		double sigmar_light = dis.ReducedCrossSection(qsqrvals[i], x, sqrts, LIGHT, lightqmass);
+
+        double x_charm =  x * (1.0 + 4.0*SQR(charmmass)/qsqrvals[i]);
+        if (scale_x)
+            x = x_charm;
 		double sigmar_c = dis.ReducedCrossSection(qsqrvals[i], x, sqrts, C, charmmass);
+
+        double x_beauty =  x * (1.0 + 4.0*SQR(bmass)/qsqrvals[i]);
+        if (scale_x)
+            x = x_beauty;
 		double sigmar_b = dis.ReducedCrossSection(qsqrvals[i], x, sqrts, B, bmass);
 		
 		cout << qsqrvals[i] << " " << xvals[i] << " " << yvals[i] << " " << expvals[i] << " " << experrors[i] << " " << sigmar_light << " " << sigmar_c << " " << sigmar_b << endl;

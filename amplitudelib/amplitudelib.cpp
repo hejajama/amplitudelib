@@ -106,7 +106,13 @@ AmplitudeLib::~AmplitudeLib()
  * Interpolate rapidity linearly and r using spline
  */
 double AmplitudeLib::N(double r, double xbj)
-{    
+{
+    if (isnan(r) or isinf(r))
+    {
+        cerr << "r=" << r << " at AmplitudeLib::N(): " << LINEINFO << endl;
+        exit(1);
+    }
+    
     if (r < MinR() or r > MaxR() )
     {
         if (out_of_range_errors)

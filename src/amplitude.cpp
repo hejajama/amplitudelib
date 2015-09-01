@@ -212,6 +212,7 @@ int main(int argc, char* argv[])
             double x = N.X0()*std::exp(-rapidities[i]);
             double rs = N.SaturationScale(x, Ns);
             lnqsqr.push_back(std::log( 2.0 / SQR(rs) ));    // qs^2
+            
         }
         Interpolator interp(rapidities, lnqsqr);
         interp.Initialize();

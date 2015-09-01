@@ -128,6 +128,12 @@ int Interpolator::Initialize()
 
 double Interpolator::Evaluate(double x)
 {
+    if (isnan(x) or isinf(x))
+    {
+        cerr << "Trying to evaluate interpolator with x=" << x << " at " << LINEINFO << endl;
+        exit(1);
+    }
+    
     if (!ready)
     {
         cerr << "Interpolator is not ready! Did you forget to call Interpolator::Initialize()?" << endl;

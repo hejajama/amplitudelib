@@ -47,6 +47,7 @@ class FitResult:
         self.sigma0=0
         self.chisqr=0
         self.chsqr_n = 0    # chi^2/N
+        self.n = 0  # number of data points
         self.filename = ""
 
 
@@ -61,6 +62,7 @@ class FitFile:
         self.theory_light       = []    # light quark contribution 
         self.theory_c           = []    # c contribution
         self.theory_b           = []    # b contribution
+        self.datapoints         = 0     # Number of data points
         
         self.maxqsqr            = 50    # Q^2 limits
         self.minqsqr            = 0     
@@ -123,6 +125,7 @@ class FitFile:
         
         f.close()
         n=len(self.expdata)
+        self.datapoints = n
         if (n < self.minpoints):
             raise NameError("Too few data points, only " +str(n) +" in the file " + str(fname) + ", should be at least " + str(minpoints))
 
@@ -145,6 +148,7 @@ class FitFile:
         result.sigma0 = fit.x
         result.chisqr = fit.fun
         result.chisqr_n = fit.fun / len(self.expdata)
+        result.n = len(self.expdata)
         return result
 
 
@@ -223,101 +227,106 @@ class FitDir:
         
 
 
-if len(sys.argv)==1:
-    sys.argv.append("-help")
-    
-if sys.argv[1]=="-help":
-    print "HELP:"
-    print "-file fname true/false true/false true/false: fit given file using quarks light/c/b"
-    print "-dir path true/false true/false true/false: add path to global fit"
 
-if sys.argv[1]=="-file":
-    print "singlefile"
-    # Fit single file
-    light=True
-    charm=True
-    bottom=True
-    if sys.argv[3]=="false":
-        light=False
-    elif sys.argv[3]!="true":
-        print "Unknown argument " + sys.argv[3]
-        sys.exit(-1)
-    if sys.argv[4]=="false":
-        charm=False
-    elif sys.argv[4]!="true":
-        print "Unknown argument " + sys.argv[4]
-        sys.exit(-1)
-    if sys.argv[5]=="false":
-        bottom=False
-    elif sys.argv[5]!="true":
-        print "Unknown argument " + sys.argv[5]
-        sys.exit(-1)
 
-    fname=sys.argv[2]
+if __name__ == "__main__":
 
-    print "Fitting file " + fname
-    print "Light quarks: " + str(light)
-    print "Charm: " + str(charm)
-    print "Bottom: " + str(bottom)
+    if len(sys.argv)==1:
+        sys.argv.append("-help")
+        
+    if sys.argv[1]=="-help":
+        print "HELP:"
+        print "-file fname true/false true/false true/false: fit given file using quarks light/c/b"
+        print "-dir path true/false true/false true/false: add path to global fit"
 
-    fit=FitFile()
-    fit.ReadDataFile(fname, light, charm, bottom)
-    bestfit=fit.MinimizeChiSqr()
-    print "Best sigma0: " + str(bestfit.sigma0) +", chi^2=" + str(bestfit.chisqr) +", chi^2/N = " + str(bestfit.chisqr_n)
-    
-
-# add multiple paths to fit
-fitter = FitDir()
-verbose=False
-for i in range(len(sys.argv)):
-    if sys.argv[i]=="-dir":
+    if sys.argv[1]=="-file":
+        # Fit single file
         light=True
         charm=True
         bottom=True
-        if sys.argv[i+2]=="false":
+        if sys.argv[3]=="false":
             light=False
-        elif sys.argv[i+2]!="true":
-            print "Unknown argument " + sys.argv[i+2]
+        elif sys.argv[3]!="true":
+            print "Unknown argument " + sys.argv[3]
             sys.exit(-1)
-        if sys.argv[i+3]=="false":
+        if sys.argv[4]=="false":
             charm=False
-        elif sys.argv[i+3]!="true":
-            print "Unknown argument " + sys.argv[i+3]
+        elif sys.argv[4]!="true":
+            print "Unknown argument " + sys.argv[4]
             sys.exit(-1)
-        if sys.argv[i+4]=="false":
+        if sys.argv[5]=="false":
             bottom=False
-        elif sys.argv[i+4]!="true":
-            print "Unknown argument " + sys.argv[i+4]
+        elif sys.argv[5]!="true":
+            print "Unknown argument " + sys.argv[5]
             sys.exit(-1)
 
-        fitter.AddDir(sys.argv[i+1], light, charm, bottom)
-    if sys.argv[i]=="-v":
-            verbose=True
+        fname=sys.argv[2]
 
-print "Running fit"
-print fitter.DirInfo()
+        print "# Fitting file " + fname
+        print "# Light quarks: " + str(light)
+        print "# Charm: " + str(charm)
+        print "# Bottom: " + str(bottom)
 
-if verbose:
-    fitter.show_good_fits = True
-    fitter.good_fit_limit = 4
+        fit=FitFile()
+        fit.ReadDataFile(fname, light, charm, bottom)
+        bestfit=fit.MinimizeChiSqr()
+        print "#Best sigma0: " + str(bestfit.sigma0) +", chi^2=" + str(bestfit.chisqr) +", chi^2/N = " + str(bestfit.chisqr_n) +", N = " + str(bestfit.n)
+        print bestfit.chisqr_n
 
-res = fitter.Fit()
-print "Bestfit: " + res.filename + ", sigma0=" + str(res.sigma0) + ", chi^2=" + str(res.chisqr) 
+        sys.exit(0)
 
-#fit = FitFile()
-#fit.AddDir("./data/")
-#fit.ReadData([0.06,1,2,2,0])
+    # add multiple paths to fit
+    fitter = FitDir()
+    verbose=False
+    for i in range(len(sys.argv)):
+        if sys.argv[i]=="-dir":
+            light=True
+            charm=True
+            bottom=True
+            if sys.argv[i+2]=="false":
+                light=False
+            elif sys.argv[i+2]!="true":
+                print "Unknown argument " + sys.argv[i+2]
+                sys.exit(-1)
+            if sys.argv[i+3]=="false":
+                charm=False
+            elif sys.argv[i+3]!="true":
+                print "Unknown argument " + sys.argv[i+3]
+                sys.exit(-1)
+            if sys.argv[i+4]=="false":
+                bottom=False
+            elif sys.argv[i+4]!="true":
+                print "Unknown argument " + sys.argv[i+4]
+                sys.exit(-1)
+
+            fitter.AddDir(sys.argv[i+1], light, charm, bottom)
+        if sys.argv[i]=="-v":
+                verbose=True
+
+    print "Running fit"
+    print fitter.DirInfo()
+
+    if verbose:
+        fitter.show_good_fits = True
+        fitter.good_fit_limit = 4
+
+    res = fitter.Fit()
+    print "Bestfit: " + res.filename + ", sigma0=" + str(res.sigma0) + ", chi^2=" + str(res.chisqr) 
+
+    #fit = FitFile()
+    #fit.AddDir("./data/")
+    #fit.ReadData([0.06,1,2,2,0])
 
 
 
-#bestfit = fit.MinimizeChiSqr()
-#print "Best sigma0: " + str(bestfit.sigma0) +", chi^2=" + str(bestfit.chisqr) +", chi^2/N = " + str(bestfit.chisqr_n)
+    #bestfit = fit.MinimizeChiSqr()
+    #print "Best sigma0: " + str(bestfit.sigma0) +", chi^2=" + str(bestfit.chisqr) +", chi^2/N = " + str(bestfit.chisqr_n)
 
-#fitter = FitDir()
-#fitter.AddDir("/space/hejajama/hera/2015/data/mve/charmmassfit/mc_1.27/sigmar/")
-#fitter.AddDir("/space/hejajama/hera/2015/data/mve/charmmassfit/mc_1.27/sigmar_cc/", light=False, charm=True, bottom=False)
-#fitter.AddDir("/space/hejajama/hera/herafit_systemaattisesti/sigmar/mve/", light=True, charm=False, bottom=False)
-#res = fitter.Fit()
-#print "Bestfit: " + res.filename + ", sigma0=" + str(res.sigma0) + ", chi^2=" + str(res.chisqr) 
+    #fitter = FitDir()
+    #fitter.AddDir("/space/hejajama/hera/2015/data/mve/charmmassfit/mc_1.27/sigmar/")
+    #fitter.AddDir("/space/hejajama/hera/2015/data/mve/charmmassfit/mc_1.27/sigmar_cc/", light=False, charm=True, bottom=False)
+    #fitter.AddDir("/space/hejajama/hera/herafit_systemaattisesti/sigmar/mve/", light=True, charm=False, bottom=False)
+    #res = fitter.Fit()
+    #print "Bestfit: " + res.filename + ", sigma0=" + str(res.sigma0) + ", chi^2=" + str(res.chisqr) 
 
 
