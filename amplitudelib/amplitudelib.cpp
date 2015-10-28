@@ -124,6 +124,11 @@ double AmplitudeLib::N(double r, double xbj)
 
     double y = std::log(X0()/xbj);
     
+    // A slighlty ugly hack, to avoid possible problems around max y
+    if ( std::abs(1.0-y / yvals[yvals.size()-1]) < 0.0000001)
+		y=yvals[yvals.size()-1];
+
+    
     if (y<0 or y>yvals[yvals.size()-1] )
     {
         //if (out_of_range_errors)
