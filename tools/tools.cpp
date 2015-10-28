@@ -1,6 +1,6 @@
 /*
  * BK equation solver
- * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011
+ * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2015
  */
 
 #include "tools.hpp"
@@ -138,6 +138,7 @@ double T_A(double b, int A)
 	gsl_function f; f.params=&par; f.function=inthelperf_ta;
 	int status = gsl_integration_qag(&f, 0, 99, 0, 0.001, 10, GSL_INTEG_GAUSS61,
 		w, &res, &abserr);
+    gsl_integration_workspace_free(w);
 	if(status)
 		cerr << "T_A integration failed at " << LINEINFO <<", result " << res
 			<< ", relerr " << std::abs(res-abserr)/res <<", A=" << A << endl;
@@ -167,6 +168,7 @@ void InitializeWSDistribution(int A)
 	res *= 4.0*M_PI;
 	
 	w_s_normalization = 1.0/res;
+    gsl_integration_workspace_free(w);
 }
 
 /*
