@@ -320,7 +320,7 @@ int main(int argc, char* argv[])
     else if (mode==HYBRID_PARTON)
     {
 		cout <<"# Parton level hybrid formalism" << endl;
-		cout <<"# sqrt(s)=" << sqrts << " GeV" << endl;
+		cout <<"# sqrt(s)=" << sqrts << " GeV, y=" << y << endl;
 		cout <<"# pdf: " << pdf->GetString() << endl;
 		cout <<"# p_T   dN/(d^2 p_T dy)-gluon uquark  dquark  squark  " << endl;
 		pdf->Initialize();
@@ -330,7 +330,7 @@ int main(int argc, char* argv[])
 			double xa = pt*std::exp(-y)/sqrts;
 			double ya = std::log(N.X0()/xa);
 			double xp =  pt*std::exp(y)/sqrts;
-			N.InitializeInterpolation(ya);
+			N.InitializeInterpolation(xa);
 				
 
 			double scale = pt;
