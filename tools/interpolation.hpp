@@ -30,6 +30,9 @@ enum INTERPOLATION_METHOD {
     INTERPOLATE_BSPLINE
 };
 
+// Enable support for bspline interpolation, requires gsl 1.x, not gsl 2
+// #define ENABLE_BSPLINE
+
 /**
  * Interpolates given data using spline (goes trough every data point)
  * or bspline (=noisy data) using the GSL routines.

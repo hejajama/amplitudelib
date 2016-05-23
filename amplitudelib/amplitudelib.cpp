@@ -24,6 +24,8 @@
 #include <algorithm>
 
 using namespace Amplitude;
+using std::isinf;
+using std::isnan;
 
 
 extern "C"
