@@ -109,6 +109,11 @@ double DIS::ReducedCrossSection(double qsqr, double xbj, double sqrts, Parton p,
 {
 	double kin_y = qsqr/(sqrts*sqrts*xbj);   // inelasticity, not rapidity
 	
+	if (xbj > N->X0())
+	{
+		cerr << "Asked to calculate DIS at x=" << xbj << ", Q^2=" << qsqr << ", mass=" << mass << ", evaluating at x=x0=" << N->X0() << endl;
+		xbj = N->X0();
+	}
 	N->InitializeInterpolation(xbj);
 	
 	

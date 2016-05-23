@@ -188,6 +188,7 @@ double Interpolator::Evaluate(double x)
     if (isnan(res) or isinf(res))
     {
         cerr << "Interpolation at x=" << x << " gives " << res << endl;
+		return 0;
         exit(1);
     }
 

@@ -20,6 +20,9 @@ tester: tools/tester.cpp libamplitude.a
 fit: tools/fit/f2fit.o 
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/fit/f2fit.o libamplitude.a -o f2fit
 
+f2grid: tools/fit/f2_grid.o
+	g++ $(CXXFLAGS) $(LDFLAGS) tools/fit/f2_grid.o libamplitude.a -o f2grid
+
 conformal: tools/nonconformal_to_conformal.o
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/conformal_to_nonconformal.o libamplitude.a -o conformal_to_nonconformal
 
