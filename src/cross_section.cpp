@@ -257,7 +257,7 @@ int main(int argc, char* argv[])
     
     if (datafile_probe != "")
         datafile_probe = datafile;
-    AmplitudeLib N2(datafile);
+    AmplitudeLib N2(datafile_probe);
     if (x0>0)
     {
         N.SetX0(x0); N2.SetX0(x0);
