@@ -255,7 +255,7 @@ int main(int argc, char* argv[])
 
     
     
-    if (datafile_probe != "")
+    if (datafile_probe == "")
         datafile_probe = datafile;
     AmplitudeLib N2(datafile_probe);
     if (x0>0)
