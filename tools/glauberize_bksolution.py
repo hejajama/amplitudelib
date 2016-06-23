@@ -12,13 +12,14 @@ scipy.pkgload()
 
 A=208
 b=0
-
+b=float(sys.argv[2])
 
 
 fmgev=5.0677
 gamma=1.135
 lambdaqcd=0.241
-sigma0=32.895*2.568
+#sigma0=32.895*2.568 #mvgamma
+sigma0=28.7977*2.568 #1507.03651
 ws_delta = 0.54*fmgev
 
 def RA(A):
