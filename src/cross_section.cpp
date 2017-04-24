@@ -255,9 +255,9 @@ int main(int argc, char* argv[])
 
     
     
-    if (datafile_probe != "")
+    if (datafile_probe == "")
         datafile_probe = datafile;
-    AmplitudeLib N2(datafile);
+    AmplitudeLib N2(datafile_probe);
     if (x0>0)
     {
         N.SetX0(x0); N2.SetX0(x0);
@@ -320,9 +320,9 @@ int main(int argc, char* argv[])
     else if (mode==HYBRID_PARTON)
     {
 		cout <<"# Parton level hybrid formalism" << endl;
-		cout <<"# sqrt(s)=" << sqrts << " GeV" << endl;
+		cout <<"# sqrt(s)=" << sqrts << " GeV, y=" << y << endl;
 		cout <<"# pdf: " << pdf->GetString() << endl;
-		cout <<"# p_T   dN/(d^2 p_T dy)-gluon uquark  dquark  squark  " << endl;
+		cout <<"# p_T   dN/(d^2 p_T dy)-gluon uquark  dquark  squark U+D+S pdf  gluon-pdf  " << endl;
 		pdf->Initialize();
         
         for (double pt=minpt; pt<=maxpt; pt+=ptstep)
@@ -330,7 +330,7 @@ int main(int argc, char* argv[])
 			double xa = pt*std::exp(-y)/sqrts;
 			double ya = std::log(N.X0()/xa);
 			double xp =  pt*std::exp(y)/sqrts;
-			N.InitializeInterpolation(ya);
+			N.InitializeInterpolation(xa);
 				
 
 			double scale = pt;
@@ -343,7 +343,7 @@ int main(int argc, char* argv[])
 			double partonlevel_s = 1.0/SQR(2.0*M_PI)  * sk * pdf->xq(xp, scale, S);
 			double partonlevel_g = 1.0/SQR(2.0*M_PI)  * sk_adj * pdf->xq(xp, scale, G);
        
-            cout << pt << " " << partonlevel_g << " " << partonlevel_u << " " << partonlevel_d << " " << partonlevel_s  << endl;
+            cout << pt << " " << partonlevel_g << " " << partonlevel_u << " " << partonlevel_d << " " << partonlevel_s  << " " << pdf->xq(xp, scale, U) + pdf->xq(xp, scale, D) + pdf->xq(xp, scale, S) << " "  << pdf->xq(xp, scale, G) << endl;
         }
 		
 	}

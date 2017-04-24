@@ -145,20 +145,29 @@ int main(int argc, char* argv[])
 	{
 		double x = xvals[i];
 		double sqrts = std::sqrt( qsqrvals[i]/(x * yvals[i]) );
-        double x_light = x * (1.0 + 4.0*SQR(lightqmass)/qsqrvals[i]);
-        if (scale_x)
-            x = x_light;
-		double sigmar_light = dis.ReducedCrossSection(qsqrvals[i], x, sqrts, LIGHT, lightqmass);
+        double x_light = x;
+		if (scale_x)
+			x_light = x   * (1.0 + 4.0*SQR(lightqmass)/qsqrvals[i]);
 
-        double x_charm =  x * (1.0 + 4.0*SQR(charmmass)/qsqrvals[i]);
-        if (scale_x)
-            x = x_charm;
-		double sigmar_c = dis.ReducedCrossSection(qsqrvals[i], x, sqrts, C, charmmass);
+		double sigmar_light = dis.ReducedCrossSection(qsqrvals[i], x_light, sqrts, LIGHT, lightqmass);
 
-        double x_beauty =  x * (1.0 + 4.0*SQR(bmass)/qsqrvals[i]);
+        double x_charm =  x ;
         if (scale_x)
-            x = x_beauty;
-		double sigmar_b = dis.ReducedCrossSection(qsqrvals[i], x, sqrts, B, bmass);
+		{
+            x_charm =  x * (1.0 + 4.0*SQR(charmmass)/qsqrvals[i]); 
+			if (x_charm>0.01)
+			{
+				cerr << "Skipping x="<< xvals[i] << ", Q^2=" << qsqrvals[i] << endl;
+				continue;
+			}
+		}
+		double sigmar_c = dis.ReducedCrossSection(qsqrvals[i], x_charm, sqrts, C, charmmass);
+
+        double x_beauty =  x;
+        if (scale_x)
+            x_beauty =  x * (1.0 + 4.0*SQR(charmmass)/qsqrvals[i]);
+
+		double sigmar_b = dis.ReducedCrossSection(qsqrvals[i], x_beauty, sqrts, B, bmass);
 		
 		cout << qsqrvals[i] << " " << xvals[i] << " " << yvals[i] << " " << expvals[i] << " " << experrors[i] << " " << sigmar_light << " " << sigmar_c << " " << sigmar_b << endl;
 	}
