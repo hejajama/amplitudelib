@@ -13,6 +13,12 @@ from decimal import Decimal
 from numpy import linalg
 from scipy.optimize import minimize_scalar
 import pdb
+import copy
+
+#debug
+def dump(obj):
+    for attr in dir(obj):
+        print "obj.%s = %s" % (attr, getattr(obj, attr))
 
 def format_number(i, decimals=4, sign=True):
     try:
@@ -48,7 +54,8 @@ class FitResult:
         self.chisqr=0
         self.chsqr_n = 0    # chi^2/N
         self.n = 0  # number of data points
-        self.filename = ""
+        self.params = []
+
 
 
 class FitFile:
@@ -71,6 +78,10 @@ class FitFile:
 
         self.dirs               = []    # Directories
         self.quarks             = []    # [light, charm, beauty] for all dirs
+    
+        self.params             = []    # Fit parameters
+        
+        self.singlefile = False         # only fit one file, don't try to construct parameter string
 
     def AddDir(self, d, light=True, charm=True, bottom=True):
         self.dirs.append(d)
@@ -81,6 +92,7 @@ class FitFile:
         ' [Q^2, gamma, ln C^2, ln ec, freeze]'
         ' Filename example: mv_qsqr_0.0600_gamma_01.0000_lncsqr_+02.0000_lnec_+02.0000_freeze_0.dat'
 
+        self.params = params
         for d,q in zip(self.dirs, self.quarks):
             fname = ParamsToFilename(params)
             self.ReadDataFile(d + "/" + fname, q[0], q[1], q[2])
@@ -144,11 +156,17 @@ class FitFile:
     def MinimizeChiSqr(self):
         fit = minimize_scalar(self.ChiSqr)
 
-        result = FitResult
+        result = FitResult()
         result.sigma0 = fit.x
         result.chisqr = fit.fun
         result.chisqr_n = fit.fun / len(self.expdata)
         result.n = len(self.expdata)
+        if self.singlefile == False:
+            result.filename =ParamsToFilename(self.params)
+        else:
+            result.filename = ""
+        result.params = self.params
+        #dump(result)
         return result
 
 
@@ -171,6 +189,8 @@ class FitDir:
         self.lnecvals       =[]
         self.sigmavals      =[]
         self.chisqrvals     =[]
+        self.minqsqr        =0
+        self.maxqsqr        =50
 
     def AddDir(self, d, light=True, charm=True, bottom=True):
         self.filedirs.append(d)
@@ -178,16 +198,22 @@ class FitDir:
 
     def Fit(self):
         # Go trough every file
+        fitresults = []
         for f in sorted( os.listdir(self.filedirs[0]) ):
             params = FilenameToParams(f)
 
             fitter = FitFile()
+            fitter.minqsqr = self.minqsqr
+            fitter.maxqsqr= self.maxqsqr
 
             for d,q in zip(self.filedirs, self.quarks):
                 fitter.AddDir(d, q[0], q[1], q[2])
             
             fitter.ReadData(params)
+            
+            fitres = FitResult()
             fitres = fitter.MinimizeChiSqr()
+            
 
             self.qsqrvals.append(params[0])
             self.gammavals.append(params[1])
@@ -195,34 +221,39 @@ class FitDir:
             self.lnecvals.append(params[3])
             self.sigmavals.append(fitres.sigma0)
             self.chisqrvals.append(fitres.chisqr)
+            
+            fitresults.append(fitres)
 
             if self.show_good_fits and fitres.chisqr_n < self.good_fit_limit:
                 par = params
                 par.append(fitres.sigma0)
-                print "Good fit with params " + str(par)     +": chi^2/N = " + str(fitres.chisqr_n)
+                print "Good fit with params " + str(par)     +": chi^2/N = " + str(fitres.chisqr_n) + ", chi^2 = " + str(fitres.chisqr)
 
             #print "Parameters " + str(params) +" fit result " + str(fitres.chisqr)
 
         # Done, find the smallest chisqr
         minchisqr=9999999999999
         min_index=-1
-        for i in range(len(self.chisqrvals)):
-            if self.chisqrvals[i] < minchisqr:
-                minchisqr = self.chisqrvals[i]
+        for i in range(len(fitresults)):
+            #print i,fitresults[i].chisqr
+            if fitresults[i].chisqr < minchisqr:
+                minchisqr = fitresults[i].chisqr
                 min_index = i
+        
+        print "Min index " + str(min_index)
 
-        res = FitResult
-        res.sigma0 = self.sigmavals[min_index]
-        res.chisqr = self.chisqrvals[min_index]
-        res.filename = ParamsToFilename([self.qsqrvals[min_index], self.gammavals[min_index],
-            self.lncsqrvals[min_index], self.lnecvals[min_index],0])
-        return res
+        #res = FitResult
+        #        res.sigma0 = self.sigmavals[min_index]
+        #        res.chisqr = self.chisqrvals[min_index]
+        #        res.filename = ParamsToFilename([self.qsqrvals[min_index], self.gammavals[min_index],
+        #            self.lncsqrvals[min_index], self.lnecvals[min_index],0])
+        return fitresults[min_index]
 
     def DirInfo(self):
         'Return string containing list of dirs and settings'
-        ss=""
+        ss="Q^2 limits [" + str(self.minqsqr) + ", " + str(self.maxqsqr) + "] "
         for d,q in zip(self.filedirs, self.quarks):
-            ss=ss + "dir: " + d +", quarks: " + str(q) + "\n"
+            ss=ss + "dir: " + d +", quarks: " + str(q)
         return ss
         
 
@@ -238,48 +269,47 @@ if __name__ == "__main__":
         print "HELP:"
         print "-file fname true/false true/false true/false: fit given file using quarks light/c/b"
         print "-dir path true/false true/false true/false: add path to global fit"
+        print "-minqsqr, -maxqsqr: set Q^2 limigs"
+        print "-sigma0: set sigma0 value used with single file fit"
+        sys.exit(1)
 
-    if sys.argv[1]=="-file":
-        # Fit single file
-        light=True
-        charm=True
-        bottom=True
-        if sys.argv[3]=="false":
-            light=False
-        elif sys.argv[3]!="true":
-            print "Unknown argument " + sys.argv[3]
-            sys.exit(-1)
-        if sys.argv[4]=="false":
-            charm=False
-        elif sys.argv[4]!="true":
-            print "Unknown argument " + sys.argv[4]
-            sys.exit(-1)
-        if sys.argv[5]=="false":
-            bottom=False
-        elif sys.argv[5]!="true":
-            print "Unknown argument " + sys.argv[5]
-            sys.exit(-1)
+    minqsqr = 0
+    maxqsqr = 50
 
-        fname=sys.argv[2]
-
-        print "# Fitting file " + fname
-        print "# Light quarks: " + str(light)
-        print "# Charm: " + str(charm)
-        print "# Bottom: " + str(bottom)
-
-        fit=FitFile()
-        fit.ReadDataFile(fname, light, charm, bottom)
-        bestfit=fit.MinimizeChiSqr()
-        print "#Best sigma0: " + str(bestfit.sigma0) +", chi^2=" + str(bestfit.chisqr) +", chi^2/N = " + str(bestfit.chisqr_n) +", N = " + str(bestfit.n)
-        print bestfit.chisqr_n
-
-        sys.exit(0)
-
-    # add multiple paths to fit
-    fitter = FitDir()
+    fitfile = False # True if fit only one file
+    fname=""
     verbose=False
+
+    dirfitter = FitDir()
+    
+    sigma0=-1
+
     for i in range(len(sys.argv)):
-        if sys.argv[i]=="-dir":
+        if sys.argv[i]=="-file":
+            # Fit single file
+            light=True
+            charm=True
+            bottom=True
+            if sys.argv[i+2]=="false":
+                light=False
+            elif sys.argv[i+2]!="true":
+                print "Unknown argument " + sys.argv[i+2]
+                sys.exit(-1)
+            if sys.argv[4]=="false":
+                charm=False
+            elif sys.argv[i+3]!="true":
+                print "Unknown argument " + sys.argv[i+3]
+                sys.exit(-1)
+            if sys.argv[i+4]=="false":
+                bottom=False
+            elif sys.argv[i+4]!="true":
+                print "Unknown argument " + sys.argv[i+4]
+                sys.exit(-1)
+
+            fname=sys.argv[i+1]
+            fitfile = True
+
+        elif sys.argv[i]=="-dir":
             light=True
             charm=True
             bottom=True
@@ -299,19 +329,61 @@ if __name__ == "__main__":
                 print "Unknown argument " + sys.argv[i+4]
                 sys.exit(-1)
 
-            fitter.AddDir(sys.argv[i+1], light, charm, bottom)
-        if sys.argv[i]=="-v":
+            dirfitter.AddDir(sys.argv[i+1], light, charm, bottom)
+
+        elif sys.argv[i]=="-v":
                 verbose=True
+        
+        elif sys.argv[i]=="-minqsqr":
+            minqsqr = float(sys.argv[i+1])
+        elif sys.argv[i]=="-maxqsqr":
+            maxqsqr = float(sys.argv[i+1])
+        
+        elif sys.argv[i]=="-sigma0":
+            sigma0 = float(sys.argv[i+1])
+        
+        elif sys.argv[i][0]=="-":
+            print "Unknown argument " + sys.argv[i]
+            sys.exit(1)
+
+
 
     print "Running fit"
-    print fitter.DirInfo()
 
-    if verbose:
-        fitter.show_good_fits = True
-        fitter.good_fit_limit = 4
 
-    res = fitter.Fit()
-    print "Bestfit: " + res.filename + ", sigma0=" + str(res.sigma0) + ", chi^2=" + str(res.chisqr) 
+    if fitfile:      #just one file
+        print "# Fitting file " + fname
+        print "# Light quarks: " + str(light)
+        print "# Charm: " + str(charm)
+        print "# Bottom: " + str(bottom)
+        
+        fit=FitFile()
+        fit.minqsqr=minqsqr
+        fit.maxqsqr=maxqsqr
+        fit.singlefile = True
+        fit.ReadDataFile(fname, light, charm, bottom)
+        if (sigma0>0):
+            sigma0fit = fit.ChiSqr(sigma0)
+            print "#Fit result with sigma0=" + str(sigma0) + ": chi^2=" + str(sigma0fit)
+        bestfit=fit.MinimizeChiSqr()
+        print "#Best sigma0: " + str(bestfit.sigma0) +", chi^2=" + str(bestfit.chisqr) +", chi^2/N = " + str(bestfit.chisqr_n) +", N = " + str(bestfit.n)
+        print bestfit.chisqr_n
+
+    else:
+        dirfitter.minqsqr=minqsqr
+        dirfitter.maxqsqr=maxqsqr
+        print dirfitter.DirInfo()
+
+        if verbose:
+            dirfitter.show_good_fits = True
+            dirfitter.good_fit_limit = 4
+
+        res = dirfitter.Fit()
+        print "======================"
+        print "Bestfit: " + res.filename + ", sigma0=" + str(res.sigma0) + ", chi^2=" + str(res.chisqr) + " chi^2/N=" + str(res.chisqr_n) + ", n=" + str(res.n)
+        print minqsqr, maxqsqr, res.params[0], res.params[2], res.params[3], res.sigma0, res.chisqr_n, res.n
+        print "======================"
+        print ""
 
     #fit = FitFile()
     #fit.AddDir("./data/")
