@@ -67,7 +67,7 @@ double DIS::ProtonPhotonCrossSection(double Qsqr, double xbj, Polarization pol,P
     double result,abserr; 
     const int MAXITER_RINT=100;
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_RINT);
-    int status = gsl_integration_qag(&fun, 0.1*N->MinR(), 10.0*N->MaxR(), 0, 0.01,
+    int status = gsl_integration_qag(&fun, 0.1*N->MinR(), 10.0*N->MaxR(), 0, 0.0001,
         MAXITER_RINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
     gsl_integration_workspace_free(ws);
     //int status = gsl_integration_qng(&fun, MinR(), MaxR(),
