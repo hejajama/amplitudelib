@@ -26,7 +26,7 @@ class IsolatedPhoton
 {
 public:
     
-    IsolatedPhoton(AmplitudeLib* N_) { N=N_; sqrts=200; partons.push_back(U); partons.push_back(D); partons.push_back(S); partons.push_back(C); };
+    IsolatedPhoton(AmplitudeLib* N_) { N=N_; sqrts=5020; partons.push_back(U); partons.push_back(D); partons.push_back(S); partons.push_back(C); };
 
     void SetIsolationCut(double R) { isolation_cut = R; };
     double DifferentialPhotonCrossSection(double k, double y_k, double l, double y_l, double phi);
@@ -34,6 +34,9 @@ public:
     
     AmplitudeLib* GetDipole() { return N; }
     std::vector<Amplitude::Parton> GetPartons() { return partons; }
+    
+    void SetSqrts(double s) { sqrts = s; };
+    
     
 private:
     AmplitudeLib* N;

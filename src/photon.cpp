@@ -10,15 +10,17 @@
 
 using namespace std;
 
-const int INTERVALS_PHOTON_PT = 7;
-const int INTERVALS_PHOTON_Y = 7;
-const int INTERVALS_PHOTON_PHI = 7;
+int INTERVALS_PHOTON_PT = 4;
+int INTERVALS_PHOTON_Y = 4;
+int INTERVALS_PHOTON_PHI = 4;
 const double INTACCURACY_PHOTON = 0.001;
 
 const double MINY = -5;
 const double MAXY = 5;
 const double MINPT = 0.1;
 const double MAXPT = 20;
+
+const double MAX_XP = 0.9;
 
 double PartonCharge(Amplitude::Parton p)
 {
@@ -58,7 +60,7 @@ double IsolatedPhoton::DifferentialPhotonCrossSection(double k, double y_k, doub
     double xg = k/sqrts * exp(-y_k) + l/sqrts*exp(-y_l);
     
     // Check if kinematically allowed
-    if (xp > 0.9 or xg > 0.01 )
+    if (xp > MAX_XP or xg > 0.01 )
         return 0;
     
     double z = k / (xp * sqrts) * exp(y_k); // Amir, Jamal, (A15)
@@ -112,6 +114,10 @@ double inthelperf_photon_lt(double l, void* p)
     par->l = l;
     gsl_function fun;
     
+    double xp =par->k/par->sqrts * exp(par->y_k) + par->l/par->sqrts*exp(par->y_l);
+    if (xp > MAX_XP)
+        return 0;
+    
     fun.params=par; fun.function = inthelperf_photon_phi;
     double result,abserr;
     int status = gsl_integration_qag(&fun, 0, M_PI, 0, INTACCURACY_PHOTON,
@@ -128,7 +134,8 @@ double inthelperf_photon_lt(double l, void* p)
     
     // PDF
     double partonsum=0;
-    double xp =par->k/par->sqrts * exp(par->y_k) + par->l/par->sqrts*exp(par->y_l);
+    
+    
     double scale = max(par->k,par->l);
     vector<Amplitude::Parton> partons = par->photon->GetPartons();
     for (unsigned int i=0; i<partons.size(); i++)
@@ -188,7 +195,7 @@ double IsolatedPhoton::PhotonCrossSection(double k, double y_k)
     
     if (status)
     {
-        cerr << "rapidity integral result " << result << " relerr " << abs(abserr/result) << endl;
+        //cerr << "rapidity integral result " << result << " relerr " << abs(abserr/result) << endl;
     }
     gsl_integration_workspace_free(ws);
     gsl_integration_workspace_free(helper.workspace_ltint);
@@ -206,14 +213,53 @@ double IsolatedPhoton::PhotonCrossSection(double k, double y_k)
 int main(int argc, char* argv[])
 {
     gsl_set_error_handler(&ErrHandler);
-    AmplitudeLib N(argv[1]);
-    N.SetFTMethod(Amplitude::GSL);
+    string datafile;
+    double R = 0.1;
+    double y = 3;
+    bool gsl_ft = false;
+    double sqrts=5020;
+    
+    for (int i=1; i<argc; i++)
+    {
+        if (string(argv[i])=="-data")
+            datafile = argv[i+1];
+        else if (string(argv[i])=="-R")
+            R = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-sqrts")
+            sqrts= StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-y")
+            y= StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-gsl_ft")
+            gsl_ft=true;
+        else if (string(argv[i]) == "-integration_intervals")
+        {
+            int intervals = StrToInt(argv[i+1]);
+            INTERVALS_PHOTON_PT=intervals;
+            INTERVALS_PHOTON_PHI=intervals;
+            INTERVALS_PHOTON_Y = intervals;
+        }
+        else if (string(argv[i]).substr(0,1)=="-")
+        {
+            cerr << "Unrecoginzed parameter " << argv[i] << endl;
+            return -1;
+        }
+        
+    }
+    AmplitudeLib N(datafile);
+    if (gsl_ft)
+        N.SetFTMethod(Amplitude::GSL);
     IsolatedPhoton photon(&N);
-    photon.SetIsolationCut(0.1);
+    photon.SetIsolationCut(R);
+    photon.SetSqrts(sqrts);
+    
+    cout << "# Datafile " << datafile << " photon rapidity y=" << y << " isolation cut " << R << " sqrts=" << sqrts << " GeV" << endl;
+    if (gsl_ft) cout << "# FT method: GSL " << endl;
+    else cout << "# FT method: Acc. series" << endl;
+    cout << "# Integration intervals: " << INTERVALS_PHOTON_PT << endl;
     
     for (double pt=1; pt<10; pt+=0.5)
     {
-        cout << pt << " " << photon.PhotonCrossSection(pt, 3) << endl;
+        cout << pt << " " << photon.PhotonCrossSection(pt, y) << endl;
     }
     return 0;
 }
