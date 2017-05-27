@@ -71,17 +71,22 @@ double CTEQ::xq(double x, double q, Parton p)
             result = f(d,x,q) - f(dbar,x,q);
             break;
         case USEA:
+	case UBAR:
             result = f(ubar,x,q);
             break;
         case DSEA:
+	case DBAR:
             result = f(dbar,x,q);
             break;
         case S:
+	case SBAR:
             result = f(s,x,q);
             break;
+	case CBAR:
         case C:
             result = f(c,x,q);
             break;
+	case BBAR:
         case B:
             result = f(b,x,q);
             break;

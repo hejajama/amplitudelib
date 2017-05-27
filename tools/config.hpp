@@ -59,6 +59,8 @@ namespace Amplitude
         UBAR,   ///< anti-u
         DBAR,   ///< anti-d
         SBAR,   ///< anti-s
+		CBAR,   ///< anti-c
+		BBAR,   ///< anti-b
         LIGHT	///< light quarks = u+d+s
     };
 
