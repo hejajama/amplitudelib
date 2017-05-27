@@ -26,7 +26,7 @@ class IsolatedPhoton
 {
 public:
     
-    IsolatedPhoton(AmplitudeLib* N_) { N=N_; sqrts=5020; partons.push_back(U); partons.push_back(D); partons.push_back(S); partons.push_back(C); };
+    IsolatedPhoton(AmplitudeLib* N_) { N=N_; sqrts=5020; partons.push_back(U); partons.push_back(D); partons.push_back(S); partons.push_back(C); partons.push_back(UBAR); partons.push_back(DBAR); partons.push_back(SBAR); partons.push_back(CBAR); };
 
     void SetIsolationCut(double R) { isolation_cut = R; };
     double DifferentialPhotonCrossSection(double k, double y_k, double l, double y_l, double phi);

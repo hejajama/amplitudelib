@@ -22,15 +22,21 @@ const double MAXPT = 20;
 
 const double MAX_XP = 0.9;
 
+// Quark is l, photon is k
+
 double PartonCharge(Amplitude::Parton p)
 {
     switch (p)
     {
         case U:
         case C:
+        case UBAR:
+        case CBAR:
             return 2.0/3.0;
         case D:
         case S:
+        case DBAR:
+        case SBAR:
             return -1.0/3.0;
         default:
             cerr <<"Unknown parton!" << endl;
@@ -97,6 +103,7 @@ struct Inthelper_isolated_photon
     double k;
     double y_l;
     double l;
+    double xp;
     double sqrts;
     gsl_integration_workspace *workspace_ltint;
     gsl_integration_workspace *workspace_phiint;
@@ -112,11 +119,23 @@ double inthelperf_photon_lt(double l, void* p)
 {
     Inthelper_isolated_photon* par = (Inthelper_isolated_photon*) p;
     par->l = l;
+    
+    // Calculate quark rapidity from xp and quark momentum
+    par->y_l =log( (-exp(par->y_k)*par->k + par->sqrts * par->xp)/l);
+    
+    if (isnan(par->y_l) or isinf(par->y_l))
+    {
+        cerr << "Forbidden kinematics? xp " << par->xp << " lt " << par->l <<   " yl " << par->y_l << " kt " << par->k << " y_k " << par->y_k << endl;
+        return 0;
+
+    }
+    
     gsl_function fun;
     
     double xp =par->k/par->sqrts * exp(par->y_k) + par->l/par->sqrts*exp(par->y_l);
-    if (xp > MAX_XP)
-        return 0;
+   // if (abs(1.0-xp/par->xp) > 0.1)
+   //         if (xp > MAX_XP)
+    //    return 0;
     
     fun.params=par; fun.function = inthelperf_photon_phi;
     double result,abserr;
@@ -148,10 +167,10 @@ double inthelperf_photon_lt(double l, void* p)
     return result*partonsum;
 }
 
-double inthelperf_photon_rapidity(double y_l, void* p)
+double inthelperf_xp(double xp, void* p)
 {
     Inthelper_isolated_photon* par = (Inthelper_isolated_photon*) p;
-    par->y_l = y_l;
+    par->xp = xp;
     gsl_function fun;
     
     fun.params=par; fun.function = inthelperf_photon_lt;
@@ -177,6 +196,8 @@ double IsolatedPhoton::PhotonCrossSection(double k, double y_k)
     helper.sqrts=sqrts;
     
     CTEQ pdf; pdf.SetOrder(Amplitude::LO);
+    
+    
     helper.pdf = &pdf;
     
     // Initialize integration workspace for l_t integral here, not every time
@@ -185,12 +206,11 @@ double IsolatedPhoton::PhotonCrossSection(double k, double y_k)
     gsl_integration_workspace *ws = gsl_integration_workspace_alloc(INTERVALS_PHOTON_Y);
     
     gsl_function fun; fun.params=&helper;
-    fun.function=inthelperf_photon_rapidity;
+    fun.function=inthelperf_xp;
     
     double result,abserr;
     
-    
-    int status = gsl_integration_qag(&fun, MINY, MAXY, 0, INTACCURACY_PHOTON,
+    int status = gsl_integration_qag(&fun, k/sqrts*exp(y_k), 0.9, 0, INTACCURACY_PHOTON,
                        INTERVALS_PHOTON_Y, GSL_INTEG_GAUSS15, ws, &result, &abserr);
     
     if (status)
