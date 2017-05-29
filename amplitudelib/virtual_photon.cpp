@@ -18,10 +18,10 @@
 
 using namespace Amplitude;
 
-const double ZINTACCURACY=0.001;
-const int MAXITER_ZINT=500;
-const double MINZ=0.00001;  // Integration limits
-const double MAXZ=0.9999;
+const double ZINTACCURACY=0.0001;
+const int MAXITER_ZINT=700;
+const double MINZ=0.000001;  // Integration limits
+const double MAXZ=0.99999;
 
 VirtualPhoton::VirtualPhoton()
 {
@@ -113,7 +113,7 @@ double VirtualPhoton::PsiSqr_T_intz(double Qsqr, double r)
     int_helper.params=&zintpar;
     
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_ZINT);
-    int status = gsl_integration_qag(&int_helper, 1e-10, 1.0-1e-10, 0, ZINTACCURACY,
+    int status = gsl_integration_qag(&int_helper, MINZ, MAXZ , 0, ZINTACCURACY,
         MAXITER_ZINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
     gsl_integration_workspace_free(ws);
 
@@ -136,7 +136,7 @@ double VirtualPhoton::PsiSqr_L_intz(double Qsqr, double r)
     int_helper.params=&zintpar;
     
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_ZINT);
-    int status = gsl_integration_qag(&int_helper, 1e-10, 1.0-1e-10, 0, ZINTACCURACY,
+    int status = gsl_integration_qag(&int_helper, MINZ, MAXZ, 0, ZINTACCURACY,
         MAXITER_ZINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
     gsl_integration_workspace_free(ws);
     
