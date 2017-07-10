@@ -17,8 +17,8 @@ const double INTACCURACY_PHOTON = 0.001;
 
 const double MINY = -5;
 const double MAXY = 5;
-const double MINPT = 0.1;
-const double MAXPT = 20;
+const double MINPT = 0.01;
+const double MAXPT = 40;
 
 const double MAX_XP = 0.9;
 
@@ -65,11 +65,13 @@ double IsolatedPhoton::DifferentialPhotonCrossSection(double k, double y_k, doub
     double xp = k/sqrts * exp(y_k) + l/sqrts*exp(y_l);
     double xg = k/sqrts * exp(-y_k) + l/sqrts*exp(-y_l);
     
+    
     // Check if kinematically allowed
-    if (xp > MAX_XP or xg > 0.01 )
+    if (xp > MAX_XP or xg > 0.01)
         return 0;
     
     double z = k / (xp * sqrts) * exp(y_k); // Amir, Jamal, (A15)
+//-cout << "z: " << z << endl;
     
     double integrand = (k*k + l*l + 2.0*k*l*cos(phi)) / ( pow(z*l, 2.0) + pow((1.0-z)*k, 2.0) - 2.0*z*(1.0-z)*k*l*cos(phi));
     
@@ -77,7 +79,10 @@ double IsolatedPhoton::DifferentialPhotonCrossSection(double k, double y_k, doub
     
     N->InitializeInterpolation(xg);
     
-    integrand *= N->S_k(k_plus_l, xg);
+    double sk =N->S_k(k_plus_l, xg);
+    if (sk < 0) sk = 0;
+    
+    integrand *= sk;
     
     if (isnan(integrand) or isinf(integrand))
     {
@@ -132,10 +137,7 @@ double inthelperf_photon_lt(double l, void* p)
     
     gsl_function fun;
     
-    double xp =par->k/par->sqrts * exp(par->y_k) + par->l/par->sqrts*exp(par->y_l);
-   // if (abs(1.0-xp/par->xp) > 0.1)
-   //         if (xp > MAX_XP)
-    //    return 0;
+    double xp = par->xp;
     
     fun.params=par; fun.function = inthelperf_photon_phi;
     double result,abserr;
@@ -271,6 +273,11 @@ int main(int argc, char* argv[])
     IsolatedPhoton photon(&N);
     photon.SetIsolationCut(R);
     photon.SetSqrts(sqrts);
+    
+    double partonlevel = photon.DifferentialPhotonCrossSection(2, 3, 5, 5, M_PI);
+    cout << partonlevel << endl;
+    return 0;
+    
     
     cout << "# Datafile " << datafile << " photon rapidity y=" << y << " isolation cut " << R << " sqrts=" << sqrts << " GeV" << endl;
     if (gsl_ft) cout << "# FT method: GSL " << endl;

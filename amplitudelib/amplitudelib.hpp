@@ -39,6 +39,13 @@ class AmplitudeLib
          * space
          */
         AmplitudeLib(std::string datafile, bool kspace_=false);
+    
+        /* Load amplitude from the give data tables
+         *
+         * data[i][j] is dipole amplitude at rapidity yvals[i] for dipole size rvals[i]
+         */
+        AmplitudeLib(std::vector< std::vector< double > > &data, std::vector<double> &yvals_, std::vector<double> &rvals_);
+    
         ~AmplitudeLib();
 
         /**
