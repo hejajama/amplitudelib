@@ -40,7 +40,8 @@ int main(int argc, char* argv[])
     cout << infostr.str() << endl;
     
     gsl_set_error_handler(&ErrHandler);
-
+	
+	bool gsl_ft = false;
 
     if ( argc==1 or (string(argv[1])=="-help" or string(argv[1])=="--help")  )
     {
@@ -56,6 +57,7 @@ int main(int argc, char* argv[])
         cout << "-k_to_x: FT amplitude from k to x space" << endl;
         cout << "-s_x_to_k: FT S(r)" << endl;
         cout << "-satscale Ns, print satscale r_s defined as N(r_s)=Ns" << endl;
+		cout << "-gsl_ft: use GSL to compute Fourier transfer" << endl;
         return 0;
         
     }
@@ -93,6 +95,8 @@ int main(int argc, char* argv[])
             mode=X_TO_K;
         else if (string(argv[i])=="-loglogder")
             mode=LOGLOGDER;
+		else if (string(argv[i])=="-gsl_ft")
+			gsl_ft = true;
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -115,6 +119,8 @@ int main(int argc, char* argv[])
     else // User set xbj
         y = std::log(N.X0()/xbj);
 
+	if (gsl_ft)
+		N.SetFTMethod(Amplitude::GSL);
 
     time_t now = time(0);
     string today = ctime(&now);

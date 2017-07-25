@@ -358,7 +358,7 @@ double AmplitudeLib::S_k(double kt, double xbj, Representation rep, double pow)
         result = fourier_j0(kt,S_k_helperf,&par);
         
         
-    if (result<-0.00001){
+    if (result<0){
 		cerr << "S_k transfer is negative=" << result*2.0*M_PI <<", kt=" << kt <<", x=" << xbj <<", adj: " << par.adjoint <<", power=" << pow << " " << LINEINFO << endl;
     }
     return result*2.0*M_PI; 

@@ -283,8 +283,15 @@ int main(int argc, char* argv[])
     cout << "# PDF: " << pdf->GetString() << endl;
     // Print quarks
     std::vector<Parton> ps;
-    ps.push_back(LIGHT);
-    //ps.push_back(C);
+    ps.push_back(U);
+	ps.push_back(UBAR);
+	ps.push_back(D);
+	ps.push_back(DBAR);
+	ps.push_back(S);
+	ps.push_back(SBAR);
+    ps.push_back(C);
+	ps.push_back(CBAR);
+	
     ps.push_back(G);
     xs.SetPartons(ps);
     cout <<"# Partons: " ;
@@ -293,7 +300,6 @@ int main(int argc, char* argv[])
         cout << PartonToString(xs.Partons()[i]) << " ";
     }
     cout << endl;
-
     //**************** Different operation modes
 
     if (mode==HYBRID_PT)
@@ -311,7 +317,7 @@ int main(int argc, char* argv[])
         //cout << "# pt   cteq-partonlevel   ugd-partonlevel " << endl;
         for (double pt=minpt; pt<=maxpt*1.01; pt+=ptstep)
         {
-            double result = xs.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, pdf, final_particle, deuteron);
+            double result = xs.dHadronMultiplicity_dyd2pt(y, pt, sqrts, fragfun, pdf, final_particle, deuteron, pt);
             cout << pt << " " << result << endl;
 
         }

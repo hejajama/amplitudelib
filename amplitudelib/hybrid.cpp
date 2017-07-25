@@ -43,14 +43,18 @@ double Inthelperf_hadronprod(double z, void *p)
     double x1 = par->xf/z; double x2 = x1*std::exp(-2.0*par->y);
     if (x1>1)
     {
-		cerr << "Entering kinematically fobidden region at y=" << par->y <<", pt=" << par->pt << " " << LINEINFO << endl;
+		cerr << "Entering kinematically fobidden region at y=" << par->y <<", pt=" << par->pt << ", z=" << z << " " << LINEINFO << endl;
 		return 0;
 	}
 	
 	double scale=par->scale;
 	if (scale<0) scale = par->pt;
 
-	
+	if (x2 > par->N->X0()) 
+	{
+			// We can only end up here if y < 2.3
+			x2 = par->N->X0();
+	}
     double y_A = std::log(par->N->X0()/x2);
 
 
@@ -62,7 +66,6 @@ double Inthelperf_hadronprod(double z, void *p)
             << par->sqrts << " pt " << par->pt << endl ;
         return 0;
     }
-
     bool deuteron = par->deuteron;
     par->N->InitializeInterpolation(x2);
     
@@ -71,6 +74,9 @@ double Inthelperf_hadronprod(double z, void *p)
     double nf = par->N->S_k(par->pt/z, x2);
     // Adjoint representation, gluon scatters
     double na = par->N->S_k(par->pt/z, x2, ADJOINT);
+
+	if (nf < 0) nf = 0;
+	if (na < 0) na = 0;
 
     double result=0;
 
@@ -93,7 +99,7 @@ double Inthelperf_hadronprod(double z, void *p)
                         );
             }
         }
-        else if (par->xs->Partons()[i]==C or par->xs->Partons()[i]==B)
+        else if (par->xs->Partons()[i]!=G)
         {
             double contrib = nf * par->pdf->xq(x1, scale, par->xs->Partons()[i])*par->frag->Evaluate(par->xs->Partons()[i], par->final, z, scale);
             //cout << "C contrib: " << contrib << " pdf " <<  par->pdf->xq(x1, scale, par->xs->Partons()[i]) << " frag " << par->frag->Evaluate(par->xs->Partons()[i], par->final, z, scale) << endl;
@@ -163,7 +169,8 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt(double y, double pt, double s
      = gsl_integration_workspace_alloc(MULTIPLICITYXINTPOINTS);
 
     int status;
-    status=gsl_integration_qag(&fun, std::max(xf, 0.05), 1.0,
+	double minz = std::max(xf, 0.05);
+    status=gsl_integration_qag(&fun, minz, 1.0,
             0, 0.005, MULTIPLICITYXINTPOINTS,
             GSL_INTEG_GAUSS51, workspace, &result, &abserr);
     gsl_integration_workspace_free(workspace);

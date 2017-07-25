@@ -303,7 +303,7 @@ const int FOURIER_ZEROS=1000;   // How many zeros of the Bessel functions is
 
 
 
-const std::string AMPLITUDELIB_VERSION = "2.1 2016-06-23";
+const std::string AMPLITUDELIB_VERSION = "2.1 2017-07-25";
 
 const Amplitude::FT_Method DEFAULT_FT_METHOD = Amplitude::ACC_SERIES;
 #endif

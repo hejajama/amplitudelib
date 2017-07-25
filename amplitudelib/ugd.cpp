@@ -160,6 +160,7 @@ double Inthelperf_ktfact_phi(double phi, void* p)
 		}
 		
 	}
+	if (ugd1 < 0 or ugd2 < 0) return 0;
 	return par->qt * ugd1/SQR(par->qt) * ugd2/SQR(kt_m_qt);
 	
 	

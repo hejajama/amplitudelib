@@ -196,16 +196,26 @@ std::string PartonToString(Amplitude::Parton p)
     {
         case U:
             return "u";
+		case UBAR:
+			return "ubar";
         case D:
             return "d";
+		case DBAR:
+			return "dbar";
         case S:
             return "s";
+		case SBAR:
+			return "sbar";
         case LIGHT:
             return "Light (u+d+s)";
         case C:
             return "c";
+		case CBAR:
+			return "cbar";
         case B:
             return "b";
+		case BBAR:
+			return "bpar";
         case G:
             return "g";        
         default:
