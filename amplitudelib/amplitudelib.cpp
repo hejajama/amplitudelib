@@ -87,7 +87,60 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
         << " Q_{s,0}^2 = " << 2.0/SQR(SaturationScale(x0, 0.393469)) << " GeV^2 [ N(r^2=2/Q_s^2, x=x0) = 0.3934]"
         << " (AmplitudeLib v. " << AMPLITUDELIB_VERSION << ")" ;
     info_string = ss.str();
+    
+    
 }
+
+/*
+ * Constructor, not loading datafile but data is given directly as an array
+ *
+ */
+AmplitudeLib::AmplitudeLib(std::vector< std::vector< double > > &data, std::vector<double> &yvals_, std::vector<double> &rvals_)
+{
+    kspace = false;
+    out_of_range_errors = true;
+    ft = DEFAULT_FT_METHOD;
+    minr = rvals_[0];
+    rmultiplier = rvals_[1] / rvals_[0];
+    rpoints = rvals_.size();
+    
+    rvals = rvals_;
+    n = data;
+    yvals = yvals_;
+    
+    x0 = 0.01;
+    
+    tmprarray = new double[rpoints];
+    tmpnarray = new double[rpoints];
+    for (int i=0; i<rpoints; i++)
+    {
+        double tmpr = std::log(minr*std::pow(rmultiplier, i));
+        double tmpr2 = rvals[i];
+        if ( abs(std::exp(tmpr)/tmpr2-1.0) > 0.01)
+        {
+            cerr << "WARNING: Dipole sizes does not form a logarithmic grid! tmpr " << tmpr << " r2 " << rvals[i] << " AmplitudeLib::AmplitudeLib()" << endl;
+        }
+        lnrvals.push_back(tmpr);
+        tmprarray[i] = std::exp(lnrvals[i]);
+    }
+    
+   
+    interpolator_xbj=-1;
+    
+    
+    std::stringstream ss;
+    ss << "#AmplitudeLib initialized , minr: " << minr
+    << " maxr: " << MaxR() << " rpoints: " << rpoints << " maxy "
+    << yvals[yvals.size()-1] << " x0 " << X0()
+    << " Q_{s,0}^2 = " << 2.0/SQR(SaturationScale(x0, 0.393469)) << " GeV^2 [ N(r^2=2/Q_s^2, x=x0) = 0.3934]"
+    << " (AmplitudeLib v. " << AMPLITUDELIB_VERSION << ")" ;
+    info_string = ss.str();
+    
+    cout << ss.str() << endl;
+    
+    
+}
+
 
 /*
  * Release reserved memory
