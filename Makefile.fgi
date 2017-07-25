@@ -17,6 +17,8 @@ interpolator: tools/interpolator.o tools/interpolation.o
 tester: tools/tester.cpp libamplitude.a
 	icpc $(CXXFLAGS) $(LDFLAGS) tools/tester.cpp libamplitude.a -o tester 
 
+photon: src/photon.o $(OBJECTS) $(FTOBJECTS)
+	icpc $(CXXFLAGS) -I amplitudelib/  src/photon.o libamplitude.a -o isolated_photon $(LDFLAGS)
 fit: tools/f2fit.o 
 	icpc $(CXXFLAGS) $(LDFLAGS) tools/f2fit.o libamplitude.a -o f2fit
 

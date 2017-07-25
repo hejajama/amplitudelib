@@ -37,7 +37,8 @@ nukeA=197
 qsqr=0.060
 ec=18.9
 gamma=1
-sigma0=83.985
+#sigma0=83.985
+sigma0 = 16.36*2.0*2.568  # = 84.025
 
 def RA(A):
     return fmgev*(1.12*pow(A, 1.0/3.0) - 0.86*pow(A, -1.0/3.0))
@@ -68,5 +69,5 @@ b=float(sys.argv[1])
 r=pow(10.0,-6)
 while(r<100):
     print str(r) + " " + str(GlauberN(r,b,nukeA))
-    r=r*1.0472494
+    r=r*1.018610170155976
 
