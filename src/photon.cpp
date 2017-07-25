@@ -77,7 +77,10 @@ double IsolatedPhoton::DifferentialPhotonCrossSection(double k, double y_k, doub
     
     N->InitializeInterpolation(xg);
     
-    integrand *= N->S_k(k_plus_l, xg);
+	double sk = N->S_k(k_plus_l, xg);
+	if (sk<0) sk=0;
+
+    integrand *= sk;
     
     if (isnan(integrand) or isinf(integrand))
     {
