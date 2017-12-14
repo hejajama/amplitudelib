@@ -156,7 +156,7 @@ class Interpolator
         // spline
         gsl_interp_accel *acc;
         gsl_spline *spline;
-
+#ifdef ENABLE_BSPLINE
         // bspline
         gsl_bspline_workspace *bw;
         gsl_bspline_deriv_workspace *derbw;
@@ -165,7 +165,7 @@ class Interpolator
         gsl_matrix *X;
         gsl_matrix *cov;
         gsl_multifit_linear_workspace *mw;
-
+#endif
         static const int k=4;
         static const int ncoeffs = 12;
         static const int nbreak = ncoeffs-k+2;
