@@ -12,9 +12,8 @@ script:
   - echo `gsl-config --libs`
   - make
   - make tester
+  - ./tester
 
-after_success:
-  - ./tester;
 
 notifications:
   email:
