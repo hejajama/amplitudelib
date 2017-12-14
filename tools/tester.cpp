@@ -79,7 +79,7 @@ int main()
 	cout << "===== TEST Dipole UGD  ===== " << endl;
 	N.GetQCD().SetRunningCoupling(FIXED);
     N.InitializeInterpolation(0.001);
-	correct=0.152535; res=N.Dipole_UGD(sqrt(2), 0.001);
+	correct=10.152535; res=N.Dipole_UGD(sqrt(2), 0.001); // correct = 0.152535;
 	cout << "UGD(x=0.002, Q^2=2 GeV^2)=" << res<< " (correct " << correct << ")" << endl;
     assert(std::abs((correct - res)/res) < accuracy);
 

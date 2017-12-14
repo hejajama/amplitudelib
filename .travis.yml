@@ -17,4 +17,8 @@ after_success:
   - ./tester;
 
 notifications:
-  email: false
+  email:
+    recipients:
+      - heikkim@gmail.com
+    on_success: never # default: change
+    on_failure: always # default: always
