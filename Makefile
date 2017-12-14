@@ -8,20 +8,20 @@ all: amplitude
 
 amplitude: $(OBJECTS) $(FTOBJECTS) $(FOBJECTS) src/amplitude.cpp src/cross_section.cpp
 	ar cru libamplitude.a $(OBJECTS) $(FTOBJECTS) $(FOBJECTS)
-	g++ $(CXXFLAGS) $(LDFLAGS) src/amplitude.cpp libamplitude.a -o amplitude
-	g++ $(CXXFLAGS) $(LDFLAGS) src/cross_section.cpp libamplitude.a -o cross_section
+	g++ $(CXXFLAGS)  src/amplitude.cpp libamplitude.a -o amplitude $(LDFLAGS)
+	g++ $(CXXFLAGS)  src/cross_section.cpp libamplitude.a -o cross_section $(LDFLAGS)
 
 interpolator: tools/interpolator.o tools/interpolation.o
-	g++ $(CXXFLAGS) $(LDFLAGS) tools/interpolator.o tools/interpolation.o -o interpolator
+	g++ $(CXXFLAGS) tools/interpolator.o tools/interpolation.o -o interpolator $(LDFLAGS)
 
 tester: tools/tester.cpp libamplitude.a
-	g++ $(CXXFLAGS) $(LDFLAGS) tools/tester.cpp libamplitude.a -o tester 
+	g++ $(CXXFLAGS) tools/tester.cpp libamplitude.a -o tester $(LDFLAGS) 
 
 photon: src/photon.o $(OBJECTS) $(FTOBJECTS)
 	g++ $(CXXFLAGS) -I amplitudelib/  src/photon.o libamplitude.a -o isolated_photon $(LDFLAGS)
 
 fit: tools/fit/f2fit.o 
-	g++ $(CXXFLAGS) $(LDFLAGS) tools/fit/f2fit.o libamplitude.a -o f2fit
+	g++ $(CXXFLAGS) tools/fit/f2fit.o libamplitude.a -o f2fit $(LDFLAGS)
 
 f2grid: tools/fit/f2_grid.o
 	g++ $(CXXFLAGS) $(LDFLAGS) tools/fit/f2_grid.o libamplitude.a -o f2grid

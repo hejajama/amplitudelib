@@ -1,0 +1,20 @@
+sudo: true 
+
+language:
+  - cpp
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y libgsl0-dev
+  - sudo apt-get install -y gfortran
+  - sudo apt-get install -y libgfortran3
+script:
+  - echo `gsl-config --libs`
+  - make
+  - make tester
+
+after_success:
+  - ./tester;
+
+notifications:
+  email: false
