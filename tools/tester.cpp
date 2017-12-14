@@ -12,9 +12,12 @@
 #include "interpolation2d.hpp"
 #include <gsl/gsl_errno.h>
 #include <string>
+#include <cassert>
 
 using namespace std;
 using namespace Amplitude;
+
+double accuracy = 1e-3;
 
 int main()
 
@@ -36,24 +39,25 @@ int main()
 	
 	cout << "===== TEST: evaluation of N(r,x) ===== " << endl;
 	correct=0.091845; res=N.N(1,x0);
-	cout << "N(r=1, x=x0) = " << res << " (correct " << correct << ")"; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED!"; else cout << " OK!";
-	cout << endl;
+	cout << "N(r=1, x=x0) = " << res << " (correct " << correct << ")" << endl;
+    assert(std::abs((correct - res)/res) < accuracy);
 
     correct=0.141605; res=N.N(1,0.001);
-	cout << "N(r=1, x=0.001) = " << res << " (correct " << correct << ")"; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED!"; else cout << " OK!";
-	cout << endl;
-
+    cout << "N(r=1, x=0.001) = " << res << " (correct " << correct << ")" << endl;;
+    assert(std::abs((correct - res)/res) < accuracy);
     
-	
 	cout << "===== TEST: Scattering matrix in momentum space = 2D FT of S ===== " << endl;
     N.InitializeInterpolation(0.002);
 	correct=0.0715372; res=N.S_k(2.0, 0.002);
-	cout << "Fundamental FT S(k=2, x=0.002) = " << res << " (correct " << correct << ")"; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED!";else cout << " OK!";
-	cout << endl;
+    cout << "Fundamental FT S(k=2, x=0.002) = " << res << " (correct " << correct << ")" << endl;;
+    assert(std::abs((correct - res)/res) < accuracy);
+
 
     correct=0.216821; res=N.S_k(2.0, 0.002, ADJOINT);
-	cout << "Adjoint FT S(k=2, x=0.002) = " << res << " (correct " << correct << ")"; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED!";else cout << " OK!";
-	cout << endl;
+	cout << "Adjoint FT S(k=2, x=0.002) = " << res << " (correct " << correct << ")" << endl;
+    assert(std::abs((correct - res)/res) < accuracy);
+    
+
 
     /*
 	cout << "===== TEST: 2d FT of S^2(r)=(1-N(r))^2 ===== " << endl;
@@ -76,13 +80,15 @@ int main()
 	N.GetQCD().SetRunningCoupling(FIXED);
     N.InitializeInterpolation(0.001);
 	correct=0.152535; res=N.Dipole_UGD(sqrt(2), 0.001);
-	cout << "UGD(x=0.002, Q^2=2 GeV^2)=" << res<< " (correct " << correct << ")"; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED!";else cout << " OK!";
-	cout << endl;
+	cout << "UGD(x=0.002, Q^2=2 GeV^2)=" << res<< " (correct " << correct << ")" << endl;
+    assert(std::abs((correct - res)/res) < accuracy);
+
 	
 	cout << "===== TEST UGD -> xg ===== " << endl;
 	correct=0.412606; res=N.xg(0.001, std::sqrt(16));
-	cout << "xg(x=0.001, Q^2=16 GeV^2)=" << res << " (correct " << correct << ")"; if (abs(res-correct)/correct>0.001) cout << " TEST FAILED! ";else cout << " OK!";
-	cout << endl;
+	cout << "xg(x=0.001, Q^2=16 GeV^2)=" << res << " (correct " << correct << ")" << endl;
+    assert(std::abs((correct - res)/res) < accuracy);
+    
 	
 	
 	
@@ -92,14 +98,16 @@ int main()
 	std::vector<double> x; x.push_back(0); x.push_back(1); x.push_back(2);  x.push_back(3); x.push_back(4);
 	Interpolator interp(x,y); //interp.Initialize();
 	correct=6.25; res = interp.Evaluate(2.5);	// 2.5^2=6.25
-	cout << "2.5^2 = " << res << " (correct: " << correct << ") "; if (abs(res-correct)/correct>0.01) cout << " TEST FAILED!" ;else cout << " OK!";
-	cout << endl;
+	cout << "2.5^2 = " << res << " (correct: " << correct << ") " << endl;
+        cout <<std::abs((res-correct)/correct) << endl;
+    assert(std::abs((res-correct)/correct) < 0.05);
+    
 	
 	// derivative at x=1.5 = 2*1.5=3
 	correct=3; res=interp.Derivative(1.5);
-	cout << "D(x^2, x=1.5) = " << res; if (abs(res-correct)/correct>0.05) cout << " TEST FAILED! Correct: " << correct;else cout << " OK!";
-	cout << endl;
-	}
+	cout << "D(x^2, x=1.5) = " << res << endl;
+    assert(std::abs(res-correct)/correct < 0.05);
+    }
 
     cout << "===== TESTING 2D INTERPOLATOR =====" << endl;
 	{
@@ -123,8 +131,8 @@ int main()
     double interpx=1.2; double interpy=2.8;
     correct = interpx*interpy*interpy;
 	res = interp2.Evaluate(interpx, interpy);
-	cout << "x*y^2 (x=" << interpx <<", y=" << interpy <<") = " << res << " (correct: " << correct << ")" ; if (abs(res-correct)/correct>0.05) cout << " TEST FAILED!";else cout << " OK!";
-	cout << endl;
+	cout << "x*y^2 (x=" << interpx <<", y=" << interpy <<") = " << res << " (correct: " << correct << ")" << endl ;
+    assert(std::abs(res-correct)/correct < 0.05);
 	
 	}
 	

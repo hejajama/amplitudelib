@@ -2,7 +2,7 @@
  * DSS Fragmentation function
  * Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2014
  */
-
+#include <cassert>
 #include "dss.hpp"
 #include "../tools/config.hpp"
 #include "fragmentation.hpp"
@@ -190,60 +190,52 @@ void DSS::Test()
 	cout << "#NLO:" << endl;
 	Order orig_order = order;
 	
+    double accuracy=1e-2;
+    
 	SetOrder(NLO);
 	double result, cor;
 	result=0.1*Evaluate(U, PI0, 0.1, std::sqrt(10)); cor=0.64450;
 	cout <<"z*D_{u->pi0}(Q^2=10GeV^2, z=0.1) = " << result << " (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+    assert(std::abs(result-cor)/cor<accuracy);
 	
 	result=0.2*Evaluate(D, PI, 0.2, std::sqrt(50)); cor=0.97394;
 	cout <<"z*D_{d->pi+ pi-}(Q^2=50GeV^2, z=0.2) = " << result << " (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor<accuracy);
 	
 	result=0.3*Evaluate(S, HM, 0.3, std::sqrt(20)); cor=0.64972;
 	cout <<"z*D_{s->h-}(Q^2=20GeV^2, z=0.3) = " << result << " (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor<accuracy);
 	
 	result=0.3*Evaluate(G, PI0, 0.3, std::sqrt(20)); cor=0.37437;
 	cout <<"z*D_{g->pi0}(Q^2=20GeV^2, z=0.3) = " << result << " (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor<accuracy);
 	
 	result = 0.05 * Evaluate(U, H, 0.05, std::sqrt(20)); cor=1.7988;
 	cout << "z*D_{u->charged hadron}(Q^2=20 GeV^2, z=0.05) = " << result << " (correct " << cor << ")" << endl;
-	if (std::abs(result-cor)/cor > 0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor<accuracy);
 		
 	cout <<"#LO:" << endl;
 	SetOrder(LO);
 	
 		result=0.1*Evaluate(U, PI0, 0.1, std::sqrt(10)); cor=0.64300;
 	cout <<"z*D_{u->pi0}(Q^2=10GeV^2, x=0.1) = " << result << " (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor<accuracy);
 	
 	result=0.2*Evaluate(D, PI, 0.2, std::sqrt(50)); cor=1.0146;
 	cout <<"z*D_{d->pi+ pi-}(Q^2=50GeV^2, x=0.2) = " << result << " (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor<accuracy);
 	
 	result=0.3*Evaluate(S, HM, 0.3, std::sqrt(20)); cor=0.74499;
 	cout <<"z*D_{s->h-}(Q^2=20GeV^2, x=0.3) = " << result << " (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor<accuracy);
 	
 	result=0.3*Evaluate(G, PI0, 0.3, std::sqrt(20)); cor=0.6663;
 	cout <<"z*D_{g->pi0}(Q^2=20GeV^2, x=0.3) = " << result << " (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor<accuracy);
 	
 	result = 0.05 * Evaluate(U, H, 0.05, std::sqrt(20)); cor=1.9169;
 	cout << "z*D_{u->charged hadron}(Q^2=20 GeV^2, z=0.05) = " << result << " (correct " << cor << ")" << endl;
-	if (std::abs(result-cor)/cor > 0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor<accuracy);
 	
 	
 	cout << "All tests done, if no errors were shown, all tests passed!" << endl;

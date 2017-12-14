@@ -9,6 +9,7 @@
 #include "cteq.hpp"
 #include <string>
 #include <cstdlib>
+#include <cassert>
 
 #define NLO_CTEQ12
 
@@ -159,6 +160,7 @@ CTEQ::CTEQ()
  */
 void CTEQ::Test()
 {
+	double accuracy = 1e-2;
 	cout <<"#----- Testing CTEQ PDF" << endl;
 	cout << "#NLO:" << endl;
 	#ifndef NLO_CTEQ12
@@ -168,23 +170,20 @@ void CTEQ::Test()
 	double result, cor;
 	result=xq(0.01, std::sqrt(10), U); cor=0.4906;
 	cout <<"f_u(Q^2=10GeV^2, x=0.01) = " << result << " (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+    assert(std::abs(result-cor)/cor < accuracy);
+
 		
 	result=xq(0.1, std::sqrt(5), D); cor=0.4231;
 	cout <<"f_d(Q^2=5GeV^2, x=0.1) = " << result <<" (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor < accuracy);
 	
 	result=xq(0.05, std::sqrt(100), S); cor=0.1443;
 	cout <<"f_s(Q^2=100GeV^2, x=0.05) = " << result <<" (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor < accuracy);
 	
 	result=xq(0.05, std::sqrt(1000), G); cor=2.193;
 	cout <<"f_g(Q^2=1000GeV^2, x=0.05) = " << result << " (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor < accuracy);
 	
 	////////////////////////////////////////////
 	
@@ -192,23 +191,19 @@ void CTEQ::Test()
 	SetOrder(LO);
 		result=xq(0.01, std::sqrt(10), U); cor=0.4602;
 	cout <<"f_u(Q^2=10GeV^2, x=0.01) = " << result << " (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor < accuracy);
 		
 	result=xq(0.1, std::sqrt(5), D); cor=0.3824;
 	cout <<"f_d(Q^2=5GeV^2, x=0.1) = " << result <<" (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor < accuracy);
 	
 	result=xq(0.05, std::sqrt(100), S); cor=0.1063;
 	cout <<"f_s(Q^2=100GeV^2, x=0.05) = " << result <<" (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor < accuracy);
 	
 	result=xq(0.05, std::sqrt(1000), G); cor=2.177;
 	cout <<"f_g(Q^2=1000GeV^2, x=0.05) = " << result << " (correct " << cor << ")" <<  endl;
-	if (std::abs(result-cor)/cor>0.01)
-		cout << "TEST FAILED!!!" << endl;
+	assert(std::abs(result-cor)/cor < accuracy);
 	
 	cout << "All tests done, if no errors were shown, all tests passed!" << endl;
 }
