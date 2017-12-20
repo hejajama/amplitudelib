@@ -5,6 +5,7 @@
 
 #include "amplitudelib.hpp"
 #include "virtual_photon.hpp"
+#include "gitsha1.h"
 #include "datafile.hpp"
 #include "../tools/tools.hpp"
 #include "../tools/config.hpp"
@@ -85,7 +86,7 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
         << " maxr: " << MaxR() << " rpoints: " << rpoints << " maxy "
         << yvals[yvals.size()-1] << " x0 " << X0()
         << " Q_{s,0}^2 = " << 2.0/SQR(SaturationScale(x0, 0.393469)) << " GeV^2 [ N(r^2=2/Q_s^2, x=x0) = 0.3934]"
-        << " (AmplitudeLib v. " << AMPLITUDELIB_VERSION << ")" ;
+        << " (AmplitudeLib v. " << AMPLITUDELIB_VERSION << " git commit " << g_GIT_SHA1  << ")" ;
     info_string = ss.str();
     
     
@@ -133,7 +134,7 @@ AmplitudeLib::AmplitudeLib(std::vector< std::vector< double > > &data, std::vect
     << " maxr: " << MaxR() << " rpoints: " << rpoints << " maxy "
     << yvals[yvals.size()-1] << " x0 " << X0()
     << " Q_{s,0}^2 = " << 2.0/SQR(SaturationScale(x0, 0.393469)) << " GeV^2 [ N(r^2=2/Q_s^2, x=x0) = 0.3934]"
-    << " (AmplitudeLib v. " << AMPLITUDELIB_VERSION << ")" ;
+    << " (AmplitudeLib v. " << AMPLITUDELIB_VERSION << " git commit " << g_GIT_SHA1  << ")" ;
     info_string = ss.str();
     
     cout << ss.str() << endl;
@@ -741,7 +742,7 @@ FT_Method AmplitudeLib::GetFTMethod()
 std::string AmplitudeLib::Version()
 {
 	std::stringstream s;
-	s << AMPLITUDELIB_VERSION << " (build " <<  __DATE__ << " " << __TIME__ << ")";
+	s << AMPLITUDELIB_VERSION << " (build " <<  __DATE__ << " " << __TIME__ << " git commit " << g_GIT_SHA1 << ")";
 	return s.str();
 }
 

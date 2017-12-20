@@ -1,0 +1,19 @@
+add_library(
+	fragmentation
+	STATIC
+        #FRAGFUN files
+        fragmentation.cpp
+        kkp.cpp
+        pkhff.cpp
+        hkns.cpp
+        dss.cpp
+        fragmentation_kkp.f
+        fragmentation_pkhff.f
+	fragmentation_hknsff07.f
+	dlib.f
+	locate.f
+        polint.f
+        polin2.f
+        grille_had_charged.f
+        fragmentation_dss.f
+)
