@@ -9,10 +9,12 @@ before_install:
   - sudo apt-get install -y gfortran
   - sudo apt-get install -y libgfortran3
 script:
-  - echo `gsl-config --libs`
+  - mkdir build
+  - cd build
+  - cmake ..
   - make
-  - make tester
-  - ./tester
+  - cd .. 
+  - ./build/bin/tester
 
 
 notifications:
