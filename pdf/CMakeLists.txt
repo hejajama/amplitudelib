@@ -8,7 +8,7 @@ add_library(
 	mrst99.cpp
 	ugdpdf.cpp
 	eps09.cpp
-	CT12pdf.f
+	CT12Pdf.f
 	Cteq6Pdf.f
 	eps09_f.f
 )
