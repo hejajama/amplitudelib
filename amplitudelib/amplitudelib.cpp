@@ -197,7 +197,7 @@ double AmplitudeLib::N(double r, double xbj)
 
     
     // Use already initialized interpolator
-    if (std::abs(xbj - interpolator_xbj)/xbj < 0.001 )
+    if (interpolator_xbj > 0 and std::abs(xbj - interpolator_xbj)/std::min(xbj, interpolator_xbj) < 0.001 )
     {
         double result=0;
 
@@ -268,7 +268,7 @@ double AmplitudeLib::N(double r, double xbj)
 
 bool AmplitudeLib::InterpolatorInitialized(double xbj)
 {
-    if (std::abs(xbj - interpolator_xbj)/xbj < 0.001)
+    if (interpolator_xbj > 0 and std::abs(xbj - interpolator_xbj)/std::min(xbj, interpolator_xbj) < 0.001)
         return true;
     else
         return false;
