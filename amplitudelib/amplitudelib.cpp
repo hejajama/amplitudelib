@@ -49,6 +49,7 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
 
     // Initialize
     out_of_range_errors=true;
+    interpolation_method = SPLINE_LINEAR;
     kspace=kspace_;
 
     // Set default FT Method
@@ -99,6 +100,7 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
 AmplitudeLib::AmplitudeLib(std::vector< std::vector< double > > &data, std::vector<double> &yvals_, std::vector<double> &rvals_)
 {
     kspace = false;
+    interpolation_method = SPLINE_LINEAR;
     out_of_range_errors = true;
     ft = DEFAULT_FT_METHOD;
     minr = rvals_[0];
@@ -211,10 +213,28 @@ double AmplitudeLib::N(double r, double xbj)
         return result;
 
     }
-
-    /// Initialize new interpolator and use it
+    
     int rind = FindIndex(r, rvals);
     int yind = FindIndex(y, yvals);
+    
+    // Check interpolation method, use bspline if needed
+    if (interpolation_method == LINEAR_LINEAR)
+    {
+        int rind2 = rind+1;
+        int yind2 = yind+1;
+        if (rind2 >= rvals.size()) return 1.0;
+        if (yind2 >= yvals.size()) return n[yind][rind]; // this should never happen
+        double r1_ = rvals[rind];
+        double r2_ = rvals[rind2];
+        double y1_ = yvals[yind];
+        double y2_ = yvals[yind2];
+        double bilin =  (1.0/( (r2_ - r1_)*(y2_ - y1_) ))*( (n[yind][rind])*(r2_ - r)*(y2_ - y) + (n[yind][rind2])*(r - r1_)*(y2_ - y) + (n[yind2][rind])*(r2_ - r)*(y - y1_) + (n[yind2][rind2])*(r - r1_)*(y - y1_) );
+        
+        return bilin;
+        
+    }
+
+    /// Initialize new interpolator and use it
     int interpolation_points = INTERPOLATION_POINTS;
 
     int interpolation_start, interpolation_end;
@@ -617,7 +637,7 @@ void AmplitudeLib::InitializeInterpolation(double xbj)
 		exit(1);
 	}
 	
-    if (std::abs((interpolator_xbj - xbj)/xbj) < 0.001) return;    // Already done it
+    if (interpolator_xbj > 0 and xbj>0 and std::abs((interpolator_xbj - xbj)/std::min(xbj, interpolator_xbj)) < 0.0001) return;    // Already done it
     if (interpolator_xbj>=0)
     {
         interpolator_xbj=-1;

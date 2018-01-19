@@ -14,7 +14,12 @@
 #include <vector>
 #include <string>
 
-
+enum AMPLITUDE_INTERPOLATION_METHOD
+{
+    SPLINE_LINEAR,      // spline in r, linear in y
+    LINEAR_LINEAR       // linear in r and y
+                // thread safe, no need to initialize interpolation
+};
 
 
 
@@ -253,6 +258,11 @@ class AmplitudeLib
         std::string Version();
 
         QCD& GetQCD();
+    
+        /**
+         * Set interpolation method
+         */
+        void SetInterpoationMethod(AMPLITUDE_INTERPOLATION_METHOD m) { interpolation_method = m;}
 
     private:
         // [yind][r/kind]
@@ -279,6 +289,16 @@ class AmplitudeLib
          * artifacts from interpolation code)
          */
         double maxr_interpolate;
+    
+        /**
+         * Method to use to interpolate dipole amplitude
+         *
+         * If set to LINEAR_LINEAR, one does not use splines,
+         * and the code is completely thread safe even if
+         * amplitude is evaluated simultaenously at different
+         * rapidities
+         */
+        AMPLITUDE_INTERPOLATION_METHOD interpolation_method;
         
         int rpoints;    //! Number of dipole sizes
 
