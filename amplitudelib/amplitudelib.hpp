@@ -262,7 +262,7 @@ class AmplitudeLib
         /**
          * Set interpolation method
          */
-        void SetInterpoationMethod(AMPLITUDE_INTERPOLATION_METHOD m) { interpolation_method = m;}
+        void SetInterpolationMethod(AMPLITUDE_INTERPOLATION_METHOD m) { interpolation_method = m;}
 
     private:
         // [yind][r/kind]
