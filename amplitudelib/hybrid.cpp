@@ -185,6 +185,93 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt(double y, double pt, double s
     return result;
 }
 
+
+/*
+ * Hadron production in parton level
+ */
+double SingleInclusive::dHadronMultiplicity_dyd2pt_parton(double y, double pt, double sqrts,
+                                                          PDF* pdf, bool deuteron,  double scale )
+{
+    // x1: fraction of parent hadron momentum carried by quark,
+    // x2: Bjorken x for the dense system
+    double x1 = pt/sqrts*std::exp(y); double x2 = x1*std::exp(-2.0*y);
+    if (x1>1)
+    {
+        cerr << "Entering kinematically fobidden region at y=" << y <<", pt=" << pt << " " << LINEINFO << endl;
+        return 0;
+    }
+    
+    if (scale<0) scale = pt;
+    
+    if (x2 > N->X0())
+        x2 = N->X0();
+    
+    double y_A = std::log(N->X0()/x2);
+    
+    
+    if (y_A<0)
+    {
+        cerr << "Negative rapidity at " << LINEINFO << " parton_pt " << pt <<
+        " x1 " << x1 << " x2 " << x2 << " y_A " << y_A
+        << " y " << y << " sqrts "
+        << sqrts << " pt " << pt << endl ;
+        return 0;
+    }
+    N->InitializeInterpolation(x2);
+    
+    // Quark from proton:
+    // UGD in fundamental representation
+    double nf = N->S_k(pt, x2);
+    // Adjoint representation, gluon scatters
+    double na = N->S_k(pt, x2, ADJOINT);
+    
+    if (nf < 0) nf = 0;
+    if (na < 0) na = 0;
+    
+    double result=0;
+    
+    // Partons
+    for (unsigned int i=0; i<Partons().size(); i++)
+    {
+        if (Partons()[i]==LIGHT)
+        {
+            result =  nf *
+            (pdf->xq(x1, scale, U)
+             + pdf->xq(x1, scale, D)
+             + pdf->xq(x1, scale, S)
+             );
+            if (deuteron)
+            {
+                result *= 2.0;
+            }
+        }
+        else if (Partons()[i]!=G)
+        {
+            double contrib = nf * pdf->xq(x1, scale, Partons()[i]);
+
+            if (deuteron)
+                contrib *= 2.0;
+            result += contrib;
+        }
+        
+        else if (Partons()[i]==G)
+        {
+            double contrib = na*pdf->xq(x1, scale, G);
+            if (deuteron)
+                contrib *= 2.0;
+            result += contrib;
+        }
+        else
+        {
+            cerr << "Unknown parton " << Partons()[i] << " at " << LINEINFO << endl;
+            exit(1);
+        }
+    }
+    
+    return result/SQR(2.0*M_PI);
+    
+    
+}
 /*
  * Set partons included in single inclusive calculations
  */

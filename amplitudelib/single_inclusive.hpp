@@ -44,6 +44,22 @@ class SingleInclusive
         double dHadronMultiplicity_dyd2pt(double y, double pt, double sqrts,
             FragmentationFunction *fragfun, PDF* pdf, Amplitude::Hadron final=Amplitude::PI0,
             bool deuteron=false,  double scale=-1 );
+    
+        /**
+         * Single inclusive hadron yield, parton level
+         *
+         * Compute single inclusive hadron yield dN/(d^2 pt dy) using the
+         * hybrid formalism
+         * @param y Rapidity of the produced parton
+         * @param pt Transverse momentum of the produced parton
+         * @param sqrts Center-of-mass energy
+         * @param pdf Pointer to the PDF class
+         * @param deuteron If true, probe is deuteron=proton+neutron
+         * @param scale Scale at which PDF and FF are evaluated, default: transverse momentum
+         * @see PDF
+         */
+        double dHadronMultiplicity_dyd2pt_parton(double y, double pt, double sqrts,
+                                          PDF* pdf, bool deuteron=false,  double scale=-1 );
 
         
 
