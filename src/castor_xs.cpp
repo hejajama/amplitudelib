@@ -16,6 +16,7 @@
 #include "../pdf/eps09.hpp"
 #include "../pdf/ugdpdf.hpp"
 #include "../amplitudelib/single_inclusive.hpp"
+#include "../amplitudelib/gitsha1.h"
 #include <string>
 #include <iostream>
 #include <iomanip>
@@ -30,8 +31,9 @@ using namespace std;
 const double default_particle_mass = 0.2;
 const double castor_min_pseudorapidity = 5.2;
 const double castor_max_pseudorapidity = 6.6;
+const double rapidity_shift = 0.465;
 
-const int INTWORKSPACEDIVISIONS = 50;
+const int INTWORKSPACEDIVISIONS = 5;
 const double INTACCURACY = 0.001;
 
 // Kinematics
@@ -65,6 +67,8 @@ struct inthelper_castor
     PDF* pdf;
     double sqrts;
     double y;   // rapidity integrated over
+    gsl_integration_workspace* workspace;
+    double m;
 };
 
 double inthelperf_pt(double pt, void* p);
@@ -74,6 +78,7 @@ int main(int argc, char* argv[])
 {
     std::stringstream infostr;
     infostr << "# Single parton yield   (c) Heikki Mäntysaari <heikki.mantysaari@jyu.fi>, 2011-2018 " << endl;
+    infostr << "# Latest git commit " << g_GIT_SHA1 << endl;
     infostr << "# Command: ";
     for (int i=0; i<argc; i++)
         infostr << argv[i] << " ";
@@ -105,7 +110,7 @@ int main(int argc, char* argv[])
     std::string datafile_probe="";
     bool deuteron=false;
     double ptstep=0.1;
-    double minE=500; double maxE=600;
+    double minE=-1; double maxE=-1;
 
     for (int i=1; i<argc; i++)
     {
@@ -117,7 +122,7 @@ int main(int argc, char* argv[])
             sqrts = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-minE")
             minE  = StrToReal(argv[i+1]);
-        else if (string(argv[i])=="-maxE")
+        else if (string(argv[i])=="-maxE [default: minE + 100]")
             maxE  = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-lo")
             order=LO;
@@ -152,6 +157,8 @@ int main(int argc, char* argv[])
         }
     }
 
+    if (maxE < 0)
+        maxE  = minE + 100;
     // Default PDF and FF
     if (pdf==NULL)
         pdf = new CTEQ();
@@ -214,6 +221,7 @@ int main(int argc, char* argv[])
     par.maxE=maxE;
     par.sqrts=sqrts;
     par.pdf=pdf;
+    par.m=default_particle_mass;
     
     gsl_function fun;
     fun.params=&par;
@@ -221,6 +229,9 @@ int main(int argc, char* argv[])
     
     gsl_integration_workspace *workspace
     = gsl_integration_workspace_alloc(INTWORKSPACEDIVISIONS);
+    gsl_integration_workspace *workspace_internal
+    = gsl_integration_workspace_alloc(INTWORKSPACEDIVISIONS);
+    par.workspace = workspace_internal;
     int status; double result,abserr;
     double miny=castor_min_pseudorapidity-2; double maxy = castor_max_pseudorapidity+2;
     status = gsl_integration_qag(&fun, miny, maxy, 0, INTACCURACY, INTWORKSPACEDIVISIONS, GSL_INTEG_GAUSS51, workspace, &result, &abserr);
@@ -228,7 +239,13 @@ int main(int argc, char* argv[])
         cerr << "y integral failed at " << LINEINFO <<": result " << result
             << " relerror " << std::abs(abserr/result) << endl;
     
-    cout << result;
+    gsl_integration_workspace_free(workspace);
+    gsl_integration_workspace_free(workspace_internal);
+    
+    
+    cout << "#" << endl;
+    cout << "# minE   maxE   yield [note: for p, multiply by sigma0/2 / sigma_inel, for nuke: do b int]" << endl;
+    cout << minE << " " << maxE << " " << result << endl;
 
     
 
@@ -243,11 +260,12 @@ double inthelperf_y(double y, void* p)
     fun.params=par;
     fun.function = inthelperf_pt;
     
-    gsl_integration_workspace *workspace
-    = gsl_integration_workspace_alloc(INTWORKSPACEDIVISIONS);
+    // If you use this, then remember to free it
+    //gsl_integration_workspace *workspace
+    //= gsl_integration_workspace_alloc(INTWORKSPACEDIVISIONS);
     int status; double result,abserr;
     
-    status = gsl_integration_qag(&fun, 1, 20, 0, INTACCURACY, INTWORKSPACEDIVISIONS, GSL_INTEG_GAUSS51, workspace, &result, &abserr);
+    status = gsl_integration_qag(&fun, 0.2, 20, 0, INTACCURACY, INTWORKSPACEDIVISIONS, GSL_INTEG_GAUSS51, par->workspace, &result, &abserr);
     
     if (status)
         cerr << "pt integral failed, result " << result << " relerr " << std::abs(abserr/result) << " y " << y << endl;
@@ -274,15 +292,20 @@ double inthelperf_pt(double pt, void* p)
     }
     
     double eta = Pseudorapidity(par->y, pt);
-    if (eta < castor_min_pseudorapidity or eta > castor_max_pseudorapidity)
+    if (eta+rapidity_shift < castor_min_pseudorapidity or eta+rapidity_shift > castor_max_pseudorapidity)
     {
         //cout << "Out of castor acceptance  " << par->y << " pt " << pt << endl;
         //cout << par->y << " " << pt << endl;
         return 0;
     }
     
+    // integration measure: we want to compute
+    // \int dEdy xs(pt,y) = \int dpt dy *Jacobian* xs(pt,y)
+    // The Jacobian is dE/dpt = (exp(-y)+exp(y))*pt / (2*sqrt(m^2+pt^2))
+    double jacobian = (std::exp(-par->y) + std::exp(par->y))*pt / (2.0 * std::sqrt(par->m*par->m + pt*pt));
+    
     // last parameters: false=no deuteron, -1 = scale is pt
-    return par->xs->dHadronMultiplicity_dyd2pt_parton(par->y, pt, par->sqrts,
+    return jacobian*par->xs->dHadronMultiplicity_dyd2pt_parton(par->y, pt, par->sqrts,
                                                       par->pdf, false,  -1 );
 }
 

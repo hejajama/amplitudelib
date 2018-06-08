@@ -11,6 +11,7 @@ add_executable(
 add_executable(
 	castor_spectra
 	castor_xs.cpp
+	../amplitudelib/gitsha1.cpp
 )
 add_executable(
 	tester
