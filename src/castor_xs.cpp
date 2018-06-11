@@ -299,13 +299,9 @@ double inthelperf_pt(double pt, void* p)
         return 0;
     }
     
-    // integration measure: we want to compute
-    // \int dEdy xs(pt,y) = \int dpt dy *Jacobian* xs(pt,y)
-    // The Jacobian is dE/dpt = (exp(-y)+exp(y))*pt / (2*sqrt(m^2+pt^2))
-    double jacobian = (std::exp(-par->y) + std::exp(par->y))*pt / (2.0 * std::sqrt(par->m*par->m + pt*pt));
     
     // last parameters: false=no deuteron, -1 = scale is pt
-    return jacobian*par->xs->dHadronMultiplicity_dyd2pt_parton(par->y, pt, par->sqrts,
+    return par->xs->dHadronMultiplicity_dyd2pt_parton(par->y, pt, par->sqrts,
                                                       par->pdf, false,  -1 );
 }
 
