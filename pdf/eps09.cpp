@@ -39,46 +39,46 @@ double EPS09::xq(double x, double q, Parton p)
 		o=1;
 	else
 		o=2;
+    
+    double Z=-1;
+    if (A == 208)
+        Z=82;
+    else
+    {
+        cerr << "Unknown nucleus " << A << "! " << LINEINFO << endl;
+        return 0;
+    }
 	
 	eps09_(o, set, A, x, q, ruv, rdv, ru, rd, rs, rc, rb, rg);
-	
-	if (p != G)
-	{
-		cerr << "TODO!!!! EPS09wrapper assumes that nucleus consist of protons! Implement isospin symmetry before real usage!!!!!!" << endl;
-	}
     
     switch(p)
     {
         case U:
-            modification = ru;
-            break;
+            return A*(Z/A * ru*cteq.xq(x,q,U) + (A-Z)/A * rd*cteq.xq(x,q,D));
+        case UBAR:
+            return A*(Z/A * ru*cteq.xq(x,q,UBAR) + (A-Z)/A * rd*cteq.xq(x,q,DBAR));
         case D:
-            modification = rd;
-            break;
-        case UVAL:
-            modification = ruv;
-            break;
-        case DVAL:
-            modification = rdv;
-			break;
+            return A*(Z/A * rd*cteq.xq(x,q,D) + (A-Z)/A * ru*cteq.xq(x,q,U));
+        case DBAR:
+            return A*(Z/A * rd*cteq.xq(x,q,DBAR) + (A-Z)/A * ru*cteq.xq(x,q,UBAR));
         case S:
-            modification = rs;
-            break;
+        case SBAR:
+            return A*rs*cteq.xq(x,q,p);
         case C:
-            modification = rc;
-            break;
+        case CBAR:
+            return A*rc*cteq.xq(x,q,p);
         case B:
-            modification = rb;
-            break;
+        case BBAR:
+            return A*rb*cteq.xq(x,q,p);
         case G:
-            modification = rg;
-            break;
+            return A*cteq.xq(x, q, p) * rg;
         default:
             cerr << "Parton " << p << " is not implemented " << LINEINFO << endl;            
 
     };
 
-    return cteq.xq(x, q, p) * modification;
+    return 0;
+    
 }
 
 // Default value of param is -1

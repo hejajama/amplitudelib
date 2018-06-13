@@ -31,7 +31,7 @@ using namespace std;
 const double default_particle_mass = 0.2;
 const double castor_min_pseudorapidity = 5.2;
 const double castor_max_pseudorapidity = 6.6;
-const double rapidity_shift = 0.465;
+double rapidity_shift = 0.465;
 
 const int INTWORKSPACEDIVISIONS = 5;
 const double INTACCURACY = 0.001;
@@ -69,6 +69,7 @@ struct inthelper_castor
     double y;   // rapidity integrated over
     gsl_integration_workspace* workspace;
     double m;
+    bool Ap_mode;
 };
 
 double inthelperf_pt(double pt, void* p);
@@ -87,6 +88,7 @@ int main(int argc, char* argv[])
     
     gsl_set_error_handler(&ErrHandler);
 
+    bool Ap_mode=false; // if true, nucleus goes into Castor
 
     if ( argc==1 or (string(argv[1])=="-help" or string(argv[1])=="--help")  )
     {
@@ -95,6 +97,7 @@ int main(int argc, char* argv[])
         cout << "-sqrts center-of-mass energy [GeV]" << endl;
         cout << "-x0 val: set x0 value for the BK solutions (overrides the value in BK file)" << endl;
         cout << "-gsl_ft: use GSL to directly calculate Fourier transform" << endl;
+        cout << "-pA / -Ap: use positive or negative rapidity sift" << endl;
         return 0;
         
     }
@@ -150,6 +153,10 @@ int main(int argc, char* argv[])
 		}
         else if (string(argv[i])=="-gsl_ft")
             ft_method = GSL;
+        else if (string(argv[i])=="-Ap")
+            Ap_mode=true;
+        else if (string(argv[i])=="-pA")
+            Ap_mode=false;
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -168,7 +175,6 @@ int main(int argc, char* argv[])
 
     N.SetFTMethod(ft_method);
     SingleInclusive xs(&N);
-
     
     
     
@@ -194,6 +200,8 @@ int main(int argc, char* argv[])
 
     cout << "# " << N.GetString() << endl;
     cout << "# PDF: " << pdf->GetString() << endl;
+    cout <<"# Ap mode: "; if (Ap_mode) cout << "true"; else cout << "false"; cout << endl;
+    
     // Print quarks
     std::vector<Parton> ps;
     ps.push_back(U);
@@ -204,6 +212,8 @@ int main(int argc, char* argv[])
 	ps.push_back(SBAR);
     ps.push_back(C);
 	ps.push_back(CBAR);
+    ps.push_back(B);
+    ps.push_back(BBAR);
 	
     ps.push_back(G);
     xs.SetPartons(ps);
@@ -222,6 +232,7 @@ int main(int argc, char* argv[])
     par.sqrts=sqrts;
     par.pdf=pdf;
     par.m=default_particle_mass;
+    par.Ap_mode=Ap_mode;
     
     gsl_function fun;
     fun.params=&par;
@@ -292,7 +303,11 @@ double inthelperf_pt(double pt, void* p)
     }
     
     double eta = Pseudorapidity(par->y, pt);
-    if (eta+rapidity_shift < castor_min_pseudorapidity or eta+rapidity_shift > castor_max_pseudorapidity)
+    double shift = rapidity_shift;
+    if (par->Ap_mode)
+        shift = -rapidity_shift;
+    
+    if (eta+shift < castor_min_pseudorapidity or eta+shift > castor_max_pseudorapidity)
     {
         //cout << "Out of castor acceptance  " << par->y << " pt " << pt << endl;
         //cout << par->y << " " << pt << endl;
@@ -300,10 +315,15 @@ double inthelperf_pt(double pt, void* p)
     }
     
     
-    // last parameters: false=no deuteron, -1 = scale is pt
+    
+    double pdf_scale = pt;
+    if (pt < par->pdf->MinQ())
+        pdf_scale = par->pdf->MinQ();
+    
 	// Do angular integral, and add jacobian 2pi
+    // 2nd to last parameters: false=no deuteron
     return 2.0*M_PI*pt*par->xs->dHadronMultiplicity_dyd2pt_parton(par->y, pt, par->sqrts,
-                                                      par->pdf, false,  -1 );
+                                                      par->pdf, false,  pdf_scale );
 }
 
     
