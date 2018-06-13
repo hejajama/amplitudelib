@@ -301,7 +301,8 @@ double inthelperf_pt(double pt, void* p)
     
     
     // last parameters: false=no deuteron, -1 = scale is pt
-    return par->xs->dHadronMultiplicity_dyd2pt_parton(par->y, pt, par->sqrts,
+	// Do angular integral, and add jacobian 2pi
+    return 2.0*M_PI*pt*par->xs->dHadronMultiplicity_dyd2pt_parton(par->y, pt, par->sqrts,
                                                       par->pdf, false,  -1 );
 }
 
