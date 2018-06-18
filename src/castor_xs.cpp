@@ -22,8 +22,11 @@
 #include <iomanip>
 #include <sstream>
 #include <gsl/gsl_integration.h>
+#include <gsl/gsl_monte.h>
+#include <gsl/gsl_monte_miser.h>
 #include <ctime>
 #include <unistd.h>
+#include <gsl/gsl_rng.h>
 
 using namespace Amplitude;
 using namespace std;
@@ -33,7 +36,7 @@ const double castor_min_pseudorapidity = 5.2;
 const double castor_max_pseudorapidity = 6.6;
 double rapidity_shift = 0.465;
 
-const int INTWORKSPACEDIVISIONS = 5;
+int INTWORKSPACEDIVISIONS = 5;
 const double INTACCURACY = 0.001;
 
 // Kinematics
@@ -75,6 +78,8 @@ struct inthelper_castor
 double inthelperf_pt(double pt, void* p);
 double inthelperf_y(double y, void* p);
 
+double inthelperf_mc(double* vec, size_t dim, void* par);
+
 int main(int argc, char* argv[])
 {
     std::stringstream infostr;
@@ -102,6 +107,7 @@ int main(int argc, char* argv[])
         
     }
 
+    cout << "# Note to self: it might be good idea to use quark mass as m!" << endl;
 
     double x0=-1;
     double sqrts=5020;
@@ -114,6 +120,7 @@ int main(int argc, char* argv[])
     bool deuteron=false;
     double ptstep=0.1;
     double minE=-1; double maxE=-1;
+    int mcintpoints=1e4;
 
     for (int i=1; i<argc; i++)
     {
@@ -125,7 +132,7 @@ int main(int argc, char* argv[])
             sqrts = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-minE")
             minE  = StrToReal(argv[i+1]);
-        else if (string(argv[i])=="-maxE [default: minE + 100]")
+        else if (string(argv[i])=="-maxE")
             maxE  = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-lo")
             order=LO;
@@ -157,6 +164,10 @@ int main(int argc, char* argv[])
             Ap_mode=true;
         else if (string(argv[i])=="-pA")
             Ap_mode=false;
+        else if (string(argv[i])=="-intdivisions")
+            INTWORKSPACEDIVISIONS = StrToInt(argv[i+1]);
+        else if (string(argv[i])=="-mcintpoints")
+            mcintpoints = StrToReal(argv[i+1]);
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -165,7 +176,7 @@ int main(int argc, char* argv[])
     }
 
     if (maxE < 0)
-        maxE  = minE + 100;
+        maxE  = minE + 50;
     // Default PDF and FF
     if (pdf==NULL)
         pdf = new CTEQ();
@@ -234,16 +245,21 @@ int main(int argc, char* argv[])
     par.m=default_particle_mass;
     par.Ap_mode=Ap_mode;
     
+     double result,abserr;
+    
+    
     gsl_function fun;
     fun.params=&par;
     fun.function = inthelperf_y;
+    
+    
     
     gsl_integration_workspace *workspace
     = gsl_integration_workspace_alloc(INTWORKSPACEDIVISIONS);
     gsl_integration_workspace *workspace_internal
     = gsl_integration_workspace_alloc(INTWORKSPACEDIVISIONS);
     par.workspace = workspace_internal;
-    int status; double result,abserr;
+    int status;
     double miny=castor_min_pseudorapidity-2; double maxy = castor_max_pseudorapidity+2;
     status = gsl_integration_qag(&fun, miny, maxy, 0, INTACCURACY, INTWORKSPACEDIVISIONS, GSL_INTEG_GAUSS51, workspace, &result, &abserr);
     if (status)
@@ -254,17 +270,52 @@ int main(int argc, char* argv[])
     gsl_integration_workspace_free(workspace_internal);
     
     
+    // Monte Carlo version, maybe it can more accurately consentrate on the right part of the kinematical plane
+    /*
+    const gsl_rng_type * rngtype = gsl_rng_default;
+    gsl_rng_env_setup();
+    gsl_rng* rng = gsl_rng_alloc(rngtype);
+    
+    gsl_monte_function F;
+    F.f = inthelperf_mc;
+    F.dim=2;
+    F.params = &par;
+    gsl_monte_miser_state *s = gsl_monte_miser_alloc(F.dim);
+    
+    // Vec is {pt, y}
+    
+    cout << "# mcintpoints " << mcintpoints << endl;
+    
+    
+    
+    double lower[2]={0.2, castor_min_pseudorapidity-2};
+    double upper[2]={30, castor_max_pseudorapidity+2};
+    gsl_monte_miser_integrate(&F, lower, upper, F.dim, mcintpoints, rng, s, &result, &abserr);
+    gsl_monte_miser_free(s);
+    gsl_rng_free(rng);
+    
     cout << "#" << endl;
+    
+    */
+    
     cout << "# minE   maxE   yield [note: for p, multiply by sigma0/2 / sigma_inel, for nuke: do b int]" << endl;
-    cout << minE << " " << maxE << " " << result << endl;
+    cout << minE << " " << maxE << " " << result << " " << mcintpoints << endl;
 
     
 
     return 0;
 }
 
+double inthelperf_mc(double* vec, size_t dim, void* p)
+{
+    inthelper_castor *par = (inthelper_castor*)p;
+    par->y = vec[1];
+    return inthelperf_pt(vec[0], par);
+}
+
 double inthelperf_y(double y, void* p)
 {
+    //cout << "#New y integral " << y << endl;
     inthelper_castor *par = (inthelper_castor*)p;
     par->y=y;
     gsl_function fun;
@@ -276,7 +327,21 @@ double inthelperf_y(double y, void* p)
     //= gsl_integration_workspace_alloc(INTWORKSPACEDIVISIONS);
     int status; double result,abserr;
     
-    status = gsl_integration_qag(&fun, 0.2, 20, 0, INTACCURACY, INTWORKSPACEDIVISIONS, GSL_INTEG_GAUSS51, par->workspace, &result, &abserr);
+    // Compute pt limits
+    double shift = rapidity_shift;
+    if (par->Ap_mode)
+        shift = -rapidity_shift;
+    
+    double ytmp = y + shift;
+    
+    double minpt = std::sqrt( par->minE*par->minE - par->m*par->m/2.0 - 1.0/2.0*par->m*par->m*std::cosh(2.0*ytmp)) * 1.0 / std::cosh(ytmp) ;
+    double maxpt =std::sqrt( par->maxE*par->maxE - par->m*par->m/2.0 - 1.0/2.0*par->m*par->m*std::cosh(2.0*ytmp)) * 1.0 / std::cosh(ytmp) ;
+    
+    if (minpt < 0.2 or maxpt < 0.2 or minpt > 100 or maxpt > 100 or isnan(minpt) or isnan(maxpt) or isinf(minpt) or isinf(maxpt))
+        return 0;
+    
+    
+    status = gsl_integration_qag(&fun, minpt, maxpt, 0, INTACCURACY, INTWORKSPACEDIVISIONS, GSL_INTEG_GAUSS51, par->workspace, &result, &abserr);
     
     if (status)
         cerr << "pt integral failed, result " << result << " relerr " << std::abs(abserr/result) << " y " << y << endl;
@@ -288,24 +353,42 @@ double inthelperf_pt(double pt, void* p)
 {
 
     
+    
     inthelper_castor *par = (inthelper_castor*)p;
     
+
     
- 
-    // Check kinematics
-    double energy = JetEnergy(par->y, pt);
+    // Kinematics
+    // The calculation is done in the center-of-mass frame
+    // But castor measures jet energy in the LAB frame
     
-    if (energy < par->minE or energy > par->maxE)
-    {
-        //cout << "Out of kinematics " << par->y << " pt " << pt << endl;
-        //cout << par->y << " " << pt << endl;
-        return 0;
-    }
+    // First approximation: we set rapidity=pseudorapidity
+    // and compute the produced jet energy in the LAB frame
+    // after applyint rapidity_shift boost
     
-    double eta = Pseudorapidity(par->y, pt);
+    // This should be quite good approximation, at least with m=0.2GV,
+    // as pt values are aloways > 1 GeV
+    
+    
+    
     double shift = rapidity_shift;
     if (par->Ap_mode)
         shift = -rapidity_shift;
+ 
+    // Check kinematics
+    double energy = JetEnergy(par->y + shift, pt);
+    
+    
+    if (energy < par->minE or energy > par->maxE)
+    {
+        //cout << "Out of kinematics [" << par->minE << ", " << par->maxE << "]: y " << par->y << " pt " << pt << " E " << energy << endl;
+        //cout << par->y << " " << pt <<" " << energy  << endl;
+        return 0;
+    }
+    
+    
+    
+    double eta = par->y;  // Or Pseudorapidity(par->y, pt);
     
     if (eta+shift < castor_min_pseudorapidity or eta+shift > castor_max_pseudorapidity)
     {
@@ -316,14 +399,33 @@ double inthelperf_pt(double pt, void* p)
     
     
     
+    // Do angular integral, and add jacobian 2pi
+    // 2nd to last parameters: false=no deuteron
     double pdf_scale = pt;
     if (pt < par->pdf->MinQ())
         pdf_scale = par->pdf->MinQ();
+    double diffxs = par->xs->dHadronMultiplicity_dyd2pt_parton(par->y, pt, par->sqrts,
+                                                               par->pdf, false,  pdf_scale );
     
-	// Do angular integral, and add jacobian 2pi
-    // 2nd to last parameters: false=no deuteron
-    return 2.0*M_PI*pt*par->xs->dHadronMultiplicity_dyd2pt_parton(par->y, pt, par->sqrts,
-                                                      par->pdf, false,  pdf_scale );
+    
+    //cout << par->y << " " << pt << " " << pt*diffxs << endl;
+    
+    
+   
+    
+    
+    
+    
+    
+	
+    if (diffxs <0 )
+    {
+        cerr << "Differential cross section<0 at y " << par->y << " pt " << pt << " res " << diffxs << endl;
+    }
+    
+    
+    
+    return 2.0*M_PI*pt*diffxs;;
 }
 
     

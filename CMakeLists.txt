@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 project(amplitudelib CXX C Fortran)
 
 # Optimization on (for debug flags, change to Debug)
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 
 # Git module
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
