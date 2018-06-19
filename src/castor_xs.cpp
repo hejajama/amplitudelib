@@ -329,8 +329,8 @@ double inthelperf_y(double y, void* p)
     
     // Compute pt limits
     double shift = rapidity_shift;
-    if (par->Ap_mode)
-        shift = -rapidity_shift;
+//    if (par->Ap_mode)
+//        shift = -rapidity_shift;
     
     double ytmp = y + shift;
     
@@ -372,8 +372,8 @@ double inthelperf_pt(double pt, void* p)
     
     
     double shift = rapidity_shift;
-    if (par->Ap_mode)
-        shift = -rapidity_shift;
+//    if (par->Ap_mode)
+//        shift = -rapidity_shift;
  
     // Check kinematics
     double energy = JetEnergy(par->y + shift, pt);
