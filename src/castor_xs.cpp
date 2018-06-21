@@ -38,6 +38,7 @@ double rapidity_shift = 0.465;
 
 int INTWORKSPACEDIVISIONS = 5;
 const double INTACCURACY = 0.001;
+const double LOW_PT_CUT = 1;
 
 // Kinematics
 // Rapidity from pseudorapidity and pt
@@ -108,6 +109,7 @@ int main(int argc, char* argv[])
     }
 
     cout << "# Note to self: it might be good idea to use quark mass as m!" << endl;
+    cout << "# Low pt cut: " << LOW_PT_CUT << endl;
 
     double x0=-1;
     double sqrts=5020;
@@ -337,9 +339,12 @@ double inthelperf_y(double y, void* p)
     double minpt = std::sqrt( par->minE*par->minE - par->m*par->m/2.0 - 1.0/2.0*par->m*par->m*std::cosh(2.0*ytmp)) * 1.0 / std::cosh(ytmp) ;
     double maxpt =std::sqrt( par->maxE*par->maxE - par->m*par->m/2.0 - 1.0/2.0*par->m*par->m*std::cosh(2.0*ytmp)) * 1.0 / std::cosh(ytmp) ;
     
+    
     if (minpt < 0.2 or maxpt < 0.2 or minpt > 100 or maxpt > 100 or isnan(minpt) or isnan(maxpt) or isinf(minpt) or isinf(maxpt))
         return 0;
     
+    if (minpt < LOW_PT_CUT)
+        return 0;
     
     status = gsl_integration_qag(&fun, minpt, maxpt, 0, INTACCURACY, INTWORKSPACEDIVISIONS, GSL_INTEG_GAUSS51, par->workspace, &result, &abserr);
     
@@ -377,7 +382,6 @@ double inthelperf_pt(double pt, void* p)
  
     // Check kinematics
     double energy = JetEnergy(par->y + shift, pt);
-    
     
     if (energy < par->minE or energy > par->maxE)
     {
