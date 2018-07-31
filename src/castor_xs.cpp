@@ -178,7 +178,7 @@ int main(int argc, char* argv[])
     }
 
     if (maxE < 0)
-        maxE  = minE + 50;
+        maxE  = minE + 20;
     // Default PDF and FF
     if (pdf==NULL)
         pdf = new CTEQ();
@@ -331,13 +331,17 @@ double inthelperf_y(double y, void* p)
     
     // Compute pt limits
     double shift = rapidity_shift;
-//    if (par->Ap_mode)
-//        shift = -rapidity_shift;
+    if (par->Ap_mode)
+        shift = -rapidity_shift;
+
+	// Check that the parton ends up in Castor
+	double y_lab = y + shift;
+	if (y_lab < castor_min_pseudorapidity or y_lab > castor_max_pseudorapidity)
+		return 0; 
     
-    double ytmp = y + shift;
     
-    double minpt = std::sqrt( par->minE*par->minE - par->m*par->m/2.0 - 1.0/2.0*par->m*par->m*std::cosh(2.0*ytmp)) * 1.0 / std::cosh(ytmp) ;
-    double maxpt =std::sqrt( par->maxE*par->maxE - par->m*par->m/2.0 - 1.0/2.0*par->m*par->m*std::cosh(2.0*ytmp)) * 1.0 / std::cosh(ytmp) ;
+    double minpt = std::sqrt( par->minE*par->minE - par->m*par->m/2.0 - 1.0/2.0*par->m*par->m*std::cosh(2.0*y_lab)) * 1.0 / std::cosh(y_lab) ;
+    double maxpt =std::sqrt( par->maxE*par->maxE - par->m*par->m/2.0 - 1.0/2.0*par->m*par->m*std::cosh(2.0*y_lab)) * 1.0 / std::cosh(y_lab) ;
     
     
     if (minpt < 0.2 or maxpt < 0.2 or minpt > 100 or maxpt > 100 or isnan(minpt) or isnan(maxpt) or isinf(minpt) or isinf(maxpt))
@@ -377,8 +381,8 @@ double inthelperf_pt(double pt, void* p)
     
     
     double shift = rapidity_shift;
-//    if (par->Ap_mode)
-//        shift = -rapidity_shift;
+    if (par->Ap_mode)
+        shift = -rapidity_shift;
  
     // Check kinematics
     double energy = JetEnergy(par->y + shift, pt);
@@ -393,13 +397,16 @@ double inthelperf_pt(double pt, void* p)
     
     
     double eta = par->y;  // Or Pseudorapidity(par->y, pt);
-    
+   /*
+	// THis check is done already in an outern integral
+	//
     if (eta+shift < castor_min_pseudorapidity or eta+shift > castor_max_pseudorapidity)
     {
         //cout << "Out of castor acceptance  " << par->y << " pt " << pt << endl;
         //cout << par->y << " " << pt << endl;
         return 0;
     }
+	*/
     
     
     
