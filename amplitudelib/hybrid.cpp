@@ -324,6 +324,15 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_parton_dps(double y1, double 
     if (nf2 < 0) nf2 = 0;
     if (nA2 < 0) nA2 = 0;
     
+    double scale_1 = scale;
+    double scale_2 = scale;
+    if (scale < 0)  // Automatically set scale
+    {
+        scale_1 = pt1; scale_2=pt2;
+        if (scale_1 < pdf->MinQ()) scale_1 = pdf->MinQ();
+        if (scale_2 < pdf->MinQ()) scale_2 = pdf->MinQ();
+    }
+    
     double result=0;
     
     if (deuteron)
@@ -339,30 +348,40 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_parton_dps(double y1, double 
         {
             double sa_1=0;
             double sa_2=0;
-            if (Partons()[i]!=G)
+            if (Partons()[i]==G)
                 sa_1 = nA1;
-            else if (Partons()[i]!=LIGHT)
+            else if (Partons()[i]!=G and Partons()[i]!=LIGHT)
                 sa_1 = nf1;
             else if (Partons()[i]==LIGHT)
             {
                 cerr << "Light partons not supported in DPS" << endl;
                 exit(1);
             }
+            else
+            {
+                cerr << "WTF parton " <<Partons()[i] << " at " << LINEINFO << endl;
+                exit(1);
+            }
             
-            if (Partons()[j]!=G)
+            if (Partons()[j]==G)
                 sa_2 = nA2;
-            else if (Partons()[j]!=LIGHT)
+            else if (Partons()[j]!=G and Partons()[j]!=LIGHT)
                 sa_2 = nf2;
             else if (Partons()[j]==LIGHT)
             {
                 cerr << "Light partons not supported in DPS" << endl;
                 exit(1);
             }
+            else
+            {
+                cerr << "WTF parton " <<Partons()[i] << " at " << LINEINFO << endl;
+                exit(1);
+            }
             
-            double f_i = pdf->xq(xp1, scale, Partons()[i])/xp1;
-            double f_i_scaled = pdf->xq(xp1/(1.0-xp2), scale, Partons()[i]) / (xp1/(1.0-xp2));
-            double f_j = pdf->xq(xp2, scale, Partons()[j])/xp2;
-            double f_j_scaled = pdf->xq(xp2/(1.0-xp1), scale, Partons()[j]) / (xp2/(1.0-xp1));
+            double f_i = pdf->xq(xp1, scale_1, Partons()[i])/xp1;
+            double f_i_scaled = pdf->xq(xp1/(1.0-xp2), scale_1, Partons()[i]) / (xp1/(1.0-xp2));
+            double f_j = pdf->xq(xp2, scale_2, Partons()[j])/xp2;
+            double f_j_scaled = pdf->xq(xp2/(1.0-xp1), scale_2, Partons()[j]) / (xp2/(1.0-xp1));
             
             double dpdf = 0.5*xp1*xp2*( f_i * f_j_scaled + f_i_scaled*f_j );
             // For testing: this should reproduce the factorized result
