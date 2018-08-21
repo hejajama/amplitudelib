@@ -80,6 +80,8 @@ class SingleInclusive
         double dHadronMultiplicity_dyd2pt_parton_dps(double y1, double pt1, double y2, double pt2, double sqrts,
                                                  PDF* pdf, bool deuteron=false,  double scale=-1 );
 
+        // 3 particle production
+        double dHadronMultiplicity_dyd2pt_parton_3ps(double y1, double pt1, double y2, double pt2, double y3, double pt3, double sqrts,    PDF* pdf, bool deuteron=false,  double scale=-1 );
     
 
         /**

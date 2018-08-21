@@ -82,6 +82,7 @@ double inthelperf_y(double y, void* p);
 double inthelperf_mc(double* vec, size_t dim, void* par);
 
 double inthelperf_dps_mc(double* vec, size_t dim, void* p);
+double inthelperf_3ps_mc(double* vec, size_t dim, void* p);
 
 int main(int argc, char* argv[])
 {
@@ -97,6 +98,7 @@ int main(int argc, char* argv[])
     gsl_set_error_handler(&ErrHandler);
 
     bool Ap_mode=false; // if true, nucleus goes into Castor
+    int DPS_N = 2;   // Number of independent particles in DPS
 
     if ( argc==1 or (string(argv[1])=="-help" or string(argv[1])=="--help")  )
     {
@@ -106,7 +108,7 @@ int main(int argc, char* argv[])
         cout << "-x0 val: set x0 value for the BK solutions (overrides the value in BK file)" << endl;
         cout << "-gsl_ft: use GSL to directly calculate Fourier transform" << endl;
         cout << "-pA / -Ap: use positive or negative rapidity sift" << endl;
-        cout << "-DPS: compute DPS contribution" << endl;
+        cout << "-DPS N: compute DPS contribution for N particle production" << endl;
         return 0;
         
     }
@@ -175,7 +177,10 @@ int main(int argc, char* argv[])
         else if (string(argv[i])=="-mcintpoints")
             mcintpoints = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-DPS")
+        {
             dps=true;
+            DPS_N = StrToInt(argv[i+1]);
+        }
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -289,9 +294,31 @@ int main(int argc, char* argv[])
         gsl_rng_env_setup();
         gsl_rng* rng = gsl_rng_alloc(rngtype);
         
+        double *lower;
+        double *upper;
+        lower = new double[DPS_N*2];
+        upper = new double[DPS_N*2];
+        
         gsl_monte_function F;
-        F.f = inthelperf_dps_mc;
-        F.dim=4;
+        if (DPS_N==2)
+        {
+            F.f = inthelperf_dps_mc;
+            F.dim=4;
+            lower[0]=lower[1]=LOW_PT_CUT;
+            lower[2]=lower[3]=castor_min_pseudorapidity - rapidity_shift;
+            upper[0]=upper[1]=30;
+            upper[2]=upper[3]=castor_max_pseudorapidity - rapidity_shift;
+
+        }
+        else if (DPS_N == 3)
+        {
+            F.f = inthelperf_3ps_mc;
+            F.dim=6;
+            lower[0]=lower[1]=lower[2]=LOW_PT_CUT;
+            lower[3]=lower[4]=lower[5]=castor_min_pseudorapidity - rapidity_shift;
+            upper[0]=upper[1]=upper[2]=30;
+            upper[3]=upper[4]=upper[5]=castor_max_pseudorapidity - rapidity_shift;
+        }
         F.params = &par;
         gsl_monte_miser_state *s = gsl_monte_miser_alloc(F.dim);
         
@@ -301,14 +328,17 @@ int main(int argc, char* argv[])
         
         
         
-        double lower[4]={LOW_PT_CUT, LOW_PT_CUT, castor_min_pseudorapidity-rapidity_shift, castor_min_pseudorapidity - rapidity_shift};
-        double upper[4]={30, 30, castor_max_pseudorapidity-rapidity_shift, castor_max_pseudorapidity-rapidity_shift};
+        
+        
         gsl_monte_miser_integrate(&F, lower, upper, F.dim, mcintpoints, rng, s, &result, &abserr);
         gsl_monte_miser_free(s);
         gsl_rng_free(rng);
         
         cout << "# MC integral uncertainty estimate " << 100.0*std::abs(abserr/result) << "%" << endl;
         
+        
+        delete[] lower;
+        delete[] upper;
         
     }
     
@@ -490,6 +520,85 @@ double inthelperf_dps_mc(double* vec, size_t dim, void* p)
     //the jet finding algorithm effect
     return SQR(2.0*M_PI)*pt1*pt2*diffxs;
 }
+
+
+
+
+///////////////////////////////////////////
+///////////////////// 3 particle production
+///////////////////////////////////////////
+double inthelperf_3ps_mc(double* vec, size_t dim, void* p)
+{
+    
+    inthelper_castor *par = (inthelper_castor*)p;
+    
+    double pt1 = vec[0];
+    double pt2 = vec[1];
+    double pt3 = vec[2];
+    double y1=vec[3];
+    double y2=vec[4];
+    double y3 = vec[5];
+    
+    // Kinematics
+    // The calculation is done in the center-of-mass frame
+    // But castor measures jet energy in the LAB frame
+    
+    // First approximation: we set rapidity=pseudorapidity
+    // and compute the produced jet energy in the LAB frame
+    // after applyint rapidity_shift boost
+    
+    // This should be quite good approximation, at least with m=0.2GV,
+    // as pt values are aloways > 1 GeV
+    
+    
+    double shift = rapidity_shift;
+    if (par->Ap_mode)
+        shift = -rapidity_shift;
+    
+    double y1_lab = y1+shift;
+    double y2_lab = y2+shift;
+    double y3_lab = y2 + shift;
+    
+    // End up in CASTOR
+    if (y1_lab < castor_min_pseudorapidity or y1_lab > castor_max_pseudorapidity or y2_lab < castor_min_pseudorapidity or y2_lab > castor_max_pseudorapidity
+        or y3_lab < castor_min_pseudorapidity or y3_lab > castor_max_pseudorapidity)
+        return 0;
+    
+    
+    // Check kinematics
+    double energy_1 = JetEnergy(y1_lab, pt1);
+    double energy_2 = JetEnergy(y2_lab, pt2);
+    double energy_3 = JetEnergy(y3_lab, pt3);
+    double energy = energy_1 + energy_2 + energy_3;
+    
+    if (energy < par->minE or energy > par->maxE)
+    {
+        //cout << "Out of kinematics [" << par->minE << ", " << par->maxE << "]: y " << par->y << " pt " << pt << " E " << energy << endl;
+        //cout << par->y << " " << pt <<" " << energy  << endl;
+        return 0;
+    }
+    
+    // Do angular integral, and add jacobian 2pi
+    // 2nd to last parameters: false=no deuteron
+    double pdf_scale = -1; //0.5*(pt1+pt2); // negative = automatic
+    // if (pdf_scale < par->pdf->MinQ())
+    //     pdf_scale = par->pdf->MinQ();
+    double diffxs = par->xs->dHadronMultiplicity_dyd2pt_parton_3ps(y1,pt1,y2,pt2, y3, pt3, par->sqrts,
+                                                                   par->pdf, false,  pdf_scale );
+    
+    
+    if (diffxs <0 )
+    {
+        cerr << "Differential cross section<0, res " << diffxs << endl;
+    }
+    
+    // (2pi)^3 from two angular integrals, this should later be scaled by R/2pi to take into account
+    //the jet finding algorithm effect
+    return std::pow(2.0*M_PI, 3.0)*pt1*pt2*diffxs;
+}
+
+
+
 
 
 

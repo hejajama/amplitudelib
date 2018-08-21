@@ -385,7 +385,7 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_parton_dps(double y1, double 
             
             double dpdf = 0.5*xp1*xp2*( f_i * f_j_scaled + f_i_scaled*f_j );
             // For testing: this should reproduce the factorized result
-            dpdf = xp1*xp2*f_i*f_j;
+            //dpdf = xp1*xp2*f_i*f_j;
             
             result += sa_1*sa_2 *dpdf;
         }
@@ -396,6 +396,163 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_parton_dps(double y1, double 
     }
     
     return result/std::pow(2.0*M_PI, 4.0);
+    
+    
+}
+
+/*
+ * Parton level triple parton scattering
+ * Compute 1/(2pi)^6 x_1 x_2 x_3 D(x_1,x_2,x_3) S(pt1)S(pt2)S(pt3)
+ * Summed over all parton species
+ */
+double SingleInclusive::dHadronMultiplicity_dyd2pt_parton_3ps(double y1, double pt1, double y2, double pt2, double y3, double pt3, double sqrts,    PDF* pdf, bool deuteron,  double scale )
+{
+    
+    
+    // xp: bjorken x for probe
+    // xA: bjorken x for target
+    double xp1 = pt1/sqrts*std::exp(y1); double xA1 = xp1*std::exp(-2.0*y1);
+    double xp2 = pt2/sqrts*std::exp(y2); double xA2 = xp1*std::exp(-2.0*y2);
+    double xp3 = pt2/sqrts*std::exp(y3); double xA3 = xp1*std::exp(-2.0*y3);
+    if (xp1>1 or xp2>1 or xp3>1 or xp1+xp2+xp3>1)
+    {
+        cerr << "Entering kinematically fobidden region at y1=" << y1 <<", pt1=" << pt1 << " y2=" << y2 << " pt2=" << pt2 << LINEINFO << endl;
+        return 0;
+    }
+    
+    if (scale<0) scale = (pt1+pt2+pt3)/3.0;
+    
+    
+    
+    if (xA1 > N->X0() or xA2 > N->X0() or xA3 > N->X0() )
+    {
+        cerr << "Negative rapidity at " << LINEINFO << " xA1 " << xA1 <<
+        " xA2 " << xA2 << " sqrts "
+        << sqrts << endl ;
+        return 0;
+    }
+    
+    
+    // Quark from proton:
+    N->InitializeInterpolation(xA1);
+    // UGD in fundamental representation
+    double nf1 = N->S_k(pt1, xA1);
+    // Adjoint representation, gluon scatters
+    double nA1 = N->S_k(pt1, xA1, ADJOINT);
+    
+    
+    N->InitializeInterpolation(xA2);
+    double nf2 = N->S_k(pt2, xA2);
+    double nA2 = N->S_k(pt2, xA2, ADJOINT);
+    
+    N->InitializeInterpolation(xA3);
+    double nf3 = N->S_k(pt3, xA3);
+    double nA3 = N->S_k(pt3, xA3, ADJOINT);
+    
+    if (nf1 < 0) nf1 = 0;
+    if (nA1 < 0) nA1 = 0;
+    if (nf2 < 0) nf2 = 0;
+    if (nA2 < 0) nA2 = 0;
+    if (nf2 < 0) nf3 = 0;
+    if (nA2 < 0) nA3 = 0;
+    
+    double scale_1 = scale;
+    double scale_2 = scale;
+    double scale_3 = scale;
+    if (scale < 0)  // Automatically set scale
+    {
+        scale_1 = pt1; scale_2=pt2; scale_3 = pt3;
+        if (scale_1 < pdf->MinQ()) scale_1 = pdf->MinQ();
+        if (scale_2 < pdf->MinQ()) scale_2 = pdf->MinQ();
+        if (scale_3 < pdf->MinQ()) scale_3 = pdf->MinQ();
+    }
+    
+    double result=0;
+    
+    if (deuteron)
+    {
+        cerr << "Deuteron is not supported in DPS calculation! " << LINEINFO << endl;
+        exit(1);
+    }
+    
+    // Partons
+    for (unsigned int i=0; i<Partons().size(); i++)
+    {
+        for (unsigned int j=0; j<Partons().size(); j++)
+        {
+            for (unsigned int k=0; k<Partons().size(); k++)
+            {
+                double sa_1=0;
+                double sa_2=0;
+                double sa_3=0;
+                
+                if (Partons()[i]==G)
+                    sa_1 = nA1;
+                else if (Partons()[i]!=G and Partons()[i]!=LIGHT)
+                    sa_1 = nf1;
+                else if (Partons()[i]==LIGHT)
+                {
+                    cerr << "Light partons not supported in DPS" << endl;
+                    exit(1);
+                }
+                else
+                {
+                    cerr << "WTF parton " <<Partons()[i] << " at " << LINEINFO << endl;
+                    exit(1);
+                }
+                
+                if (Partons()[j]==G)
+                    sa_2 = nA2;
+                else if (Partons()[j]!=G and Partons()[j]!=LIGHT)
+                    sa_2 = nf2;
+                else if (Partons()[j]==LIGHT)
+                {
+                    cerr << "Light partons not supported in DPS" << endl;
+                    exit(1);
+                }
+                else
+                {
+                    cerr << "WTF parton " <<Partons()[j] << " at " << LINEINFO << endl;
+                    exit(1);
+                }
+                
+                if (Partons()[k]==G)
+                    sa_3 = nA3;
+                else if (Partons()[k]!=G and Partons()[k]!=LIGHT)
+                    sa_3 = nf3;
+                else if (Partons()[k]==LIGHT)
+                {
+                    cerr << "Light partons not supported in DPS" << endl;
+                    exit(1);
+                }
+                else
+                {
+                    cerr << "WTF parton " <<Partons()[k] << " at " << LINEINFO << endl;
+                    exit(1);
+                }
+                
+                /////TODO TÄSTÄ ETEENPÄIN
+                double f_i = pdf->xq(xp1, scale_1, Partons()[i])/xp1;
+                double f_i_scaled = pdf->xq(xp1/(1.0-xp2 - xp3), scale_1, Partons()[i]) / (xp1/(1.0-xp2-xp3));
+                double f_j = pdf->xq(xp2, scale_2, Partons()[j])/xp2;
+                double f_j_scaled = pdf->xq(xp2/(1.0-xp1-xp3), scale_2, Partons()[j]) / (xp2/(1.0-xp1-xp3));
+                double f_k = pdf->xq(xp2, scale_2, Partons()[j])/xp2;
+                double f_k_scaled = pdf->xq(xp3/(1.0-xp1-xp2), scale_3, Partons()[k]) / (xp3/(1.0-xp1-xp2));
+                
+                double dpdf = 1.0/3.0*xp1*xp2*xp3*( f_i * f_j * f_k_scaled + f_i * f_j_scaled * f_k
+                                                        + f_i_scaled*f_j*f_k );
+                // For testing: this should reproduce the factorized result
+                //dpdf = xp1*xp2*f_i*f_j;
+                
+                result += sa_1*sa_2*sa_3 *dpdf;
+            }
+        
+        }
+        
+        
+    }
+    
+    return result/std::pow(2.0*M_PI, 6.0);
     
     
 }
