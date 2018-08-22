@@ -54,7 +54,7 @@ double Rapidity(double eta, double pt, double m=default_particle_mass)
 // Pseudorapidity from rapidity
 double Pseudorapidity(double y, double pt, double m=default_particle_mass)
 {
-    return acosh( std::exp(-y)*std::sqrt( std::pow(std::exp(2.0*y)-1.0,2)*std::pow(m,4) + 2.0*(1+std::exp(4.0*y))*std::pow(m*pt,2) + std::pow(1 + std::exp(2.0*y), 2) * std::pow(pt,4) )
+    return acosh( std::exp(-y)*std::sqrt( std::pow(std::exp(2.0*y)-1.0,2)*std::pow(m,4) + 2.0   *(1+std::exp(4.0*y))*std::pow(m*pt,2) + std::pow(1 + std::exp(2.0*y), 2) * std::pow(pt,4) )
                       / (2.0*pt*std::sqrt( m*m + pt*pt))
                       );
 }
@@ -389,9 +389,12 @@ double inthelperf_y(double y, void* p)
         shift = -rapidity_shift;
 
 	// Check that the parton ends up in Castor
-	double y_lab = y + shift;
-	if (y_lab < castor_min_pseudorapidity or y_lab > castor_max_pseudorapidity)
-		return 0; 
+    // Note that if we really sparate rapidity and pseudorapidity, this can
+    // be done only in the next integrnad as we need also pt
+    double y_lab = y + shift;
+	//double y_lab = y + shift;
+	//if (y_lab < castor_min_pseudorapidity or y_lab > castor_max_pseudorapidity)
+	//	return 0;
     
     
     double minpt = std::sqrt( par->minE*par->minE - par->m*par->m/2.0 - 1.0/2.0*par->m*par->m*std::cosh(2.0*y_lab)) * 1.0 / std::cosh(y_lab) ;
@@ -434,6 +437,10 @@ double inthelperf_pt(double pt, void* p)
         shift = -rapidity_shift;
  
     // Check kinematics
+    double eta_lab = Pseudorapidity(par->y + shift, pt, par->m);
+    if (eta_lab < castor_min_pseudorapidity or eta_lab > castor_max_pseudorapidity)
+            return 0;
+    
     double energy = JetEnergy(par->y + shift, pt, par->m);
     
     if (energy < par->minE or energy > par->maxE)
@@ -442,8 +449,6 @@ double inthelperf_pt(double pt, void* p)
         //cout << par->y << " " << pt <<" " << energy  << endl;
         return 0;
     }
-    
-    double eta = par->y;  // Or Pseudorapidity(par->y, pt);
     
     // Do angular integral, and add jacobian 2pi
     // 2nd to last parameters: false=no deuteron
