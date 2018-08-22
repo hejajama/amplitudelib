@@ -25,6 +25,7 @@
 #include <gsl/gsl_monte.h>
 #include <gsl/gsl_monte_miser.h>
 #include <ctime>
+#include <cmath>
 #include <unistd.h>
 #include <gsl/gsl_rng.h>
 
@@ -38,7 +39,7 @@ double rapidity_shift = 0.465;
 
 int INTWORKSPACEDIVISIONS = 5;
 const double INTACCURACY = 0.001;
-const double LOW_PT_CUT = 1;
+double LOW_PT_CUT = 1;
 
 // Kinematics
 // Rapidity from pseudorapidity and pt
@@ -109,6 +110,8 @@ int main(int argc, char* argv[])
         cout << "-gsl_ft: use GSL to directly calculate Fourier transform" << endl;
         cout << "-pA / -Ap: use positive or negative rapidity sift" << endl;
         cout << "-DPS N: compute DPS contribution for N particle production" << endl;
+        cout << "-m mass: set jet mass in GeV " << endl;
+        cout << "-minpt cutoff: set min pT cutoff in GeV" << endl;
         return 0;
         
     }
@@ -129,6 +132,8 @@ int main(int argc, char* argv[])
     double minE=-1; double maxE=-1;
     int mcintpoints=1e4;
     bool dps=false;
+    
+    double mass = default_particle_mass;
 
     for (int i=1; i<argc; i++)
     {
@@ -166,6 +171,10 @@ int main(int argc, char* argv[])
 				return -1;
 			}
 		}
+        else if (string(argv[i])=="-m")
+            mass = StrToReal(argv[i+1]);
+        else if (string(argv[i])=="-minpt")
+            LOW_PT_CUT = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-gsl_ft")
             ft_method = GSL;
         else if (string(argv[i])=="-Ap")
@@ -223,6 +232,7 @@ int main(int argc, char* argv[])
 	delete[] hostname;
 
     cout << "# " << N.GetString() << endl;
+    cout << "# Jet mass = " << mass << " GeV, low pt cutoff = " << LOW_PT_CUT << " GeV";
     cout << "# PDF: " << pdf->GetString() << endl;
     cout <<"# Ap mode: "; if (Ap_mode) cout << "true"; else cout << "false"; cout << endl;
     
@@ -338,7 +348,7 @@ int main(int argc, char* argv[])
         
         
         delete[] lower;
-        delete[] upper;
+        delete[] upper;
         
     }
     
