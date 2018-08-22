@@ -54,7 +54,7 @@ double Rapidity(double eta, double pt, double m=default_particle_mass)
 // Pseudorapidity from rapidity
 double Pseudorapidity(double y, double pt, double m=default_particle_mass)
 {
-    return std::acosh( std::exp(-y)*std::sqrt( std::pow(std::exp(2.0*y)-1.0,2)*std::pow(m,4) + 2.0*(1+std::exp(4.0*y))*std::pow(m*pt,2) + std::pow(1 + std::exp(2.0*y), 2) * std::pow(pt,4) )
+    return acosh( std::exp(-y)*std::sqrt( std::pow(std::exp(2.0*y)-1.0,2)*std::pow(m,4) + 2.0*(1+std::exp(4.0*y))*std::pow(m*pt,2) + std::pow(1 + std::exp(2.0*y), 2) * std::pow(pt,4) )
                       / (2.0*pt*std::sqrt( m*m + pt*pt))
                       );
 }
@@ -268,7 +268,7 @@ int main(int argc, char* argv[])
     par.maxE=maxE;
     par.sqrts=sqrts;
     par.pdf=pdf;
-    par.m=default_particle_mass;
+    par.m=mass;
     par.Ap_mode=Ap_mode;
     
      double result,abserr;
@@ -434,7 +434,7 @@ double inthelperf_pt(double pt, void* p)
         shift = -rapidity_shift;
  
     // Check kinematics
-    double energy = JetEnergy(par->y + shift, pt);
+    double energy = JetEnergy(par->y + shift, pt, par->m);
     
     if (energy < par->minE or energy > par->maxE)
     {
@@ -501,8 +501,8 @@ double inthelperf_dps_mc(double* vec, size_t dim, void* p)
     
     
     // Check kinematics
-    double energy_1 = JetEnergy(y1_lab, pt1);
-    double energy_2 = JetEnergy(y2_lab, pt2);
+    double energy_1 = JetEnergy(y1_lab, pt1, par->m);
+    double energy_2 = JetEnergy(y2_lab, pt2, par->m);
     double energy = energy_1 + energy_2;
     
     if (energy < par->minE or energy > par->maxE)
@@ -576,9 +576,9 @@ double inthelperf_3ps_mc(double* vec, size_t dim, void* p)
     
     
     // Check kinematics
-    double energy_1 = JetEnergy(y1_lab, pt1);
-    double energy_2 = JetEnergy(y2_lab, pt2);
-    double energy_3 = JetEnergy(y3_lab, pt3);
+    double energy_1 = JetEnergy(y1_lab, pt1, par->m);
+    double energy_2 = JetEnergy(y2_lab, pt2, par->m);
+    double energy_3 = JetEnergy(y3_lab, pt3, par->m);
     double energy = energy_1 + energy_2 + energy_3;
     
     if (energy < par->minE or energy > par->maxE)
