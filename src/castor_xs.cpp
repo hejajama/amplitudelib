@@ -500,8 +500,11 @@ double inthelperf_dps_mc(double* vec, size_t dim, void* p)
     double y1_lab = y1+shift;
     double y2_lab = y2+shift;
     
+    double eta1_lab = Pseudorapidity(y1_lab, pt1, par->m);
+    double eta2_lab = Pseudorapidity(y2_lab, pt2, par->m);
+    
     // End up in CASTOR
-    if (y1_lab < castor_min_pseudorapidity or y1_lab > castor_max_pseudorapidity or y2_lab < castor_min_pseudorapidity or y2_lab > castor_max_pseudorapidity)
+    if (eta1_lab < castor_min_pseudorapidity or eta1_lab > castor_max_pseudorapidity or eta2_lab < castor_min_pseudorapidity or eta2_lab > castor_max_pseudorapidity)
         return 0;
     
     
@@ -573,10 +576,13 @@ double inthelperf_3ps_mc(double* vec, size_t dim, void* p)
     double y1_lab = y1+shift;
     double y2_lab = y2+shift;
     double y3_lab = y2 + shift;
+    double eta1_lab = Pseudorapidity(y1_lab, pt1, par->m);
+    double eta2_lab = Pseudorapidity(y2_lab, pt2, par->m);
+    double eta3_lab = Pseudorapidity(y3_lab, pt3, par->m);
     
     // End up in CASTOR
-    if (y1_lab < castor_min_pseudorapidity or y1_lab > castor_max_pseudorapidity or y2_lab < castor_min_pseudorapidity or y2_lab > castor_max_pseudorapidity
-        or y3_lab < castor_min_pseudorapidity or y3_lab > castor_max_pseudorapidity)
+    if (eta1_lab < castor_min_pseudorapidity or eta1_lab > castor_max_pseudorapidity or eta2_lab < castor_min_pseudorapidity or eta2_lab > castor_max_pseudorapidity
+        or eta3_lab < castor_min_pseudorapidity or eta3_lab > castor_max_pseudorapidity)
         return 0;
     
     
