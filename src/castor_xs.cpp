@@ -97,6 +97,7 @@ int main(int argc, char* argv[])
     cout << infostr.str() << endl;
     
     gsl_set_error_handler(&ErrHandler);
+    double binwidth = -1;
 
     bool Ap_mode=false; // if true, nucleus goes into Castor
     int DPS_N = 2;   // Number of independent particles in DPS
@@ -112,6 +113,7 @@ int main(int argc, char* argv[])
         cout << "-DPS N: compute DPS contribution for N particle production" << endl;
         cout << "-m mass: set jet mass in GeV " << endl;
         cout << "-minpt cutoff: set min pT cutoff in GeV" << endl;
+	cout << "-bin winwidth: set E bin width " << endl;
         return 0;
         
     }
@@ -190,6 +192,8 @@ int main(int argc, char* argv[])
             dps=true;
             DPS_N = StrToInt(argv[i+1]);
         }
+	else if (string(argv[i])=="-bin")
+	    binwidth=StrToReal(argv[i+1]);
         else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
@@ -197,8 +201,11 @@ int main(int argc, char* argv[])
         }
     }
 
+    if (binwidth < 0)
+         binwidth=20;
+
     if (maxE < 0)
-        maxE  = minE + 20;
+        maxE  = minE + binwidth;
     // Default PDF and FF
     if (pdf==NULL)
         pdf = new CTEQ();
