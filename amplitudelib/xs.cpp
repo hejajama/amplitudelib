@@ -75,12 +75,19 @@ double Inthelperf_hadronprod(double z, void *p)
     double nf = par->N->S_k(par->pt/z, y_A);
     // PDF and fragmentation
     double xqf = par->pdf->xq(x1, scale, U)*par->frag->Evaluate(U, par->final, z, scale)
+	+ par->pdf->xq(x1, scale, UBAR)*par->frag->Evaluate(UBAR, par->final, z, scale)
         + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(D, par->final, z, scale)
+	+ par->pdf->xq(x1, scale, DBAR)*par->frag->Evaluate(DBAR, par->final, z, scale)
         + par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
-        //+ par->pdf->xq(x1, scale, C)*par->frag->Evaluate(C, par->final, z, scale)
+	+ par->pdf->xq(x1, scale, SBAR)*par->frag->Evaluate(SBAR, par->final, z, scale)
+	+ par->pdf->xq(x1, scale, C)*par->frag->Evaluate(C, par->final, z, scale)
+	+ par->pdf->xq(x1, scale, CBAR)*par->frag->Evaluate(CBAR, par->final, z, scale);
+	+ par->pdf->xq(x1, scale, B)*par->frag->Evaluate(B, par->final, z, scale)
+	+ par->pdf->xq(x1, scale, BBAR)*par->frag->Evaluate(BBAR, par->final, z, scale);
 
     if (deuteron)
     {
+	cerr << "NOTE deuteron does not include antiquarks!" << endl; exit(1);
         // isospin symmetry, u in p -> d in n
         xqf += par->pdf->xq(x1, scale, U)*par->frag->Evaluate(D, par->final, z, scale)
         + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(U, par->final, z, scale)

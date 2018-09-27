@@ -41,7 +41,7 @@ double CTEQ::xq(double x, double q, Parton p)
     }
     // Codes
     int u=1; int d=2; int s=3; int c=4; int b=5; int g=0;
-    int ubar=-1; int dbar=-2; 
+    int ubar=-1; int dbar=-2; int sbar=-3; int cbar=-4; int bbar=-5; 
     double result=0;
     // Antiquarks with minus sign 
     
@@ -59,9 +59,15 @@ double CTEQ::xq(double x, double q, Parton p)
         case U:
             result = f(u, x, q);
             break;
+	case UBAR:
+            result = f(ubar,x,q);
+	    break;
         case D:
             result = f(d,x,q);
             break;
+	case DBAR:
+	    result = f(dbar,x,q);
+	    break;
         case UVAL:
             result = f(u,x,q) - f(ubar,x,q);
             break;
@@ -77,12 +83,20 @@ double CTEQ::xq(double x, double q, Parton p)
         case S:
             result = f(s,x,q);
             break;
+	case SBAR:
+	    result = f(sbar,x,q);
+	    break;
         case C:
             result = f(c,x,q);
             break;
+	case CBAR:
+	    result = f(cbar,x,q);
+	    break;
         case B:
             result = f(b,x,q);
             break;
+	case BBAR:
+	    result = f(bbar,x,q);
         case G:
             result = f(g,x,q);
             break;
