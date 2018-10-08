@@ -129,6 +129,18 @@ double DSS::Evaluate(Parton p, Hadron h, double x, double qs)
             parton=6;
             //result = sbar/x;
             break;
+	case C:
+	    parton=7;
+	    break;
+	case CBAR:
+	    parton=8;
+	    break;
+	case B:
+	    parton=9;
+	    break;
+	case BBAR:
+	    parton=10;
+	    break;
         case G:
 			parton=0;
             //result = g/x;
