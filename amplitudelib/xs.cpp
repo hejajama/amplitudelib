@@ -73,19 +73,19 @@ double Inthelperf_hadronprod(double z, void *p)
     // Quark from proton:
     // UGD in fundamental representation
     double nf = par->N->S_k(par->pt/z, y_A);
-    if (nf < 0)
-        nf=0;
+    //if (nf < 0)
+    //    nf=0;
     // PDF and fragmentation
     double xqf = par->pdf->xq(x1, scale, U)*par->frag->Evaluate(U, par->final, z, scale)
-	+ par->pdf->xq(x1, scale, UBAR)*par->frag->Evaluate(UBAR, par->final, z, scale)
+	+ 0*par->pdf->xq(x1, scale, UBAR)*par->frag->Evaluate(UBAR, par->final, z, scale)
         + par->pdf->xq(x1, scale, D)*par->frag->Evaluate(D, par->final, z, scale)
-	+ par->pdf->xq(x1, scale, DBAR)*par->frag->Evaluate(DBAR, par->final, z, scale)
+	+ 0*par->pdf->xq(x1, scale, DBAR)*par->frag->Evaluate(DBAR, par->final, z, scale)
         + par->pdf->xq(x1, scale, S)*par->frag->Evaluate(S, par->final, z, scale);
-	+ par->pdf->xq(x1, scale, SBAR)*par->frag->Evaluate(SBAR, par->final, z, scale)
-	+ par->pdf->xq(x1, scale, C)*par->frag->Evaluate(C, par->final, z, scale)
-	+ par->pdf->xq(x1, scale, CBAR)*par->frag->Evaluate(CBAR, par->final, z, scale);
-	+ par->pdf->xq(x1, scale, B)*par->frag->Evaluate(B, par->final, z, scale)
-	+ par->pdf->xq(x1, scale, BBAR)*par->frag->Evaluate(BBAR, par->final, z, scale);
+	+ 0*par->pdf->xq(x1, scale, SBAR)*par->frag->Evaluate(SBAR, par->final, z, scale);
+	//+ par->pdf->xq(x1, scale, C)*par->frag->Evaluate(C, par->final, z, scale)
+//	+ par->pdf->xq(x1, scale, CBAR)*par->frag->Evaluate(CBAR, par->final, z, scale);
+//	+ par->pdf->xq(x1, scale, B)*par->frag->Evaluate(B, par->final, z, scale)
+//	+ par->pdf->xq(x1, scale, BBAR)*par->frag->Evaluate(BBAR, par->final, z, scale);
 
     if (deuteron)
     {
@@ -101,8 +101,8 @@ double Inthelperf_hadronprod(double z, void *p)
 	
     // Adjoint representation, gluon scatters
     double na = par->N->S_k(par->pt/z, y_A, true);
-    if (na < 0)
-         na=0;
+    //if (na < 0)
+    //     na=0;
     double xgf = par->pdf->xq(x1, scale, G)*par->frag->Evaluate(G, par->final, z, scale);
     if (deuteron) xgf *= 2.0;   // gluon pdf gets multiplied by 2
     result += na*xgf;
