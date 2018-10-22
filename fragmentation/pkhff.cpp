@@ -95,14 +95,24 @@ double PKHFF::Evaluate(Parton p, Hadron h, double x, double qs)
     double result=0;
     if (p==U)
         result=u[0];
+    else if (p==UBAR)
+        result=u[1];
     else if (p==D)
         result=d[0];
+    else if (p==DBAR)
+        result=d[1];
     else if (p==S)
         result = s[0];
+    else if (p==SBAR)
+        result = s[1];
     else if (p==C)
         result = c[0];
+    else if (p==CBAR)
+        result = c[1];
     else if (p==B)
         result = b[0];
+    else if (p==BBAR)
+        result = b[1];
     else if (p==G)
         result = g;
     else

@@ -51,11 +51,15 @@ double KKP::Evaluate(Parton p, Hadron h, double x, double qs)
     double result=0;
     if (p==G) result = partons[0];
     else if (p==U) result = partons[1];
+    else if (p==UBAR) result  =partons[2];
     else if (p==D) result = partons[3];
+    else if (p==DBAR) result = partons[4];
     else if (p==S) result = partons[5];
+    else if (p==SBAR) result = partons[6];
     else if (p==C) result = partons[7];
+    else if (p==CBAR) result = partons[8];
     else if (p==B) result = partons[9];
-    // Check: partons[2] is ubar etc...?
+    else if (p==BBAR) result = partons[10];
     else
         cerr << "Parton " << p << " is not supported! " << LINEINFO << endl;
     
