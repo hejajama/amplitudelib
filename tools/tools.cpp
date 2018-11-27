@@ -70,7 +70,7 @@ int FindIndex(double val, std::vector<double> &vec)
     int ind=-1;
     
     uint start=0; uint end=vec.size()-1;
-    while(end-start>10)
+    while(end-start>5)
     {
         int tmp = static_cast<int>((start+end)/2.0);
         
