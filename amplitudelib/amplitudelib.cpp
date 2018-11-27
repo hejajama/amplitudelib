@@ -97,7 +97,7 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
  * Constructor, not loading datafile but data is given directly as an array
  *
  */
-AmplitudeLib::AmplitudeLib(std::vector< std::vector< double > > &data, std::vector<double> &yvals_, std::vector<double> &rvals_)
+AmplitudeLib::AmplitudeLib(std::vector< std::vector< double > > data, std::vector<double> yvals_, std::vector<double> rvals_)
 {
     kspace = false;
     interpolation_method = SPLINE_LINEAR;
