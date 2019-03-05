@@ -384,18 +384,18 @@ double* Interpolator::GetYData()
 {
     return ydata;
 }
-int Interpolator::GetNumOfPoints()
+int Interpolator::GetNumOfPoints() const
 {
     return points;
 }
-INTERPOLATION_METHOD Interpolator::GetMethod()
+INTERPOLATION_METHOD Interpolator::GetMethod() const
 {
     return method;
 }
 
 // Copy data from given class and initialize this, as this is
 // the copy constructor
-Interpolator::Interpolator(Interpolator& inter)
+Interpolator::Interpolator(const Interpolator& inter)
 {
     points=inter.GetNumOfPoints();
     xdata = new double[points];
@@ -415,7 +415,7 @@ Interpolator::Interpolator(Interpolator& inter)
     Initialize();
 }
 
-gsl_spline* Interpolator::GetGslSpline()
+gsl_spline* Interpolator::GetGslSpline() const
 {
     return spline;
 }

@@ -58,7 +58,7 @@ class Interpolator
          * The given vectors are not saved or referenced later.
          */
         Interpolator(std::vector<double> &x, std::vector<double> &y);
-        Interpolator(Interpolator& inter);
+        Interpolator(const Interpolator& inter);
         ~Interpolator();
         void Clear();
         /**
@@ -98,9 +98,9 @@ class Interpolator
 
         double* GetXData();
         double* GetYData();
-        gsl_spline* GetGslSpline();
-        int GetNumOfPoints();
-        INTERPOLATION_METHOD GetMethod();
+        gsl_spline* GetGslSpline() const;
+        int GetNumOfPoints() const;
+        INTERPOLATION_METHOD GetMethod() const;
         
         bool Freeze();
 
