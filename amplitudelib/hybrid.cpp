@@ -413,16 +413,12 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_parton_3ps(double y1, double 
     // xA: bjorken x for target
     double xp1 = pt1/sqrts*std::exp(y1); double xA1 = xp1*std::exp(-2.0*y1);
     double xp2 = pt2/sqrts*std::exp(y2); double xA2 = xp1*std::exp(-2.0*y2);
-    double xp3 = pt2/sqrts*std::exp(y3); double xA3 = xp1*std::exp(-2.0*y3);
+    double xp3 = pt3/sqrts*std::exp(y3); double xA3 = xp1*std::exp(-2.0*y3);
     if (xp1>1 or xp2>1 or xp3>1 or xp1+xp2+xp3>1)
     {
         cerr << "Entering kinematically fobidden region at y1=" << y1 <<", pt1=" << pt1 << " y2=" << y2 << " pt2=" << pt2 << LINEINFO << endl;
         return 0;
     }
-    
-    if (scale<0) scale = (pt1+pt2+pt3)/3.0;
-    
-    
     
     if (xA1 > N->X0() or xA2 > N->X0() or xA3 > N->X0() )
     {
@@ -536,7 +532,7 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_parton_3ps(double y1, double 
                 double f_i_scaled = pdf->xq(xp1/(1.0-xp2 - xp3), scale_1, Partons()[i]) / (xp1/(1.0-xp2-xp3));
                 double f_j = pdf->xq(xp2, scale_2, Partons()[j])/xp2;
                 double f_j_scaled = pdf->xq(xp2/(1.0-xp1-xp3), scale_2, Partons()[j]) / (xp2/(1.0-xp1-xp3));
-                double f_k = pdf->xq(xp2, scale_2, Partons()[j])/xp2;
+                double f_k = pdf->xq(xp3, scale_3, Partons()[j])/xp3;
                 double f_k_scaled = pdf->xq(xp3/(1.0-xp1-xp2), scale_3, Partons()[k]) / (xp3/(1.0-xp1-xp2));
                 
                 double dpdf = 1.0/3.0*xp1*xp2*xp3*( f_i * f_j * f_k_scaled + f_i * f_j_scaled * f_k

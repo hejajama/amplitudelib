@@ -582,7 +582,7 @@ double inthelperf_3ps_mc(double* vec, size_t dim, void* p)
     
     double y1_lab = y1+shift;
     double y2_lab = y2+shift;
-    double y3_lab = y2 + shift;
+    double y3_lab = y3 + shift;
     double eta1_lab = Pseudorapidity(y1_lab, pt1, par->m);
     double eta2_lab = Pseudorapidity(y2_lab, pt2, par->m);
     double eta3_lab = Pseudorapidity(y3_lab, pt3, par->m);
