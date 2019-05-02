@@ -19,6 +19,8 @@ if(OPENMP_FOUND)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
+set (CMAKE_Fortran_FLAGS "-std=legacy")
+
 find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})
 

@@ -59,8 +59,24 @@ class AmplitudeLib
          * Evaluates the dipole amplitude at given dipole size r and at
          * given Bjorken x (xbj). In momentum space the first argument is
          * transverse momentum.
+         *
+         * @param r dipole size in GeV^-1
+         * @param xbj Bjorken x at which dipole is evaluated
          */
         double N(double r, double xbj);
+    
+        /**
+         * Dipole amplitude at given rapidity y
+         *
+         * Evaluates the dipole amplitude at given dipole size r and at
+         * given evolution rapidity y (y=0 corresponding to the initial condition).
+         * In momentum space the first argument is
+         * transverse momentum.
+         *
+         * @param r dipole size in GeV^-1
+         * @param y Evolution rapidity at which the dipole is evaluated
+         */
+        double Ny(double r, double y);
 
         /**
          * Dipole amplitude in adjoint representation
@@ -77,8 +93,23 @@ class AmplitudeLib
          *
          * Evaluate the scattering matrix 1-N (forced between 0 and 1)
          * at given dipole size and Bjorken-x.
+         *
+         * @param r dipole size in GeV^-1
+         * @param xbj Bjorken x at which dipole is evaluated
          */
          double S(double r, double xbj);
+    
+        /**
+         * Scattering matrix at given evolution rapidity
+         *
+         * Evaluate the scattering matrix 1-N (forced between 0 and 1)
+         * at given dipole size and evolution rapidity,
+         * (y=0 is the initial condition).
+         *
+         * @param r dipole size in GeV^-1
+         * @param y Evolution rapidity at which the dipole is evaluated
+         */
+        double Sy(double r, double y);
         
         /**
          * Weizsäcker-Williams (WW) gluon distribution

@@ -302,6 +302,16 @@ double AmplitudeLib::S(double r, double xbj)
     return s;
 }
 
+// Dipole amplitude as a functoin of rapidity, wrapper y -> xbj
+double AmplitudeLib::Ny(double r, double y)
+{
+    return N(r, x0*std::exp(-y));
+}
+
+double AmplitudeLib::Sy(double r, double y)
+{
+    return S(r, x0*std::exp(-y));
+}
 /*
  * FT the amplitude to the k-space (WW UGD)
  * N(k) = \int d^2 r/(2\pi r^2) exp(ik.r)N(r)
