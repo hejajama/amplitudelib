@@ -20,6 +20,8 @@ if(OPENMP_FOUND)
 endif()
 
 set (CMAKE_Fortran_FLAGS "-std=legacy")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -march=native -mtune=native")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -march=native -mtune=native")
 
 find_package(GSL REQUIRED)
 include_directories(${GSL_INCLUDE_DIRS})
