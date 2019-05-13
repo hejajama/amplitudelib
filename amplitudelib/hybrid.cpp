@@ -287,10 +287,10 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_parton_dps(double y1, double 
     // xp: bjorken x for probe
     // xA: bjorken x for target
     double xp1 = pt1/sqrts*std::exp(y1); double xA1 = xp1*std::exp(-2.0*y1);
-    double xp2 = pt2/sqrts*std::exp(y2); double xA2 = xp1*std::exp(-2.0*y2);
+    double xp2 = pt2/sqrts*std::exp(y2); double xA2 = xp2*std::exp(-2.0*y2);
     if (xp1>1 or xp2>1 or xp1+xp2>1)
     {
-        cerr << "Entering kinematically fobidden region at y1=" << y1 <<", pt1=" << pt1 << " y2=" << y2 << " pt2=" << pt2 << LINEINFO << endl;
+//        cerr << "Entering kinematically fobidden region at y1=" << y1 <<", pt1=" << pt1 << " y2=" << y2 << " pt2=" << pt2 << LINEINFO << endl;
         return 0;
     }
     
@@ -416,7 +416,7 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_parton_3ps(double y1, double 
     double xp3 = pt3/sqrts*std::exp(y3); double xA3 = xp3*std::exp(-2.0*y3);
     if (xp1>1 or xp2>1 or xp3>1 or xp1+xp2+xp3>1)
     {
-        cerr << "Entering kinematically fobidden region at y1=" << y1 <<", pt1=" << pt1 << " y2=" << y2 << " pt2=" << pt2 << LINEINFO << endl;
+//        cerr << "Entering kinematically fobidden region at y1=" << y1 <<", pt1=" << pt1 << " y2=" << y2 << " pt2=" << pt2 << LINEINFO << endl;
         return 0;
     }
     
