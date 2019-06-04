@@ -83,6 +83,9 @@ class SingleInclusive
         // 3 particle production
         double dHadronMultiplicity_dyd2pt_parton_3ps(double y1, double pt1, double y2, double pt2, double y3, double pt3, double sqrts,    PDF* pdf, bool deuteron=false,  double scale=-1 );
     
+    // 4 parton production
+    double dHadronMultiplicity_dyd2pt_parton_4ps(double y1, double pt1, double y2, double pt2, double y3, double pt3, double y4, double pt4, double sqrts,    PDF* pdf, bool deuteron,  double scale=-1 );
+    
 
         /**
          * Single inclusive hadron yield, kt-factorization
