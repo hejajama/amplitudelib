@@ -189,12 +189,13 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt(double y, double pt, double s
 /*
  * Hadron production in parton level
  */
-double SingleInclusive::dHadronMultiplicity_dyd2pt_parton(double y, double pt, double sqrts,
-                                                          PDF* pdf, bool deuteron,  double scale )
+double SingleInclusive::dHadronMultiplicity_dyd2pt_parton(double y, double pt, double sqrts, PDF* pdf, bool deuteron,  double scale, double m )
 {
+    if (m<0) m=0;   // By default massless quark kinematics
+    
     // x1: fraction of parent hadron momentum carried by quark,
     // x2: Bjorken x for the dense system
-    double x1 = pt/sqrts*std::exp(y); double x2 = x1*std::exp(-2.0*y);
+    double x1 = std::sqrt(m*m+pt*pt)/sqrts*std::exp(y); double x2 = x1*std::exp(-2.0*y);
     if (x1>1)
     {
         cerr << "Entering kinematically fobidden region at y=" << y <<", pt=" << pt << " " << LINEINFO << endl;
@@ -279,15 +280,14 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_parton(double y, double pt, d
  * Compute 1/(2pi)^4 x_1 x_2 D(x_1,x_2) S(pt1)S(pt2)
  * Summed over all parton species
  */
-double SingleInclusive::dHadronMultiplicity_dyd2pt_parton_dps(double y1, double pt1, double y2, double pt2, double sqrts,
-                                         PDF* pdf, bool deuteron,  double scale )
+double SingleInclusive::dHadronMultiplicity_dyd2pt_parton_dps(double y1, double pt1, double y2, double pt2, double sqrts, PDF* pdf, bool deuteron,  double scale, double m )
 {
-    
+    if (m<0) m=0;   // default: massless quark inematics
     
     // xp: bjorken x for probe
     // xA: bjorken x for target
-    double xp1 = pt1/sqrts*std::exp(y1); double xA1 = xp1*std::exp(-2.0*y1);
-    double xp2 = pt2/sqrts*std::exp(y2); double xA2 = xp2*std::exp(-2.0*y2);
+    double xp1 = std::sqrt(m*m+pt1*pt1)/sqrts*std::exp(y1); double xA1 = xp1*std::exp(-2.0*y1);
+    double xp2 = std::sqrt(m*m+pt2*pt2)/sqrts*std::exp(y2); double xA2 = xp2*std::exp(-2.0*y2);
     if (xp1>1 or xp2>1 or xp1+xp2>1)
     {
 //        cerr << "Entering kinematically fobidden region at y1=" << y1 <<", pt1=" << pt1 << " y2=" << y2 << " pt2=" << pt2 << LINEINFO << endl;
@@ -405,15 +405,15 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_parton_dps(double y1, double 
  * Compute 1/(2pi)^6 x_1 x_2 x_3 D(x_1,x_2,x_3) S(pt1)S(pt2)S(pt3)
  * Summed over all parton species
  */
-double SingleInclusive::dHadronMultiplicity_dyd2pt_parton_3ps(double y1, double pt1, double y2, double pt2, double y3, double pt3, double sqrts,    PDF* pdf, bool deuteron,  double scale )
+double SingleInclusive::dHadronMultiplicity_dyd2pt_parton_3ps(double y1, double pt1, double y2, double pt2, double y3, double pt3, double sqrts,    PDF* pdf, bool deuteron,  double scale, double m )
 {
-    
+    if (m<0) m=0;   // default: massless quark kinematics
     
     // xp: bjorken x for probe
     // xA: bjorken x for target
-    double xp1 = pt1/sqrts*std::exp(y1); double xA1 = xp1*std::exp(-2.0*y1);
-    double xp2 = pt2/sqrts*std::exp(y2); double xA2 = xp2*std::exp(-2.0*y2);
-    double xp3 = pt3/sqrts*std::exp(y3); double xA3 = xp3*std::exp(-2.0*y3);
+    double xp1 = std::sqrt(m*m+pt1*pt1)/sqrts*std::exp(y1); double xA1 = xp1*std::exp(-2.0*y1);
+    double xp2 = std::sqrt(m*m+pt2*pt2)/sqrts*std::exp(y2); double xA2 = xp2*std::exp(-2.0*y2);
+    double xp3 = std::sqrt(m*m+pt3*pt3)/sqrts*std::exp(y3); double xA3 = xp3*std::exp(-2.0*y3);
     if (xp1>1 or xp2>1 or xp3>1 or xp1+xp2+xp3>1)
     {
 //        cerr << "Entering kinematically fobidden region at y1=" << y1 <<", pt1=" << pt1 << " y2=" << y2 << " pt2=" << pt2 << LINEINFO << endl;

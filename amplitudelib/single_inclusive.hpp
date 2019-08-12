@@ -56,10 +56,11 @@ class SingleInclusive
          * @param pdf Pointer to the PDF class
          * @param deuteron If true, probe is deuteron=proton+neutron
          * @param scale Scale at which PDF and FF are evaluated, default: transverse momentum
+         * @param m parton mass used to calculate kinematics, default: 0
          * @see PDF
          */
         double dHadronMultiplicity_dyd2pt_parton(double y, double pt, double sqrts,
-                                          PDF* pdf, bool deuteron=false,  double scale=-1 );
+                                          PDF* pdf, bool deuteron=false,  double scale=-1, double m=0 );
     
     
         /**
@@ -75,13 +76,14 @@ class SingleInclusive
          * @param pdf Pointer to the PDF class
          * @param deuteron If true, probe is deuteron=proton+neutron
          * @param scale Scale at which PDF and FF are evaluated, default: average transverse momentum
+         * @param m parton mass used to calculate kinematics, default: 0
          * @see PDF
          */
         double dHadronMultiplicity_dyd2pt_parton_dps(double y1, double pt1, double y2, double pt2, double sqrts,
-                                                 PDF* pdf, bool deuteron=false,  double scale=-1 );
+                                                 PDF* pdf, bool deuteron=false,  double scale=-1, double m=0 );
 
         // 3 particle production
-        double dHadronMultiplicity_dyd2pt_parton_3ps(double y1, double pt1, double y2, double pt2, double y3, double pt3, double sqrts,    PDF* pdf, bool deuteron=false,  double scale=-1 );
+        double dHadronMultiplicity_dyd2pt_parton_3ps(double y1, double pt1, double y2, double pt2, double y3, double pt3, double sqrts,    PDF* pdf, bool deuteron=false,  double scale=-1 , double m=0);
     
     // 4 parton production
     double dHadronMultiplicity_dyd2pt_parton_4ps(double y1, double pt1, double y2, double pt2, double y3, double pt3, double y4, double pt4, double sqrts,    PDF* pdf, bool deuteron,  double scale=-1 );
