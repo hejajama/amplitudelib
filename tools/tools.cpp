@@ -50,6 +50,9 @@ void ErrHandler(const char * reason,
 
     // 15: underflows
     if (gsl_errno == 15 ) return;
+    // 16: overflows
+    if (gsl_errno == 16 ) return;
+
 
     errors++;
     std::cerr << file << ":"<< line <<": Error " << errors << ": " <<reason

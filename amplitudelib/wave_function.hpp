@@ -8,7 +8,7 @@
  */
 
 #include <string>
-
+#include <cmath>
 /**
  * Virtual class from which different wave functions are inherited
  *
@@ -61,8 +61,16 @@ class WaveFunction{
          * integrated over z.
          */
         double PsiSqr_tot_intz(double Qsqr, double r);
+    
+        /*
+         * Vector meson mass
+         */
+        virtual double MesonMass();
     protected:
         int mode;   // What to return when PsiSqr_intz is called
 };
 
+// Helpers
+double epsfunsqr(double z, double Qsqr, double msqr);
+double epsfun(double z, double Qsqr, double msqr);
 #endif  // WAVE_FUNCTION_H
