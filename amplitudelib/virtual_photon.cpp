@@ -51,6 +51,16 @@ double VirtualPhoton::PsiSqr_T(double Qsqr, double r, double z)
             );
     }
     result *= qcd.Nc()/(2.0*SQR(M_PI))*ALPHA_e;
+    
+    if (isnan(result))
+    {
+        std::cerr << "PsiSqr_T=NaN at r=" << r <<", Q^2=" << Qsqr <<", z=" << z << " with quarks: " << endl;
+        for (unsigned int f=0; f<e_f.size(); f++)
+        {
+            std::cerr << "m=" << m_f[f] << ", e_f=" << e_f[f] << std::endl;
+            exit(1);
+        }
+    }
 
     return result;
 }
@@ -69,6 +79,17 @@ double VirtualPhoton::PsiSqr_L(double Qsqr, double r, double z)
     }
     result *= 2.0*qcd.Nc()/SQR(M_PI)*ALPHA_e*Qsqr*SQR(z)*SQR(1.0-z);
 
+    if (isnan(result))
+    {
+        std::cerr << "PsiSqr_L=NaN at r=" << r <<", Q^2=" << Qsqr <<", z=" << z << " with quarks: " << endl;
+        for (unsigned int f=0; f<e_f.size(); f++)
+        {
+            std::cerr << "m=" << m_f[f] << ", e_f=" << e_f[f] << std::endl;
+            exit(1);
+        }
+    }
+
+    
     return result;
 }
 
@@ -116,9 +137,15 @@ double VirtualPhoton::PsiSqr_T_intz(double Qsqr, double r)
     int status = gsl_integration_qag(&int_helper, MINZ, MAXZ , 0, ZINTACCURACY,
         MAXITER_ZINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
     gsl_integration_workspace_free(ws);
+    
+    if (isnan(result))
+    {
+        std::cerr << "z integral in Photon = NaN, Qsqr=" << Qsqr << ", r=" << r << " at " << LINEINFO << std::endl;
+        exit(1);
+    }
 
     if(status){ std::cerr<< "z integral in Photon failed with code " 
-        << status << " (transverse, Qsqr=" << Qsqr << ", r=" << r 
+        << status << " result " << result << " (transverse, Qsqr=" << Qsqr << ", r=" << r
         << "relerr=" << abserr/result << ") at " << LINEINFO << std::endl;}
   
     return result;
@@ -144,6 +171,12 @@ double VirtualPhoton::PsiSqr_L_intz(double Qsqr, double r)
         << status << " (longitudinal, Qsqr=" << Qsqr << ", r=" << r 
         << "relerr=" << abserr/result << ") at " << LINEINFO << std::endl;}
 
+    if (isnan(result))
+    {
+        std::cerr << "z integral in Photon = NaN, Qsqr=" << Qsqr << ", r=" << r << " at " << LINEINFO << std::endl;
+        exit(1);
+    }
+    
     return result;
 }
 
@@ -212,6 +245,11 @@ void VirtualPhoton::SetQuark(Parton p, double mass)
 		default:
 			cerr << "Unknown parton " << p << " at " << LINEINFO << endl;
 	}
+    if (m_f[0] < 0 or m_f[0] > 1000 or e_f[0] < -1 or e_f[0]>1)
+    {
+        std::cerr << "Quark m=" << m_f[0] << ", frac.charge=" << e_f[0] << " was provided to VirtualPhoton, this is crazy! " << LINEINFO << std::endl;
+        exit(1);
+    }
 
 }
 
