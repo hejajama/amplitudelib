@@ -66,8 +66,8 @@ class WaveFunction{
          * Vector meson mass
          */
         virtual double MesonMass();
-    protected:
-        int mode;   // What to return when PsiSqr_intz is called
+
+		virtual std::string WaveFunctionType();
 };
 
 // Helpers

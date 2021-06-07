@@ -28,6 +28,7 @@ include_directories(${GSL_INCLUDE_DIRS})
 
 add_subdirectory(amplitudelib)
 add_subdirectory(src)
+#add_subdirectory(public_library)
 add_subdirectory(fragmentation)
 add_subdirectory(pdf)
 #add_subdirectory(tools)
@@ -47,6 +48,9 @@ set_target_properties(fragmentation PROPERTIES
 set_target_properties(amplitude PROPERTIES
 	 LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
 	ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
+#set_target_properties(amplitude_minimal PROPERTIES
+#	 LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib
+#	ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
 
 set_target_properties(dipole_analyzer PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

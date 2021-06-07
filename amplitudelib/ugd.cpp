@@ -83,7 +83,7 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, doubl
         maxq=80;
 
     
-	double result, abserr; 
+    double result, abserr;
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(INTPOINTS_KTFACT);
 	int status = gsl_integration_qag(&fun, 0.001, maxq, 0, 0.05,		
 		INTPOINTS_KTFACT, GSL_INTEG_GAUSS15, ws, &result, &abserr);
@@ -102,6 +102,7 @@ double SingleInclusive::dHadronMultiplicity_dyd2pt_ktfact_parton(double y, doubl
     
     return result;
 }
+
 
 double Inthelperf_ktfact_q(double q, void *p)
 {

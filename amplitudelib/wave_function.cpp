@@ -29,6 +29,12 @@ double WaveFunction::MesonMass()
     return 0;
 }
 
+
+std::string WaveFunction::WaveFunctionType()
+{
+	return "Not specified";
+}
+
 // eps(z,Q,r) = sqrt(z(1-z)*Q^2 + m^2)
 double epsfunsqr(double z, double Qsqr, double msqr)
 {

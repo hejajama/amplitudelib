@@ -8,8 +8,9 @@
 import scipy
 from math import*
 import sys
+from scipy import integrate
 
-scipy.pkgload()
+#scipy.pkgload()
 
 fmgev=5.0677
 lambdaqcd=0.241
@@ -18,12 +19,10 @@ ws_delta = 0.54*fmgev
 nukeA=197
 
 #mvgamma
-#qsqr=0.165
-#gamma=1.135
-#ec=1
-#sigma0=84.47436
-#qsqr=0.1586
-#gamma=1.1290
+qsqr=0.0905
+gamma=1.210
+ec=1
+sigma0=8.68*2.0*2.568
 #ec=1
 #sigma0=82.97
 
@@ -34,11 +33,11 @@ nukeA=197
 #sigma0=96.586       # sigma_0 in [GeV^{-2}]
 
 #mve
-qsqr=0.060
-ec=18.9
-gamma=1
+#qsqr=0.060
+#ec=18.9
+#gamma=1
 #sigma0=83.985
-sigma0 = 16.36*2.0*2.568  # = 84.025
+#sigma0 = 16.36*2.0*2.568  # = 84.025
 
 def RA(A):
     return fmgev*(1.12*pow(A, 1.0/3.0) - 0.86*pow(A, -1.0/3.0))
