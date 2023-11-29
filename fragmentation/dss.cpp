@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include "../tools/tools.hpp"
 
+
 extern "C"
 {
     // ih: input hadron, 1=pion, 2=kaon, 3=proton, 4=charged hadrons
@@ -20,22 +21,32 @@ extern "C"
     // NOTE: cbar and bbar not in DSS, returns c or b instead
 	// result is the fragmentation function (X factor divided out)
     
-    /*void fdss_ (int &ih, int &ic, int &io, double &x, double& q2, double& u,
+    // version: 1 = DSS07, 2=DSS14 (only pions)
+    void fdss_ (int &version,int &ih, int &ic, int &io, double &x, double& q2, double& u,
         double &ub, double &d, double &db, double &s, double &sb, double &c,
-        double &b, double &g);*/
+        double &b, double &g);
+    /*
     void fdss_(int& hadron, int& charge, int& order, double& z,
               double& scalesqr, int& parton, double& result);
+              */
 
     extern struct{
         double fini;
     } fragini_;
 }
 
+
 using namespace Amplitude;
 
 // D_{p->h}, x: long. mom. fraction, qs: scale (GeV)
 double DSS::Evaluate(Parton p, Hadron h, double x, double qs)
 {
+    if (!(h == PI0 or h == PIP or h==PIM) and version==DSS14)
+    {
+        std::cerr << "DSS14 does not support anything else than pions" << std::endl;
+        exit(1);
+    }
+
     if (x<0.05 or x>1)
     {
         cerr << "z=" << x <<" out of range [0.05, 1] at " << LINEINFO << endl;
@@ -104,57 +115,72 @@ double DSS::Evaluate(Parton p, Hadron h, double x, double qs)
     double qsqr = qs*qs;
     //double u, ubar, d, dbar, s, sbar, c, b, g;
     //fdss_(ih, ic, io, x, qsqr, u, ubar, d, dbar, s, sbar, c, b, g);
-    double result;
+    //double result;
+    // New DSS14 wrapper partons: U, UB, D, DB, S, SB,   C,           B,       GL     
     int parton=0;
     switch(p)
     {
         case U:
             //result = u/x;
-            parton=1;
+            parton=0;
             break;
         case D:
-			parton=3;
+			parton=2;
             //result = d/x;
             break;
         case UBAR:
-			parton=2;
+			parton=1;
             //result = ubar/x;
             break;
         case DBAR:
-			parton=4;
+			parton=3;
             //result = dbar/x;
             break;
         case S:
-			parton=5;
+			parton=4;
             //result = s/x;
             break;
         case SBAR:
-            parton=6;
+            parton=5;
             //result = sbar/x;
             break;
         case C:
-            parton = 7;
+            parton = 6;
             break;
 		case CBAR:
-			parton = 8;
+			//parton = 8;
+            parton=6;
 			break;
         case B:
-            parton = 9;
+            //parton = 9;
+            parton=7;
             break;
 		case BBAR:
-			parton=10;
+			//parton=10;
+            parton=7;
 			break;
         case G:
-			parton=0;
+			parton=8;
             break;
         default:
             cerr << "Parton " << PartonToString(p) << " is not supported! " << LINEINFO << endl;
             return 0;
     }
 
-	fdss_(ih, ic, io, x, qsqr, parton, result);
+    double output[9];
+    int v=-1;
+    if (version==DSS07) v=1;
+    else if (version==DSS14) v=2;
+    else
+    {
+        cerr << "Uknown DSS version! " << endl;
+        exit(1);
+    }
+    fdss_(v, ih, ic, io, x, qsqr, output[0],output[1],output[2],output[3],output[4],output[5],
+        output[6],output[7],output[8] );
+	//fdss_(ih, ic, io, x, qsqr, parton, result);
     
-    return result; 
+    return output[parton]/x; // this returns D(z), not z*D(z) 
 }
 
 
@@ -169,6 +195,7 @@ DSS::DSS()
 {
     initialized = false;
     fragini_.fini=0;
+    version=DSS07;
 }
  
 void DSS::SetOrder(Order o)

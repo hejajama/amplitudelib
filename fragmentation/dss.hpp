@@ -16,6 +16,12 @@
  * Ref. hep-ph/0703242
  */
 
+enum DSS_VERSION
+{
+    DSS07,
+    DSS14
+};
+
 class DSS : public FragmentationFunction
 {
     public:
@@ -32,10 +38,13 @@ class DSS : public FragmentationFunction
         DSS();
         std::string GetString();
         void SetOrder(Amplitude::Order order_);
+        void SetDSSVersion(DSS_VERSION v) { version=v; }
         
         void Test();
     private:
         bool initialized;
+        DSS_VERSION version;
+    
 
 };
 
