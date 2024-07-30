@@ -23,19 +23,16 @@ using std::cerr;
 
 /**
  * Interpolation method, spline goes trough every
- * datapoint, bspline fits a noisy dataset.
+ * datapoint
  */
 enum INTERPOLATION_METHOD {
-    INTERPOLATE_SPLINE,
-    INTERPOLATE_BSPLINE
+    INTERPOLATE_SPLINE
 };
 
-// Enable support for bspline interpolation, requires gsl 1.x, not gsl 2
-// #define ENABLE_BSPLINE
 
 /**
  * Interpolates given data using spline (goes trough every data point)
- * or bspline (=noisy data) using the GSL routines.
+ * Using GSL Spline implementation
  */
 class Interpolator
 {
@@ -49,15 +46,17 @@ class Interpolator
          * @param x array of x coordinates
          * @param y array of y coordinates
          * @param p number of points in arrays
+         * @param log if true, this will interpolate log(y) as a function of log(x)
          */
-        Interpolator(double* x, double* y, int p);
+        Interpolator(double* x, double* y, int p, bool log=false);
 
         /**
          * Create interpolator from two std::vectors.
          *
          * The given vectors are not saved or referenced later.
+         * @param log if true, this will interpolate log(y) as a function of log(x)
          */
-        Interpolator(std::vector<double> &x, std::vector<double> &y);
+        Interpolator(std::vector<double> &x, std::vector<double> &y, bool log=false);
         Interpolator(const Interpolator& inter);
         ~Interpolator();
         void Clear();
@@ -152,24 +151,14 @@ class Interpolator
         bool freeze;		// true if return freeze_under/overflow if
         double freeze_underflow;	// asked to evaluate interpolation
 		double freeze_overflow;	// outside the spesified range
+
+        bool log_data; // true if the interpolated data (both x and y) is in log scale
         
         // spline
         gsl_interp_accel *acc;
         gsl_spline *spline;
-#ifdef ENABLE_BSPLINE
-        // bspline
-        gsl_bspline_workspace *bw;
-        gsl_bspline_deriv_workspace *derbw;
-        gsl_vector *B;
-        gsl_vector *c;
-        gsl_matrix *X;
-        gsl_matrix *cov;
-        gsl_multifit_linear_workspace *mw;
-#endif
-        static const int k=4;
-        static const int ncoeffs = 12;
-        static const int nbreak = ncoeffs-k+2;
 
+      
         bool out_of_range_errors;
 
 

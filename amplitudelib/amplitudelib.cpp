@@ -89,6 +89,8 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
         << " Q_{s,0}^2 = " << 2.0/SQR(SaturationScale(x0, 0.393469)) << " GeV^2 [ N(r^2=2/Q_s^2, x=x0) = 0.3934]"
         << " (AmplitudeLib v. " << AMPLITUDELIB_VERSION << " git commit " << g_GIT_SHA1  << ")" ;
     info_string = ss.str();
+
+    logarithmic_interpolation_grid=true;
     
     
 }
@@ -140,6 +142,8 @@ AmplitudeLib::AmplitudeLib(std::vector< std::vector< double > > data, std::vecto
     info_string = ss.str();
     
     cout << ss.str() << endl;
+
+    logarithmic_interpolation_grid=true;
     
     
 }
@@ -655,11 +659,12 @@ void AmplitudeLib::InitializeInterpolation(double xbj)
     }
     for (int i=0; i<rpoints; i++)
     {
-        double tmpr = tmprarray[i];
+        double tmpr = rvals[i];
         if (i==0) tmpr*=1.0001; if (i==rpoints-1) tmpr*=0.9999;
         tmpnarray[i] = N(tmpr, xbj);
+        tmprarray[i]=tmpr;  // make sure that this table is correct, as it can be modified by the interpolator
     }
-    interpolator = new Interpolator(tmprarray, tmpnarray, rpoints);
+    interpolator = new Interpolator(tmprarray, tmpnarray, rpoints, logarithmic_interpolation_grid); // last argument: true = interpolate logarithmically
 
     interpolator->Initialize();
     interpolator_xbj = xbj;

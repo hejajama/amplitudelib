@@ -295,6 +295,8 @@ class AmplitudeLib
          */
         void SetInterpolationMethod(AMPLITUDE_INTERPOLATION_METHOD m) { interpolation_method = m;}
 
+        void SetLogarithmicInterpolation(bool l) { logarithmic_interpolation_grid = l; }
+
     private:
         // [yind][r/kind]
         std::vector< std::vector<double> > n;
@@ -306,7 +308,7 @@ class AmplitudeLib
         bool kspace;    //! true if data is in kspace
 
         double interpolator_xbj;  //! xbj at which the interpolator is initialized
-        double* tmprarray;
+        double* tmprarray;  // NOTE: this pointer is passed to interpolator, and in case of logarithmic interpolation it is modified
         double* tmpnarray;
 
         double minr;
@@ -347,6 +349,8 @@ class AmplitudeLib
         
         Amplitude::FT_Method ft;  // ACC SERIES: use j0_transfer from fourier/fourier.c,	
 					// it should be faster but sometimes it is much slower!!
+
+        bool logarithmic_interpolation_grid;    // true if the interpolation grid is in logarithmic scale
         
         
 };

@@ -42,12 +42,14 @@ int main()
 	cout << "N(r=1, x=x0) = " << res << " (correct " << correct << ")" << endl;
     assert(std::abs((correct - res)/res) < accuracy);
 
+	N.InitializeInterpolation(0.001);
     correct=0.141605; res=N.N(1,0.001);
     cout << "N(r=1, x=0.001) = " << res << " (correct " << correct << ")" << endl;;
     assert(std::abs((correct - res)/res) < accuracy);
     
 	cout << "===== TEST: Scattering matrix in momentum space = 2D FT of S ===== " << endl;
     N.InitializeInterpolation(0.002);
+	cout << "Interpolator ready" << endl;
 	correct=0.0715372; res=N.S_k(2.0, 0.002);
     cout << "Fundamental FT S(k=2, x=0.002) = " << res << " (correct " << correct << ")" << endl;;
     assert(std::abs((correct - res)/res) < accuracy);
@@ -95,10 +97,16 @@ int main()
 	cout << "===== TESTING INTERPOLATOR =====" << endl;
 	{
 	std::vector<double> y; y.push_back(0); y.push_back(1); y.push_back(4);  y.push_back(9); y.push_back(16);
-	std::vector<double> x; x.push_back(0); x.push_back(1); x.push_back(2);  x.push_back(3); x.push_back(4);
+	std::vector<double> x; x.push_back(1e-20); x.push_back(1); x.push_back(2);  x.push_back(3); x.push_back(4);
 	Interpolator interp(x,y); //interp.Initialize();
+	Interpolator interplog(x,y,true);
 	correct=6.25; res = interp.Evaluate(2.5);	// 2.5^2=6.25
 	cout << "2.5^2 = " << res << " (correct: " << correct << ") " << endl;
+        cout <<std::abs((res-correct)/correct) << endl;
+    assert(std::abs((res-correct)/correct) < 0.05);
+
+	correct=6.25; res = interplog.Evaluate(2.5);	// 2.5^2=6.25
+	cout << "Log interp: 2.5^2 = " << res << " (correct: " << correct << ") " << endl;
         cout <<std::abs((res-correct)/correct) << endl;
     assert(std::abs((res-correct)/correct) < 0.05);
     
