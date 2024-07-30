@@ -225,7 +225,7 @@ Interpolator::Interpolator(double *x, double *y, int p, bool log)
     Initialize();
 }
 
-Interpolator::Interpolator(std::vector<double> &x, std::vector<double> &y, bool log)
+Interpolator::Interpolator(std::vector<double> x, std::vector<double> y, bool log)
 {
     points = x.size();
     xdata = new double[points];

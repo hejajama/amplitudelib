@@ -56,7 +56,7 @@ class Interpolator
          * The given vectors are not saved or referenced later.
          * @param log if true, this will interpolate log(y) as a function of log(x)
          */
-        Interpolator(std::vector<double> &x, std::vector<double> &y, bool log=false);
+        Interpolator(std::vector<double> x, std::vector<double> y, bool log=false);
         Interpolator(const Interpolator& inter);
         ~Interpolator();
         void Clear();
