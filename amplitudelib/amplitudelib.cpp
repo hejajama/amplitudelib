@@ -193,8 +193,8 @@ double AmplitudeLib::N(double r, double xbj)
             cerr << "y must be between limits [" << 0 << ", "
                 << yvals[yvals.size()-1] << "], asked y=" << y << ", x=" << xbj << " (x0=" << X0() << ") datafile " << datafilename << " "
                 << LINEINFO << endl;
-            exit(1);
-        //if (y < 0) y=0; else if (y>yvals[yvals.size()-1]) y=yvals[yvals.size()-1];
+            //exit(1);
+        if (y < 0) y=0; else if (y>yvals[yvals.size()-1]) y=yvals[yvals.size()-1];
     }
 
     
@@ -204,7 +204,7 @@ double AmplitudeLib::N(double r, double xbj)
         double result=0;
 
         // Can't interpolate (too large dipole), return 1.0
-        if (r >= maxr_interpolate and maxr_interpolate>0 and !kspace) { return 1.0; }
+        //if (r >= maxr_interpolate and maxr_interpolate>0 and !kspace) { return 1.0; }
 
         result = interpolator->Evaluate(r);
         

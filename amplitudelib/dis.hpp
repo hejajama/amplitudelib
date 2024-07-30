@@ -70,8 +70,11 @@ class DIS
          */
         double ReducedCrossSection(double qsqr, double xbj, double sqrts, Amplitude::Parton=Amplitude::LIGHT, double mass=-1);
 
+        void SetDisIntegralMaxR(double maxr_) { maxr = maxr_; }
+
     private:
         AmplitudeLib* N;
+	double maxr;
 };
 
 #endif

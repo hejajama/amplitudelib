@@ -82,6 +82,8 @@ int main(int argc, char* argv[])
             datafile=argv[i+1];
         else if (string(argv[i])=="-x")
             mode=X;
+        else if (string(argv[i])=="-x0")
+            x0 = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-kspace")
             kspace=true;
         else if (string(argv[i])=="-satscale")

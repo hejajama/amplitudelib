@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
     gsl_set_error_handler(&ErrHandler);
     
     bool only_charm = false;
+   double maxr=-1;
 	
     
     std::string herafile="";    // if not empty, read Q^2,x,y from datafile
@@ -75,12 +76,17 @@ int main(int argc, char* argv[])
                 exit(1);
             }
         }
-        else if (string(argv[i]).substr(0,1)=="-")
+	else if (string(argv[i])=="-x0")
+            x0 = StrToReal(argv[i+1]);
+       else if (string(argv[i])=="-maxr")
+          maxr=StrToReal(argv[i+1]); 
+ else if (string(argv[i]).substr(0,1)=="-")
         {
             cerr << "Unrecoginzed parameter " << argv[i] << endl;
             return -1;
         }
-    }
+         }
+ 
 
     if (xbj<0 and herafile=="" )
     {
@@ -93,7 +99,7 @@ int main(int argc, char* argv[])
     if (x0>0)
         N.SetX0(x0);
 
-    time_t now = time(0);
+        time_t now = time(0);
     string today = ctime(&now);
     
     char *hostname = new char[500];
@@ -109,16 +115,23 @@ int main(int argc, char* argv[])
 
     DIS dis(&N);
     
-    
-    
+    if (maxr > 0) {
+        dis.SetDisIntegralMaxR(maxr);
+    	cout <<"# Max r when computing F2: " << maxr << " GeV^(-1)"<<endl;
+     }
+
+   double mc=1.4; 
     if (herafile=="")
     {
-        for (double Q2=1; Q2 < 128; Q2*=1.1)
+        for (double Q2=1; Q2 < 200; Q2*=1.2)
         {
-            double light_F2 = dis.F2(Q2, xbj, Amplitude::LIGHT, 0.03);
-            double charm_F2 = dis.F2(Q2, xbj, Amplitude::C,1.3528);
-            double bottom_F2 = dis.F2(Q2,xbj, Amplitude::B, 4.75);
-            cout << xbj << " " << Q2 << " " << light_F2 << " " << charm_F2 << " " << light_F2 + charm_F2 + bottom_F2 << endl;
+	    //if (xbj*(1+4.*mc*mc/Q2) > 0.01) continue;
+            double light_F2 = dis.F2(Q2, xbj, Amplitude::LIGHT, 0.14);
+            double charm_F2 = 0; //dis.F2(Q2, xbj*(1+4.*mc*mc/Q2), Amplitude::C,1.4);
+            double bottom_F2 = 0; // dis.F2(Q2,xbj*(1+4.*4.75*4.75/Q2), Amplitude::B, 4.75);
+	    double charm_FL = 0;//dis.FL(Q2, xbj*(1+4.*mc*mc/Q2), Amplitude::C,1.4);
+		if (maxr > 0) cout << maxr << " ";
+            cout << xbj << " " << Q2 << " " << light_F2 << " " << charm_F2 << " " << bottom_F2 << " " <<charm_FL << endl;
         }
     }
     else
@@ -126,7 +139,7 @@ int main(int argc, char* argv[])
         Data heradata;
         
         heradata.LoadData(herafile,CHARM); // CHARM flag does not affect anything here
-        cout << "Q2 x y s_r" <<endl;
+        cout << "Q2 x y s_r exp experr" <<endl;
         for (int i=0; i < heradata.NumOfPoints(); i++)
         {
             double Q2 =heradata.Qsqr(i);
@@ -136,18 +149,19 @@ int main(int argc, char* argv[])
             
             double x = heradata.xbj(i);
             double y = heradata.y(i);
-            double sqrts = std::sqrt( Q2/x);
+            double sqrts = std::sqrt( Q2/(x*y));
             
             double sigmar_light=0;
             double sigmar_b=0;
-            double sigmar_c =dis.ReducedCrossSection(Q2,x, sqrts, Amplitude::C, 1.3528);
+            //double sigmar_c =dis.ReducedCrossSection(Q2,x, sqrts, Amplitude::C, 1.3528);
+	    double sigmar_c = dis.ReducedCrossSection(Q2,x*(1+4.*mc*mc/Q2), sqrts, Amplitude::C, 1.4);
             
             if (only_charm==false)
             {
-                sigmar_light =dis.ReducedCrossSection(Q2,x, sqrts, Amplitude::LIGHT, 0.03);
-                sigmar_b = dis.ReducedCrossSection(Q2,x, sqrts, Amplitude::B, 4.75);
+                sigmar_light =dis.ReducedCrossSection(Q2,x, sqrts, Amplitude::LIGHT, 0.14);
+                sigmar_b = dis.ReducedCrossSection(Q2,x*(1+4.*4.75*4.75/Q2), sqrts, Amplitude::B, 4.75);
             }
-            cout << Q2 << " " << x << " " << y << " " << sigmar_light+sigmar_c+sigmar_b << endl;
+            cout << Q2 << " " << x << " " << y << " " << sigmar_light+sigmar_c+sigmar_b << " " << heradata.ReducedCrossSection(i) << " " << heradata.ReducedCrossSectionError(i) << endl;
         }
     }
     return 0;

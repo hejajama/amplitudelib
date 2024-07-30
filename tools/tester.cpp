@@ -144,6 +144,9 @@ int main()
 	
 	cout << "===== TEST: DSS FF ===== " << endl;
 	DSS ff;
+	ff.SetDSSVersion(DSS07);
+	ff.Test();
+	ff.SetDSSVersion(DSS14);
 	ff.Test();
 	
 		

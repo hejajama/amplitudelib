@@ -8,6 +8,7 @@ using namespace Amplitude;
 DIS::DIS(AmplitudeLib* amp)
 {
     N=amp;
+    maxr=-1;
 }
 
 /*
@@ -62,12 +63,14 @@ double DIS::ProtonPhotonCrossSection(double Qsqr, double xbj, Polarization pol,P
     fun.params=&par;
 
     N->SetOutOfRangeErrors(false);
-    
+   
+    double integral_maxr = 10*N->MaxR();
+    if (maxr > 0) integral_maxr=maxr; 
 
     double result,abserr; 
     const int MAXITER_RINT=100;
     gsl_integration_workspace* ws = gsl_integration_workspace_alloc(MAXITER_RINT);
-    int status = gsl_integration_qag(&fun, 0.1*N->MinR(), 10.0*N->MaxR(), 0, 0.0001,
+    int status = gsl_integration_qag(&fun, 0.1*N->MinR(), integral_maxr, 0, 0.0001,
         MAXITER_RINT, GSL_INTEG_GAUSS51, ws, &result, &abserr);
     gsl_integration_workspace_free(ws);
     //int status = gsl_integration_qng(&fun, MinR(), MaxR(),

@@ -289,8 +289,8 @@ int main(int argc, char* argv[])
 	ps.push_back(DBAR);
 	ps.push_back(S);
 	ps.push_back(SBAR);
-    ps.push_back(C);
-	ps.push_back(CBAR);
+   // ps.push_back(C);
+//	ps.push_back(CBAR);
 	
     ps.push_back(G);
     xs.SetPartons(ps);
