@@ -21,7 +21,23 @@ enum AMPLITUDE_INTERPOLATION_METHOD
                 // thread safe, no need to initialize interpolation
 };
 
+// Parametrizations when using a dipole amplitude with give analytical MV-like parametrization (parameters are x dependent)
+struct MVgammaE_params
+{
+    std::vector<double> Qs0sqr;
+    std::vector<double> gamma;
+    std::vector<double> ec;
+    std::vector<double> lqcd;
+    std::vector<double> rapidities;
 
+    Interpolator *Qs0sqr_interp;
+    Interpolator *gamma_interp;
+    Interpolator *ec_interp;
+    Interpolator *lqcd_interp;
+
+    string filename;
+
+};
 
 /**
  * Amplitude class
@@ -50,6 +66,8 @@ class AmplitudeLib
          * data[i][j] is dipole amplitude at rapidity yvals[i] for dipole size rvals[i]
          */
         AmplitudeLib(std::vector< std::vector< double > > data, std::vector<double> yvals_, std::vector<double> rvals_);
+
+        AmplitudeLib(MVgammaE_params params);
     
         ~AmplitudeLib();
 
@@ -297,6 +315,7 @@ class AmplitudeLib
 
         void SetLogarithmicInterpolation(bool l) { logarithmic_interpolation_grid = l; }
 
+
     private:
         // [yind][r/kind]
         std::vector< std::vector<double> > n;
@@ -351,6 +370,9 @@ class AmplitudeLib
 					// it should be faster but sometimes it is much slower!!
 
         bool logarithmic_interpolation_grid;    // true if the interpolation grid is in logarithmic scale
+
+        MVgammaE_params mvgammae_params;
+        bool use_analytical_parametrization;
         
         
 };

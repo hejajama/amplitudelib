@@ -71,6 +71,7 @@ int main(int argc, char* argv[])
     bool kspace=false;
     std::string datafile="";
     Mode mode=X;
+    bool analytical_parametrization=false;
 
     for (int i=1; i<argc; i++)
     {
@@ -80,6 +81,8 @@ int main(int argc, char* argv[])
             xbj = StrToReal(argv[i+1]);
         else if (string(argv[i])=="-data")
             datafile=argv[i+1];
+        else if (string(argv[i])=="-analytical_parametrization")
+            analytical_parametrization=true;        
         else if (string(argv[i])=="-x")
             mode=X;
         else if (string(argv[i])=="-x0")
@@ -113,7 +116,12 @@ int main(int argc, char* argv[])
     }
     
     // Read data
-    AmplitudeLib N(datafile, kspace);
+    //AmplitudeLib N(datafile, kspace);
+    MVgammaE_params analytic_par;
+    if (analytical_parametrization)
+        analytic_par.filename=datafile;
+
+    AmplitudeLib N = analytical_parametrization ? AmplitudeLib(analytic_par) : AmplitudeLib(datafile, kspace);
     if (x0>0)
         N.SetX0(x0);
     if (y>=0)   // User set rapidity

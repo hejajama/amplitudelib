@@ -58,6 +58,10 @@ class Interpolator
          */
         Interpolator(std::vector<double> x, std::vector<double> y, bool log=false);
         Interpolator(const Interpolator& inter);
+        Interpolator();
+
+        void Construct(std::vector<double> x, std::vector<double> y, bool log=false);
+
         ~Interpolator();
         void Clear();
         /**

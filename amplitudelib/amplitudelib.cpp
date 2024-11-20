@@ -20,6 +20,8 @@
 #include <gsl/gsl_min.h>
 #include <string>
 #include <sstream>
+#include <iostream>
+#include <fstream>
 
 
 #include <algorithm>
@@ -91,6 +93,7 @@ AmplitudeLib::AmplitudeLib(std::string datafile, bool kspace_)
     info_string = ss.str();
 
     logarithmic_interpolation_grid=true;
+    use_analytical_parametrization=false;
     
     
 }
@@ -144,10 +147,102 @@ AmplitudeLib::AmplitudeLib(std::vector< std::vector< double > > data, std::vecto
     cout << ss.str() << endl;
 
     logarithmic_interpolation_grid=true;
+    use_analytical_parametrization=false;
     
     
 }
 
+/*
+ * Analytical parametrization
+
+ if filename is given in the MVgammaE_params struct, read parmaeters from that file
+*/
+AmplitudeLib::AmplitudeLib(MVgammaE_params params)
+{
+    if (params.filename != "")
+    {
+            std::string paramfile = params.filename;
+        std::ifstream infile(paramfile);
+        if (!infile.is_open()) {
+            std::cerr << "Error opening file: " << paramfile << std::endl;
+            exit(1);
+        }
+
+        x0 = 0.01;
+
+
+        double xb, qs0sqr, gamma, ec, lqcd,Rsqr,reldiff;
+        // Note: last 2 are not params, just quantify the fit quality
+        std::string line;
+        while (std::getline(infile, line)) {
+            if (line[0] == '#') continue;
+            std::istringstream iss(line);
+            double xb, qs0sqr, gamma, ec, lqcd, Rsqr, reldiff;
+            if (!(iss >> xb >> qs0sqr >> gamma >> lqcd >> ec >> Rsqr >> reldiff)) {
+                std::cerr << "Error reading parameters from line: " << line << std::endl;
+                continue;
+            }
+
+            if (isnan(xb) || isnan(qs0sqr) || isnan(gamma) || isnan(ec) || isnan(lqcd) || isnan(Rsqr) || isnan(reldiff) ||
+                isinf(xb) || isinf(qs0sqr) || isinf(gamma) || isinf(ec) || isinf(lqcd) || isinf(Rsqr) || isinf(reldiff)) {
+                std::cerr << "Error: One or more parameters are NaN or Inf in line: " << line << std::endl;
+                continue;
+            }
+
+            params.rapidities.push_back(std::log(x0/xb));
+            params.Qs0sqr.push_back(qs0sqr);
+            params.gamma.push_back(gamma);
+            params.ec.push_back(ec);
+            params.lqcd.push_back(lqcd);
+
+            yvals.push_back(std::log(x0/xb));
+        }
+
+        infile.close();
+
+        cout << "# Read " << params.rapidities.size() << " points from " << params.filename << endl;
+    }
+
+  
+    mvgammae_params=params;
+
+    kspace = false;
+    ft=DEFAULT_FT_METHOD;
+    minr=1e-7;
+    rpoints=1000;
+    rmultiplier=1.03;
+
+    for (int i=0; i<rpoints; i++)
+    {
+        double tmpr = std::log(minr*std::pow(rmultiplier, i));
+        lnrvals.push_back(tmpr);    
+    }
+
+    use_analytical_parametrization=true;
+
+    mvgammae_params.Qs0sqr_interp = new Interpolator(params.rapidities, params.Qs0sqr);
+    //mvgammae_params.Qs0sqr_interp.Initialize();
+
+    mvgammae_params.gamma_interp = new Interpolator(params.rapidities, params.gamma);
+   // mvgammae_params.gamma_interp.Initialize();
+
+    mvgammae_params.ec_interp = new Interpolator(params.rapidities, params.ec);
+    //mvgammae_params.ec_interp.Initialize();
+
+    mvgammae_params.lqcd_interp = new Interpolator(params.rapidities, params.lqcd);
+    //mvgammae_params.lqcd_interp.Initialize();
+
+    cout << mvgammae_params.lqcd_interp->Evaluate(1) << endl;
+
+    std::stringstream ss;
+    ss << "#AmplitudeLib initialized, x0 " << X0() << " with analytical parametrization, "
+    << " Q_{s,0}^2 = " << 2.0/SQR(SaturationScale(x0, 0.393469)) << " GeV^2 [ N(r^2=2/Q_s^2, x=x0) = 0.3934]"
+    << " (AmplitudeLib v. " << AMPLITUDELIB_VERSION << " git commit " << g_GIT_SHA1  << ")" ;
+    info_string = ss.str();
+    
+    cout << ss.str() << endl;
+
+}
 
 /*
  * Release reserved memory
@@ -155,6 +250,16 @@ AmplitudeLib::AmplitudeLib(std::vector< std::vector< double > > data, std::vecto
 
 AmplitudeLib::~AmplitudeLib()
 {
+    if (use_analytical_parametrization)
+    {
+        delete mvgammae_params.Qs0sqr_interp;
+        delete mvgammae_params.gamma_interp;
+        delete mvgammae_params.ec_interp;
+        delete mvgammae_params.lqcd_interp;
+
+    }
+        return;
+
     if (interpolator_xbj>=0)
     {
         delete interpolator;
@@ -169,6 +274,32 @@ AmplitudeLib::~AmplitudeLib()
  */
 double AmplitudeLib::N(double r, double xbj)
 {
+
+    if (use_analytical_parametrization)
+    {
+        double y = std::log(x0/xbj);
+        if (y < mvgammae_params.rapidities[0] or y > mvgammae_params.rapidities[mvgammae_params.rapidities.size()-1])
+        {
+            if (out_of_range_errors)
+                 cerr << "y must be between limits [" << mvgammae_params.rapidities[0] << ", " << mvgammae_params.rapidities[mvgammae_params.rapidities.size()-1] << "]"
+                    << " asked y=" << y << " " << LINEINFO << endl;
+            
+            if (y < mvgammae_params.rapidities[0]) y=mvgammae_params.rapidities[0];
+            if (y > mvgammae_params.rapidities[mvgammae_params.rapidities.size()-1]) y=mvgammae_params.rapidities[mvgammae_params.rapidities.size()-1];
+        }
+        double qs0sqr = mvgammae_params.Qs0sqr_interp->Evaluate(y);
+        double gamma = mvgammae_params.gamma_interp->Evaluate(y);
+        double ec = mvgammae_params.ec_interp->Evaluate(y);
+        double lqcd = mvgammae_params.lqcd_interp->Evaluate(y);
+
+        double exp = std::pow(SQR(r)*qs0sqr,gamma)/4. * std::log(1./(lqcd*r)+ec*std::exp(1));
+        if (exp < 1e-5)
+            return exp;
+        return 1.0 - std::exp(-exp); 
+        
+    }
+
+
     if (isnan(r) or isinf(r))
     {
         cerr << "r=" << r << " at AmplitudeLib::N(): " << LINEINFO << endl;
@@ -636,6 +767,9 @@ double AmplitudeLib::N_A(double r, double y)
  */
 void AmplitudeLib::InitializeInterpolation(double xbj)
 {
+    if (use_analytical_parametrization)
+        return; // no need to initialize interpolator for analytical parametrization
+
 	if (xbj > X0())
 	{
 		cerr << "Asked to initialize interpolator with too large x=" << xbj

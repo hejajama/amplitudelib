@@ -228,6 +228,88 @@ Interpolator::Interpolator(double *x, double *y, int p, bool log)
 Interpolator::Interpolator(std::vector<double> x, std::vector<double> y, bool log)
 {
     points = x.size();
+    method=INTERPOLATE_SPLINE;
+    ready=false;
+
+    if (points<2)
+    {
+        cout << "WARNING: Initialized interpolator with too few datapoints" << LINEINFO << endl;
+        return ;
+    }
+
+    xdata = new double[points];
+    ydata = new double[points];
+    allocated_data=true;
+    log_data=log;
+
+    if (log)
+    {
+        for (uint i=0; i<x.size(); i++)
+        {
+            if (x[i] <= 0)
+            {
+                cerr << "Logartihmic interpolation requires all x values to be strictly positive! x["
+                    << i << "]=" << x[i] << " " << LINEINFO << endl;
+                exit(1);
+            }
+            x[i]=std::log(x[i]);
+            if (y[i] <= 0)
+                y[i]=MIN_LOG_VALUE;
+            else 
+                y[i]=std::log(y[i]);
+        }
+    }
+   
+
+    for (uint i=0; i<x.size(); i++)
+    {
+        xdata[i]=x[i];
+        ydata[i]=y[i];
+
+        // Check that x values are monotonically increasing
+        if (i>0)
+        {
+            if (xdata[i-1]>=xdata[i])
+            {
+                cerr << "Grid points are not monotonically increasing! grid["
+                    << i-1 <<"]=" << xdata[i-1] <<", grid["<<i<<"]="<< xdata[i]
+                    << " " << LINEINFO << endl;
+                exit(1);
+            }
+        }
+    }
+    minx=xdata[0]; maxx=xdata[x.size()-1];
+    
+    freeze=false;
+    freeze_overflow = y[y.size()-1];
+    freeze_underflow = y[0];
+
+    Initialize();
+}
+
+Interpolator::Interpolator()
+{
+    points=0;
+    xdata=NULL;
+    ydata=NULL;
+    method = INTERPOLATE_SPLINE;
+    allocated_data=false;
+    ready=false;
+    freeze=false;
+    freeze_underflow = 0;
+    freeze_overflow = 0;
+    log_data=false;
+}
+
+void Interpolator::Construct(std::vector<double> x, std::vector<double> y, bool log)
+{
+    cerr << "Interpolator::Construct has not been tested! " << LINEINFO << endl;
+    if (allocated_data)
+    {
+        delete[] xdata;
+        delete[] ydata;
+    }
+    points = x.size();
     xdata = new double[points];
     ydata = new double[points];
     allocated_data=true;
@@ -352,7 +434,9 @@ Interpolator::Interpolator(const Interpolator& inter)
     minx = xdata[0]; maxx=xdata[points-1];
     method = inter.GetMethod();
     ready=false;
-    Initialize();
+
+    if (points > 2)
+        Initialize();
 }
 
 gsl_spline* Interpolator::GetGslSpline() const
