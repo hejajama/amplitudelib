@@ -257,8 +257,8 @@ AmplitudeLib::~AmplitudeLib()
         delete mvgammae_params.ec_interp;
         delete mvgammae_params.lqcd_interp;
 
+        //return;
     }
-        return;
 
     if (interpolator_xbj>=0)
     {
